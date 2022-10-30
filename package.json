@@ -33,9 +33,12 @@
     "cookies-next": "^2.1.1",
     "dayjs": "^1.11.6",
     "embla-carousel-react": "^7.0.3",
+    "framer-motion": "^7.6.2",
     "next": "12.3.1",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "react-intersection-observer": "^9.4.0",
+    "sass": "^1.55.0"
   },
   "devDependencies": {
     "@babel/core": "^7.17.8",

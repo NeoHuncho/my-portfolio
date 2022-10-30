@@ -1,0 +1,44 @@
+/* 
+$non-mobile: '(min-width:461px)';
+$ipad: '(min-width:461px) and (max-width: 811px)';
+$ipadPro: '(min-width:812px) and (max-width: 1024px)';
+$ipadAndIpadPro: '(min-width:461px) and (max-width: 1024px)';
+$nondesktop: '(max-width: 1024px)';
+$desktop: '(min-width: 1025px)'; */
+
+
+.component{
+    flex-grow: 1;
+    background-color: #f5f5f5;
+    width: 90%;
+    margin: auto;
+}
+
+.page{
+  display: block;
+  position: relative;
+  background: radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%);
+  min-height: 96vh;
+}
+
+/* mobile */
+@media (max-width: 460px) {
+  .component{
+    margin-top: 12%;
+    width: 100%;
+  }
+  .page{
+    height: 100%;
+  }
+}
+/* ipad */
+@media (min-width:461px) {
+
+}
+/* desktop */	
+@media (min-width: 1025px) {
+  .component{
+    margin-top: 2%;
+    min-height: 90vh;
+  }
+}
