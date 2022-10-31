@@ -11,11 +11,12 @@ import {
 } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
 import Header from '@components/header';
+import { useMediaQuery } from '@mantine/hooks';
 
 export default function App(props: AppProps & { colorScheme: ColorScheme }) {
   const { Component, pageProps } = props;
   const [colorScheme, setColorScheme] = useState<ColorScheme>(props.colorScheme);
-
+  const isSmall = useMediaQuery('(max-width: 850px)');
   const toggleColorScheme = (value?: ColorScheme) => {
     const nextColorScheme = value || (colorScheme === 'dark' ? 'light' : 'dark');
     setColorScheme(nextColorScheme);
@@ -44,7 +45,7 @@ export default function App(props: AppProps & { colorScheme: ColorScheme }) {
                   background:
                     'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
                   overflow: 'hidden',
-                  padding: '20px 20px 0px 20px',
+                  padding: !isSmall ? '20px 20px 0px 20px' : '10px 10px 0px 10px',
                 },
               })}
               padding={0}

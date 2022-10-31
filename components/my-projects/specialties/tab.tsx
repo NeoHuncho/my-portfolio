@@ -72,6 +72,7 @@ function SpecialtiesTab({ items }: any) {
       </motion.div>
     );
   }
+  //TODO: Loop bug on mobile front end tech. Hopefully fixed soon
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -83,15 +84,15 @@ function SpecialtiesTab({ items }: any) {
         dragFree
         controlsOffset="xs"
         classNames={classes}
-        slideSize={isSmall ? '33%' : '11.5%'}
+        slideSize={isSmall ? '33.33%' : '11.5%'}
         slideGap={isSmall ? 'xl' : 'sm'}
-        loop
         styles={{
           viewport: { paddingBottom: 0 },
           indicators: { bottom: 12 },
           indicator: { backgroundColor: 'black' },
           container: { alignItems: 'center', marginTop: '1%' },
         }}
+        loop={!isSmall}
       >
         {items.map((item: any, index: number) => (
           <Carousel.Slide key={index}>

@@ -7,10 +7,7 @@ $nondesktop: '(max-width: 1024px)';
 $desktop: '(min-width: 1025px)'; */
 
 
-.component{
-    width: 95%;
-    margin: auto;
-}
+
 .section{
   display: flex;
   flex-direction: column;
@@ -55,16 +52,15 @@ $desktop: '(min-width: 1025px)'; */
   left: 0vw;
 
 }
-;
 
 /* mobile */
-@media (max-width: 460px) {
-  .component{
-    margin-top: 12%;
-    width: 100%;
+@media  (max-width: 460px) {
+
+  .line_bottom{
+    width: 30vw;
   }
-  .page{
-    height: 100%;
+  .line_top{
+    width: 30vw;
   }
 }
 /* ipad */
@@ -73,9 +69,6 @@ $desktop: '(min-width: 1025px)'; */
 }
 /* desktop */	
 @media (min-width: 1025px) {
-  .component{
-    margin-top: 2%;
-    
-  }
+
 }
 

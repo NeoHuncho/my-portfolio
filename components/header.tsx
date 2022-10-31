@@ -8,10 +8,10 @@ export default function Header() {
   const isSmall = useMediaQuery('(max-width: 850px)');
 
   return (
-    <Grid style={{ padding: '0.5% 1% 0.5% 1%', position: 'fixed', zIndex: 10, width: '100%' }}>
+    <Grid style={{ padding: '0.5% 1% 0.5% 1%', position: 'fixed', zIndex: 10, width: '99%' }}>
       <Grid.Col span={4}>
         <Link passHref href="/">
-          <Title style={{ fontWeight: 500, color: 'white' }} order={2}>
+          <Title style={{ fontWeight: 500, color: 'white', marginLeft: 0 }} order={2}>
             W.G
           </Title>
         </Link>

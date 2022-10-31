@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs } from '@mantine/core';
 import projectTabs from '@config/my-projects/projects-tabs';
@@ -19,7 +18,7 @@ export default function ProjectsPanel() {
   }, [activeTab]);
 
   return (
-    <div className={styles.component} style={{ backgroundColor: 'rgba(0, 0, 0, 0.00)' }}>
+    <div style={{ backgroundColor: 'rgba(0, 0, 0, 0.00)' }}>
       <Tabs
         value={activeTab}
         onTabChange={setActiveTab}
