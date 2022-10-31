@@ -2,8 +2,15 @@ import { useState } from 'react';
 import NextApp, { AppProps, AppContext } from 'next/app';
 import { getCookie, setCookie } from 'cookies-next';
 import Head from 'next/head';
-import { MantineProvider, ColorScheme, ColorSchemeProvider } from '@mantine/core';
+import {
+  MantineProvider,
+  ColorScheme,
+  ColorSchemeProvider,
+  AppShell,
+  Header as MantineHeader,
+} from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
+import Header from '@components/header';
 
 export default function App(props: AppProps & { colorScheme: ColorScheme }) {
   const { Component, pageProps } = props;
@@ -24,9 +31,25 @@ export default function App(props: AppProps & { colorScheme: ColorScheme }) {
       </Head>
 
       <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
-        <MantineProvider theme={{ colorScheme }} withGlobalStyles withNormalizeCSS>
+        <MantineProvider
+          theme={{ colorScheme, fontFamily: 'Tahoma !important' }}
+          withGlobalStyles
+          withNormalizeCSS
+        >
           <NotificationsProvider>
-            <Component {...pageProps} />
+            <AppShell
+              header={<Header />}
+              styles={() => ({
+                root: {
+                  background:
+                    'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
+                  overflow: 'hidden',
+                },
+              })}
+              padding="lg"
+            >
+              <Component {...pageProps} />
+            </AppShell>
           </NotificationsProvider>
         </MantineProvider>
       </ColorSchemeProvider>

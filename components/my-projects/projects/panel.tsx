@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 import React, { useState, useEffect } from 'react';
 import { Tabs } from '@mantine/core';
 import projectTabs from '@config/my-projects/projects-tabs';

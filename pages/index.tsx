@@ -1,12 +1,11 @@
 import Head from 'next/head';
 
-// import Header from '@components/header';
+import TopPage from '@components/top_page';
 import Section from '@components/section';
-// import NavBar from '@components/nav_bar';
 
 import ProjectsPanel from '@components/my-projects/projects/panel';
-// import SpecialtiesPanel from '@components/my-projects/specialties/panel';
-// import main_img from '@public/assets/main_img/main_img';
+import SpecialtiesPanel from '@components/my-projects/specialties/panel';
+import main_img from '@public/assets/main_img/main_img';
 
 export default function MyProjects() {
   return (
@@ -18,13 +17,12 @@ export default function MyProjects() {
         <link rel="preconnect" href="https://fonts.gstatic.com" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {/* <NavBar />
-      <Header
+      <TopPage
         title="MY PROJECTS"
         image={{ src: main_img.computer_projects, width: 1254, height: 657 }}
-      /> */}
+      />
       <Section title="Projects" Component={ProjectsPanel} />
-      {/* <Section title="Specialties" Component={SpecialtiesPanel} /> */}
+      <Section title="Specialties" Component={SpecialtiesPanel} />
     </div>
   );
 }
