@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs } from '@mantine/core';
 import specialtiesTabs from '@config/my-projects/specialties-tabs';
-import styles from '@styles/globalStyles.module.css';
+import { useMediaQuery } from '@mantine/hooks';
 import SpecialtyTab from './tab';
 
 export default function SpecialtiesComponent() {
   const [activeTab, setActiveTab] = useState(specialtiesTabs[0].label);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const isSmall = useMediaQuery('(max-width: 600px)');
+
   useEffect(() => {
     specialtiesTabs.map((tab, index) => {
       if (tab.label === activeTab) {
@@ -30,7 +32,13 @@ export default function SpecialtiesComponent() {
             </Tabs.Tab>
           ))}
         </Tabs.List>
-        <div style={{ marginTop: '30px', backgroundColor: 'whitesmoke' }}>
+        <div
+          style={{
+            marginTop: '30px',
+            minHeight: isSmall ? 120 : 130,
+            backgroundColor: 'whitesmoke',
+          }}
+        >
           <Tabs.Panel
             value={specialtiesTabs[activeTabIndex].label}
             key={specialtiesTabs[activeTabIndex].label}

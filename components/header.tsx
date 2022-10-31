@@ -24,7 +24,6 @@ export default function Header() {
             paddingTop: isSmall ? 10 : 0,
             justifyContent: isSmall ? 'flex-start' : 'center',
           }}
-          s
           spacing="xl"
         >
           <a href="mailto: william.guinaudie@gmail.com" target="_blank" rel="noreferrer">

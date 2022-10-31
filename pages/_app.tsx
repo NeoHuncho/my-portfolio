@@ -44,9 +44,10 @@ export default function App(props: AppProps & { colorScheme: ColorScheme }) {
                   background:
                     'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
                   overflow: 'hidden',
+                  padding: '20px 20px 0px 20px',
                 },
               })}
-              padding="lg"
+              padding={0}
             >
               <Component {...pageProps} />
             </AppShell>

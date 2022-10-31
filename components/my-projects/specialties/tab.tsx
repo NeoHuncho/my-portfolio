@@ -61,7 +61,6 @@ function SpecialtiesTab({ items }: any) {
         >
           {items.map((item: any, index: number) => (
             <Image
-              style={{ marginTop: isSmall ? 10 : 2 }}
               key={index}
               src={item.image.src}
               alt={item.image.name}
@@ -97,11 +96,11 @@ function SpecialtiesTab({ items }: any) {
         {items.map((item: any, index: number) => (
           <Carousel.Slide key={index}>
             <Image
-              style={{ marginTop: isSmall ? 10 : 0 }}
               key={index}
               src={item.image.src}
               alt={item.image.name}
-              layout="fill"
+              width={100}
+              height={100}
             />
           </Carousel.Slide>
         ))}
