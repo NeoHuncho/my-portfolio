@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Grid, Group, Title } from '@mantine/core';
+import { Grid, Group, Menu, Text, Title } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 
 export default function Header() {
@@ -11,7 +11,15 @@ export default function Header() {
     <Grid style={{ padding: '0.5% 1% 0.5% 1%', position: 'fixed', zIndex: 10, width: '99%' }}>
       <Grid.Col span={4}>
         <Link passHref href="/">
-          <Title style={{ fontWeight: 500, color: 'white', marginLeft: 0 }} order={2}>
+          <Title
+            style={{
+              fontWeight: 500,
+              color: 'white',
+              cursor: 'pointer',
+              paddingTop: isSmall ? 5 : 0,
+            }}
+            order={2}
+          >
             W.G
           </Title>
         </Link>
@@ -26,11 +34,16 @@ export default function Header() {
           }}
           spacing="xl"
         >
-          <a href="mailto: william.guinaudie@gmail.com" target="_blank" rel="noreferrer">
+          <a style={{ cursor: 'pointer' }} href="mailto:william.guinaudie@gmail.com">
             <Image height={25} width={25} src="/assets/socials/email.png" />
           </a>
 
-          <a>
+          <a
+            style={{ cursor: 'pointer' }}
+            href="https://github.com/NeoHuncho"
+            target="_blank"
+            rel="noreferrer"
+          >
             <Image
               src="/assets/socials/github_white.svg"
               alt="Github link"
@@ -40,6 +53,7 @@ export default function Header() {
           </a>
 
           <a
+            style={{ cursor: 'pointer' }}
             href="https://www.freecodecamp.org/neohuncho"
             rel="noopener noreferrer"
             target="_blank"
@@ -49,41 +63,37 @@ export default function Header() {
         </Group>
       </Grid.Col>
       {isSmall && (
-        <Grid.Col span={2} style={{ display: 'flex', justifyContent: 'end' }}>
-          <Image src="/assets/ui_img/hamburger.svg" alt="menu" width={23} height={23} />
-        </Grid.Col>
+        <Menu>
+          <Menu.Target>
+            <Grid.Col span={2} style={{ display: 'flex', justifyContent: 'end' }}>
+              <Image src="/assets/ui_img/hamburger.svg" alt="menu" width={23} height={23} />
+            </Grid.Col>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item>
+              <Link href="/my-projects" passHref>
+                <Text>My Projects</Text>
+              </Link>
+            </Menu.Item>
+            <Menu.Item>
+              <Link href="/about-me" passHref>
+                <Text>About Me</Text>
+              </Link>
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       )}
-      {/* <ThisMenu
-        id="simple-menu"
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-      >
-        <Link passHref href="/">
-          <ThisMenuItem onClick={handleClose}>Home</ThisMenuItem>
-        </Link>
-        <Link passHref href="/my-projects">
-          <ThisMenuItem style={{ gridArea: 'myProjects' }} onClick={handleClose}>
-            My Projects
-          </ThisMenuItem>
-        </Link>
-        <Link passHref href="/about-me">
-          <ThisMenuItem style={{ gridArea: 'aboutMe' }} onClick={handleClose}>
-            About Me
-          </ThisMenuItem>
-        </Link>
-      </ThisMenu> */}
+
       {!isSmall && (
         <Grid.Col span={4}>
           <Group position="right" style={{ alignItems: 'center' }} spacing="xl">
             <Link passHref href="/my-projects">
-              <Title style={{ fontWeight: 600, color: 'white' }} order={4}>
+              <Title style={{ fontWeight: 600, color: 'white', cursor: 'pointer' }} order={4}>
                 My Projects
               </Title>
             </Link>
             <Link passHref href="/about-me">
-              <Title style={{ fontWeight: 600, color: 'white' }} order={4}>
+              <Title style={{ fontWeight: 600, color: 'white', cursor: 'pointer' }} order={4}>
                 About Me
               </Title>
             </Link>

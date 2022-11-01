@@ -19,11 +19,7 @@ export default function Top_Page({ title, image }: { title: string; image: any }
         <Image src="/assets/ui_img/scroll_down_bar.svg" width={60} height={140} />
       </div>
       <Grid style={{ width: '100%', alignItems: 'center', marginTop: !isSmall ? 0 : '-30%' }}>
-        <Grid.Col
-          style={{ display: 'flex', justifyContent: 'center' }}
-          span={!isSmall ? 6 : 12}
-          order={!isSmall ? 1 : 3}
-        >
+        <Grid.Col style={{ display: 'flex' }} span={!isSmall ? 6 : 12} order={!isSmall ? 1 : 3}>
           <motion.div
             initial="hidden"
             animate="visible"
