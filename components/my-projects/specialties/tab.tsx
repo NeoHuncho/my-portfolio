@@ -92,7 +92,7 @@ function SpecialtiesTab({ items }: any) {
           indicator: { backgroundColor: 'black' },
           container: { alignItems: 'center', marginTop: '1%' },
         }}
-        loop={!isSmall}
+        loop={isSmall}
       >
         {items.map((item: any, index: number) => (
           <Carousel.Slide key={index}>
