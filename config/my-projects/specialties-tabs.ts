@@ -1,12 +1,12 @@
-import technologies from "../../public/assets/technologies/logo_text";
+import technologies from '@public/assets/technologies/logo_text';
 
 const myProjectsTabs = [
   {
-    label: "Programming Languages",
+    label: 'Programming Languages',
     items: [technologies.ts, technologies.python, technologies.cSharp],
   },
   {
-    label: "Front-end Technologies",
+    label: 'Front-end Technologies',
     items: [
       technologies.react,
       technologies.next,
@@ -21,7 +21,7 @@ const myProjectsTabs = [
     ],
   },
   {
-    label: "Back End Technologies",
+    label: 'Back End Technologies',
     items: [
       technologies.node,
       technologies.express,
@@ -32,26 +32,16 @@ const myProjectsTabs = [
     ],
   },
   {
-    label: "Database Technologies",
+    label: 'Database Technologies',
     items: [technologies.mySQL, technologies.firebase, technologies.mongodb],
   },
   {
-    label: "Storage And Deployment",
-    items: [
-      technologies.github,
-      technologies.netlify,
-      technologies.npm,
-      technologies.vercel,
-    ],
+    label: 'Storage And Deployment',
+    items: [technologies.github, technologies.netlify, technologies.npm, technologies.vercel],
   },
   {
-    label: "Design Tools",
-    items: [
-      technologies.figma,
-      technologies.ae,
-      technologies.illustrator,
-      technologies.premiere,
-    ],
+    label: 'Design Tools',
+    items: [technologies.figma, technologies.ae, technologies.illustrator, technologies.premiere],
   },
 ];
 export default myProjectsTabs;
