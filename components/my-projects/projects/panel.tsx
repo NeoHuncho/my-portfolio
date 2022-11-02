@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs } from '@mantine/core';
 import projectTabs from '@config/my-projects/projects-tabs';
-import styles from '@styles/globalStyles.module.css';
+import { useMediaQuery } from '@mantine/hooks';
 import ProjectTab from './tab';
 
 export default function ProjectsPanel() {
   const [activeTab, setActiveTab] = useState(projectTabs[0].label);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
-
+  const isMobile = useMediaQuery('(max-width: 600px)');
   useEffect(() => {
     projectTabs.map((tab, index) => {
       if (tab.label === activeTab) {
@@ -18,7 +18,7 @@ export default function ProjectsPanel() {
   }, [activeTab]);
 
   return (
-    <div style={{ backgroundColor: 'rgba(0, 0, 0, 0.00)' }}>
+    <div style={{ marginBottom: isMobile ? '10%' : 0, backgroundColor: 'rgba(0, 0, 0, 0.00)' }}>
       <Tabs
         value={activeTab}
         onTabChange={setActiveTab}

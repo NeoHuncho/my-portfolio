@@ -50,7 +50,7 @@ export default function MoreInformation() {
           }}
         >
           {information_items.map((item, index) => (
-            <Text align="justify" size="xl" key={index}>
+            <Text align="justify" size={isSmall ? 'md' : 'xl'} key={index}>
               {item}
             </Text>
           ))}
