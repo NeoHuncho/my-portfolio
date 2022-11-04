@@ -89,8 +89,7 @@ const timeline_items = [
     heading: 'Joining Earth',
     icon: 'earth',
     points: [
-      'Born in France to à speaking English mother and a French speaking dad',
-      'Remained in france for the remaining 18 years of my life',
+      'Born in France to a English mother and a French dad',
       'Went to a multi-nationality school and the school my school classes half in French and half in English',
     ],
   },

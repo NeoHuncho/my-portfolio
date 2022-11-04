@@ -83,7 +83,7 @@ function SpecialtiesTab({ items }: any) {
         align="start"
         dragFree
         controlsOffset="xs"
-        classNames={classes}
+        classNames={!isSmall ? classes : undefined}
         slideSize={isSmall ? '33.33%' : '11.5%'}
         slideGap={isSmall ? 'xl' : 'sm'}
         styles={{
