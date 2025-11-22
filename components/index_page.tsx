@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll } from 'framer-motion';
+import { useState } from 'react';
 
 import Image from 'next/image';
-import { Grid, Title } from '@mantine/core';
-import styles from '@styles/globalStyles.module.css';
-import { useMediaQuery } from '@mantine/hooks';
 import Link from 'next/link';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 export default function IndexPage({
   title,
@@ -20,26 +18,30 @@ export default function IndexPage({
 }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const isSmall = useMediaQuery('(max-width: 1000px)');
+  const { scrollY } = useScroll();
+  
+
   const variantstext = {
     hidden: { opacity: 0, x: -50 },
     visible: { opacity: 1, x: 0 },
   };
   return (
     <div
-      className={styles.page}
+      className="flex flex-col relative min-h-screen h-full justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)]"
       style={{ zIndex: link ? 2 : 1, minHeight: link && isSmall ? '70vh' : '100vh' }}
     >
       {!link && (
-        <div className={styles.scroll_down}>
+        <div className="fixed z-[1]" style={{ bottom:'0px !important'}}>
           <Image
             src="/assets/ui_img/scroll_down_bar.svg"
             width={!isSmall ? 60 : 45}
             height={!isSmall ? 140 : 105}
+            alt="Scroll down"
           />
         </div>
       )}
-      <Grid style={{ width: '100%', alignItems: 'center', marginTop: !isSmall ? 0 : '-30%' }}>
-        <Grid.Col style={{ display: 'flex' }} span={!isSmall ? 6 : 12} order={!isSmall ? 1 : 3}>
+      <div className={`w-full items-center grid grid-cols-12 ${isSmall ? '-mt-[30%]' : '-mt-24'}`}>
+        <div className={`flex ${!isSmall ? 'col-span-6 order-1' : 'col-span-12 order-3'}`}>
           <Link href={link || ''} passHref>
             <motion.div
               initial="hidden"
@@ -48,22 +50,22 @@ export default function IndexPage({
               transition={{ ease: 'easeOut', duration: 1 }}
               style={{ cursor: link ? 'pointer' : '' }}
             >
-              <Title style={{ fontSize: !isSmall ? 90 : 50, color: 'whitesmoke' }}>{title}</Title>
-              <span className={styles.line_top} />
-              <span className={styles.line_bottom} />
-              {subTitle && <Title style={{ fontWeight: 300, fontSize: 37 }}>{subTitle}</Title>}
+              <h1 className='font-extrabold' style={{ fontSize: !isSmall ? 90 : 50, color: 'whitesmoke' }}>{title}</h1>
+              <span className={`bg-[#196dbd] block mt-[1vh] h-[0.26vh] rounded-[5px] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`} />
+              <span className={`bg-[#196dbd] block rounded-[5px] h-[0.26vh] mt-[2vh] mb-[2vh] ml-[7vw] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`} />
+              {subTitle && <h2 style={{ fontWeight: 300, fontSize: 37, color: 'white' }}>{subTitle}</h2>}
             </motion.div>
           </Link>
-        </Grid.Col>
-        <Grid.Col order={!isSmall ? 2 : 1} span={!isSmall ? 6 : 12}>
+        </div>
+        <div className={`${!isSmall ? 'col-span-6 order-2' : 'col-span-12 order-1'}`}>
           <Link href={link || ''} passHref>
             <motion.div
               initial={link ? { opacity: 0, x: 0 } : { opacity: 0, x: 50, y: -50 }}
-              animate={imageLoaded && (link ? { opacity: [0, 0, 2] } : { opacity: 1, x: 0, y: 0 })}
+              animate={imageLoaded && (link ? { opacity: [0, 0, 1] } : { opacity: 1, x: 0, y: 0 })}
               transition={
                 imageLoaded
                   ? link
-                    ? { times: [0, 0.6, 1.2], ease: 'easeInOut' }
+                    ? { times: [0, 0.6, 1], ease: 'easeInOut' }
                     : { ease: 'easeOut', duration: 1.5 }
                   : {}
               }
@@ -74,7 +76,8 @@ export default function IndexPage({
                 transition={{
                   duration: 5,
                   ease: 'easeInOut',
-                  loop: Infinity,
+                  repeat: Infinity,
+                  type: "tween"
                 }}
               >
                 <Image
@@ -89,8 +92,8 @@ export default function IndexPage({
               </motion.div>
             </motion.div>
           </Link>
-        </Grid.Col>
-      </Grid>
+        </div>
+      </div>
     </div>
   );
 }

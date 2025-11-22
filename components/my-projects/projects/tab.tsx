@@ -1,169 +1,146 @@
-import React from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
 import { motion } from 'framer-motion';
-import {
-  Card,
-  Divider,
-  Button,
-  Image,
-  Group,
-  Title,
-  ActionIcon,
-  createStyles,
-  useMantineTheme,
-} from '@mantine/core';
-import { useHover, useMediaQuery } from '@mantine/hooks';
-import { Carousel } from '@mantine/carousel';
+import Image from 'next/image';
+import { useState } from 'react';
 
-const useStyles = createStyles((_theme, _params, getRef) => ({
-  controls: {
-    ref: getRef('controls'),
-    transition: 'opacity 150ms ease',
-    opacity: 0,
-  },
+interface Technology {
+  name: string;
+  image: { src: string };
+}
 
-  root: {
-    '&:hover': {
-      [`& .${getRef('controls')}`]: {
-        opacity: 1,
-      },
-    },
-  },
-  control: {
-    '&[data-inactive]': {
-      opacity: 0,
-      cursor: 'default',
-    },
-  },
-}));
-const ProjectCard = ({ item }) => {
-  const theme = useMantineTheme();
-  const isMobile = useMediaQuery('(max-width: 500px)');
-  const { hovered, ref } = useHover();
-  return (
-    <Card
-      radius="lg"
-      shadow="xl"
-      withBorder
-      style={
-        hovered && item.link
-          ? { transform: 'scale(0.98)', transitionDuration: '0.5s' }
-          : { transform: 'scale(1)', transitionDuration: '0.5s' }
+interface ProjectItem {
+  link?: string;
+  image: { name: string; image: { src: string } };
+  title: string;
+  github?: string;
+  subTitle: string;
+  technologies: Technology[];
+  statusCode: number;
+  status: string;
+  period?: string;
+}
+
+const ProjectCard = ({ item }: { item: ProjectItem }) => {
+  const [hovered, setHovered] = useState(false);
+  const [hoveredTech, setHoveredTech] = useState<string | null>(null);
+
+  const getStatusColor = (code: number) => {
+      switch(code) {
+          case 1: return 'bg-blue-600';
+          case 2: return 'bg-orange-600';
+          case 3: return 'bg-red-600';
+          default: return 'bg-green-600';
       }
-    >
-      <Card.Section ref={ref}>
-        <a href={item.link} target="_blank" rel="noreferrer">
-          <Image
-            fit={isMobile ? 'contain' : 'cover'}
-            alt={item.image.name}
-            height={isMobile ? 160 : 250}
-            src={item.image.image.src}
-          />
-        </a>
-      </Card.Section>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: isMobile ? '340px' : '250px',
-          justifyContent: 'space-around',
-        }}
-      >
-        <div>
-          <Group align="center" style={{ marginTop: 10 }}>
-            <Title order={3}>{item.title}</Title>
-            {item.github && (
-              <ActionIcon href={item.github} component="a" target="_blank">
-                <Image src="/assets/socials/github_white.svg" height={20} width={20} />
-              </ActionIcon>
-            )}
-          </Group>
-          <Title order={5} style={{ marginTop: 5 }}>
-            {item.subTitle}
-          </Title>
-          <Divider style={{ marginTop: 5 }} size="md" />
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            height: '100%',
-          }}
-        >
-          <Group
-            align="center"
-            position="center"
-            spacing="xl"
-            style={{
-              padding: 10,
-              marginTop: 10,
-              backgroundColor: 'snow',
-              width: 'fit-content',
-              borderRadius: 10,
-            }}
-          >
-            {item.technologies.map((technology, index) => (
-              <Image
-                key={index}
-                alt={technology.name}
-                src={technology.image.src}
-                width={40}
-                fit="contain"
-              />
-            ))}
-          </Group>
+  };
 
-          <Button
+  return (
+    <div
+      className="h-full flex flex-col rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden transition-transform duration-300 ease-out"
+      style={{
+        transform: hovered && item.link ? 'scale(1.02)' : 'scale(1)',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <a href={item.link} target="_blank" rel="noreferrer" className="block relative w-full group">
+        <div className="relative h-64 w-full overflow-hidden bg-gray-900">
+           {item.period && (
+             <div className="absolute top-3 left-3 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-lg">
+               {item.period}
+             </div>
+           )}
+           <Image
+              src={item.image.image.src}
+              alt={item.image.name}
+              fill
+              style={{ objectFit: 'cover' }}
+              className={item.link ? 'transition-transform duration-500 group-hover:scale-110' : ''}
+              unoptimized
+           />
+        </div>
+      </a>
+      
+      <div className="flex flex-col flex-grow p-6">
+        <div className="flex-grow">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-2xl font-bold text-white truncate pr-2">{item.title}</h3>
+            {item.github && (
+              <a href={item.github} target="_blank" className="flex-shrink-0 hover:opacity-80 transition-opacity">
+                <Image src="/assets/socials/github_white.svg" height={24} width={24} alt="Github" />
+              </a>
+            )}
+          </div>
+          <h5 className="text-base font-medium text-gray-300 leading-relaxed mb-4">
+            {item.subTitle}
+          </h5>
+        </div>
+
+        <div className="mt-auto pt-4 border-t border-gray-700">
+          <div className="flex flex-wrap gap-3 justify-center mb-5">
+            {item.technologies.map((technology, index) => (
+              <div 
+                key={index} 
+                className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all"
+                onMouseEnter={() => setHoveredTech(technology.name)}
+                onMouseLeave={() => setHoveredTech(null)}
+              >
+                <div className="relative w-6 h-6">
+                  <Image
+                    alt={technology.name}
+                    src={technology.image.src}
+                    fill
+                    style={{ objectFit: 'contain' }}
+                  />
+                </div>
+                {hoveredTech === technology.name && (
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg z-20 pointer-events-none">
+                    {technology.name}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <button
             disabled
-            radius="md"
-            style={{
-              marginTop: 20,
-              color: 'white',
-              width: '100%',
-              backgroundColor:
-                item.statusCode === 1
-                  ? theme.colors.blue[8]
-                  : item.statusCode === 2
-                  ? theme.colors.orange[8]
-                  : item.statusCode === 3
-                  ? theme.colors.red[8]
-                  : theme.colors.green[8],
-              cursor: 'default',
-            }}
+            className={`w-full py-2.5 rounded-lg font-semibold text-white text-sm tracking-wide uppercase shadow-md ${getStatusColor(item.statusCode)}`}
           >
             {item.status}
-          </Button>
+          </button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
-const ProjectTab = ({ items }) => {
-  const { classes } = useStyles();
-  const isMobile = useMediaQuery('(max-width: 500px)');
+
+const ProjectTab = ({ items }: { items: ProjectItem[] }) => {
+  const [emblaRef] = useEmblaCarousel({ 
+      align: 'start', 
+      slidesToScroll: 1,
+      containScroll: 'trimSnaps',
+      dragFree: true
+  });
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: [0, 0, 1] }}
-      transition={{ times: [0, 0.5, 1.1], ease: 'easeInOut' }}
-      style={{ marginTop: '30px' }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="mt-8"
     >
-      <Carousel
-        withControls={!isMobile}
-        slideSize={isMobile ? '90%' : '40%'}
-        slideGap={isMobile ? 'md' : 'xl'}
-        controlsOffset="xs"
-        classNames={classes}
-        align={isMobile ? 'center' : 'start'}
-      >
-        {items.map((item) => (
-          <Carousel.Slide key={item.title} style={{ borderRadius: '40px' }}>
-            <ProjectCard item={item} />
-          </Carousel.Slide>
-        ))}
-      </Carousel>
+      <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
+        <div className="flex -ml-6 py-4">
+            {items.map((item) => (
+            <div 
+                className={`flex-[0_0_85%] md:flex-[0_0_45%] lg:flex-[0_0_35%] min-w-0 pl-6`} 
+                key={item.title}
+            >
+                <ProjectCard item={item} />
+            </div>
+            ))}
+        </div>
+      </div>
     </motion.div>
   );
 };

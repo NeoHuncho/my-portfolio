@@ -1,6 +1,8 @@
-import Head from 'next/head';
-import main_img from '@public/assets/main_img/main_img';
 import IndexPage from '@components/index_page';
+import ProjectsPanel from '@components/my-projects/projects/panel';
+import Section from '@components/section';
+import main_img from '@public/assets/main_img/main_img';
+import Head from 'next/head';
 
 export default function Home() {
   return (
@@ -15,16 +17,7 @@ export default function Home() {
         image={{ src: main_img.computer, width: 657, height: 506 }}
         subTitle="Full Stack Developer"
       />
-      <IndexPage
-        title="MY PROJECTS"
-        image={{ src: main_img.workspace, width: 1254, height: 647 }}
-        link="/my-projects"
-      />
-      <IndexPage
-        title="ABOUT ME"
-        image={{ src: main_img.astronaut, width: 657, height: 506 }}
-        link="/about-me"
-      />
+      <Section title="Projects" Component={ProjectsPanel} />
     </div>
   );
 }

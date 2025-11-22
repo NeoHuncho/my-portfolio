@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs } from '@mantine/core';
 import projectTabs from '@config/my-projects/projects-tabs';
-import { useMediaQuery } from '@mantine/hooks';
+import { useEffect, useState } from 'react';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import ProjectTab from './tab';
 
 export default function ProjectsPanel() {
@@ -19,27 +18,30 @@ export default function ProjectsPanel() {
 
   return (
     <div style={{ marginBottom: isMobile ? '10%' : 0, backgroundColor: 'rgba(0, 0, 0, 0.00)' }}>
-      <Tabs
-        value={activeTab}
-        onTabChange={setActiveTab}
-        styles={{ tabsList: { justifyContent: 'center' } }}
-        defaultValue={activeTab.label}
-      >
-        <Tabs.List>
+      <div className="flex justify-center mb-10">
+        <div className="bg-gray-900/50 p-2 rounded-2xl inline-flex gap-6 shadow-md border border-gray-700/50 backdrop-blur-sm">
           {projectTabs.map((tab, index) => (
-            <Tabs.Tab value={tab.label} key={index}>
+            <button
+              key={index}
+              onClick={() => setActiveTab(tab.label)}
+              className={`
+                px-10 py-5 rounded-xl text-lg font-bold transition-all duration-300
+                ${
+                  activeTab === tab.label
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/20 scale-105'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800/60 hover:scale-102 cursor-pointer'
+                }
+              `}
+            >
               {tab.label}
-            </Tabs.Tab>
+            </button>
           ))}
-        </Tabs.List>
+        </div>
+      </div>
 
-        <Tabs.Panel
-          value={projectTabs[activeTabIndex].label}
-          key={projectTabs[activeTabIndex].label}
-        >
+      <div className="mt-4">
           <ProjectTab items={projectTabs[activeTabIndex].items} />
-        </Tabs.Panel>
-      </Tabs>
+      </div>
     </div>
   );
 }

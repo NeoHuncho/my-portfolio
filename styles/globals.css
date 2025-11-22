@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@layer base {
+  a {
+    text-decoration: none;
+  }
+}
+
+body {
+  font-family: 'Tahoma', sans-serif;
+  background: radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%);
+  color: white;
+  margin: 0;
+  padding: 0;
+}
