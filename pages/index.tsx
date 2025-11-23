@@ -1,8 +1,8 @@
-import IndexPage from '@components/index_page';
-import ProjectsPanel from '@components/my-projects/projects/panel';
+import computer from '@assets/floatingComputer.svg';
 import Section from '@components/section';
-import main_img from '@public/assets/main_img/main_img';
 import Head from 'next/head';
+import Hero from 'sections/hero';
+import ProjectsPanel from 'sections/myProjects/panel';
 
 export default function Home() {
   return (
@@ -12,9 +12,9 @@ export default function Home() {
         <meta name="description" content="William Guinaudie Portfolio" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <IndexPage
+      <Hero
         title="WILLIAM GUINAUDIE"
-        image={{ src: main_img.computer, width: 657, height: 506 }}
+        image={{ src: computer, width: 657, height: 506 }}
         subTitle="Full Stack Developer"
       />
       <Section title="Projects" Component={ProjectsPanel} />

@@ -1,16 +1,16 @@
+import hamburger from '@assets/ui/hamburger.svg';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { FaLinkedin } from 'react-icons/fa';
+import { FaGithub, FaLinkedin } from 'react-icons/fa';
+import { MdEmail } from 'react-icons/md';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
 export default function Header() {
   const [isLoaded, setIsLoaded] = useState(false);
   const isSmall = useMediaQuery('(max-width: 850px)');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [imagesLoaded, setImagesLoaded] = useState(0);
-  const totalImages = 2; // Email and Github are images, LinkedIn is an icon
 
   useEffect(() => {
     setIsLoaded(true);
@@ -19,12 +19,6 @@ export default function Header() {
   if (!isLoaded) {
     return null;
   }
-
-  const handleImageLoad = () => {
-    setImagesLoaded((prev) => prev + 1);
-  };
-
-  const allLoaded = imagesLoaded >= totalImages;
 
   return (
     <div className="fixed z-10 w-[99%] px-[1%] py-[0.5%] grid grid-cols-12 items-center">
@@ -41,7 +35,7 @@ export default function Header() {
         <div className={isSmall ? 'col-span-6' : 'col-span-4'}>
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: allLoaded ? 1 : 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
             className={`flex gap-4 items-center ${isSmall ? 'pt-2 justify-start' : 'justify-center'}`}
           >
@@ -51,13 +45,7 @@ export default function Header() {
               target="_blank"
               rel="noreferrer"
             >
-              <Image
-                src="/assets/socials/github_white.svg"
-                alt="Github link"
-                height={25}
-                width={25}
-                onLoadingComplete={handleImageLoad}
-              />
+              <FaGithub size={25} color="white" />
             </a>
 
             <a
@@ -70,20 +58,14 @@ export default function Header() {
             </a>
 
             <a className="cursor-pointer" href="mailto:william.guinaudie@gmail.com">
-              <Image 
-                height={25} 
-                width={25} 
-                src="/assets/socials/email.png" 
-                alt="Email" 
-                onLoadingComplete={handleImageLoad}
-              />
+              <MdEmail size={28} color="white" />
             </a>
           </motion.div>
         </div>
         {isSmall && (
           <div className="col-span-2 flex justify-end relative">
             <button onClick={() => setMenuOpen(!menuOpen)}>
-                <Image src="/assets/ui_img/hamburger.svg" alt="menu" width={23} height={23} />
+                <Image src={hamburger} alt="menu" width={23} height={23} />
             </button>
             {menuOpen && (
                 <div className="absolute top-full right-0 mt-2 bg-white rounded shadow-lg py-2 w-40 text-black">
