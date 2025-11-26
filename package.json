@@ -24,6 +24,7 @@
     "@emotion/server": "^11.11.0",
     "@next/bundle-analyzer": "^16.0.3",
     "@tabler/icons": "^3.35.0",
+    "@vercel/analytics": "^1.5.0",
     "cookies-next": "^6.1.1",
     "dayjs": "^1.11.19",
     "embla-carousel-react": "^8.6.0",

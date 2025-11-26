@@ -1,9 +1,9 @@
 // Project images
 import brawlMax from '@assets/projects/fullStackProjects/brawlMax.webp';
-import vikunjaHA from '@assets/projects/fullStackProjects/vikunjaHA.webp';
 import openSource from '@assets/projects/fullStackProjects/openSource.webp';
-import second from '@assets/projects/fullStackProjects/second.webp';
 import portfolio from '@assets/projects/fullStackProjects/portfolio.webp';
+import second from '@assets/projects/fullStackProjects/second.webp';
+import vikunjaHA from '@assets/projects/fullStackProjects/vikunjaHA.webp';
 import cpBackend from '@assets/projects/professionalWork/cpBackend.webp';
 import cpMobile from '@assets/projects/professionalWork/CPMobile.webp';
 import cpWeb from '@assets/projects/professionalWork/CPWeb.webp';
@@ -14,19 +14,26 @@ import zenrideFrontend from '@assets/projects/professionalWork/zenrideFrontend.w
 
 // Technology images
 import algolia from '@assets/technologies/algolia.webp';
+import docker from '@assets/technologies/docker.webp';
+import electron from '@assets/technologies/electron.webp';
 import express from '@assets/technologies/express.webp';
 import firebase from '@assets/technologies/firebase.webp';
+import framerMotion from '@assets/technologies/framerMotion.webp';
 import gcPlatform from '@assets/technologies/gcPlatform.webp';
+import homeAssistant from '@assets/technologies/homeAssistant.webp';
 import jest from '@assets/technologies/jest.webp';
 import javascript from '@assets/technologies/js.webp';
+import kubernetes from '@assets/technologies/kubernetes.webp';
 import leaflet from '@assets/technologies/leaflet.webp';
 import lingui from '@assets/technologies/lingui.webp';
 import mantine from '@assets/technologies/mantine.webp';
 import mongodb from '@assets/technologies/mongodb.webp';
 import mySQL from '@assets/technologies/mySQL.webp';
+import nextjs from '@assets/technologies/nextjs.webp';
 import node from '@assets/technologies/node.webp';
 import ovh from '@assets/technologies/ovh.webp';
 import PHP from '@assets/technologies/PHP.webp';
+import prisma from '@assets/technologies/prisma.webp';
 import puppeteer from '@assets/technologies/puppeteer.webp';
 import python from '@assets/technologies/python.webp';
 import react from '@assets/technologies/react.webp';
@@ -38,17 +45,12 @@ import rnNavigation from '@assets/technologies/rnNavigation.webp';
 import sentry from '@assets/technologies/sentry.webp';
 import sequelize from '@assets/technologies/sequelize.webp';
 import tailwind from '@assets/technologies/tailwind.webp';
+import trpc from '@assets/technologies/trpc.webp';
 import typescript from '@assets/technologies/typescript.webp';
+import vue from '@assets/technologies/vue.webp';
 import wooCommerce from '@assets/technologies/wooCommerce.webp';
 import wordPress from '@assets/technologies/Wordpress.webp';
 import zustand from '@assets/technologies/zustand.webp';
-import vue from '@assets/technologies/vue.webp';
-import electron from '@assets/technologies/electron.webp';
-import nextjs from '@assets/technologies/nextjs.webp';
-import prisma from '@assets/technologies/prisma.webp';
-import trpc from '@assets/technologies/trpc.webp';
-import framerMotion from '@assets/technologies/framerMotion.webp';
-import homeAssistant from '@assets/technologies/homeAssistant.webp';
 
 
 const projects = {
@@ -130,7 +132,7 @@ const technologies = {
   },  
   reactAdmin: {
     image: reactAdmin,
-    name: 'Read Admin',
+    name: 'React Admin',
   },
   vue: {
     image: vue,
@@ -160,6 +162,14 @@ const technologies = {
     image: homeAssistant,
     name: 'Home Assistant',
   },
+  docker: {
+    image: docker,
+    name: 'Docker',
+  },
+  kubernetes: {
+    image: kubernetes,
+    name: 'Kubernetes',
+  },
 };
 
 //statusCodes Equivilants
@@ -188,6 +198,7 @@ const myProjectsTabs = [
           technologies.jest,
         ],
         period: '2023 - Present',
+        link:'https://www.zenride.co/'
       },
       {
         title: 'Zenride - Backend',
@@ -200,7 +211,8 @@ const myProjectsTabs = [
           technologies.express,
           technologies.mySQL,
           technologies.sequelize,
-          technologies.redis,
+          technologies.docker,
+          technologies.kubernetes,
           technologies.ovh,
           technologies.puppeteer,
           technologies.sentry,
@@ -289,16 +301,18 @@ const myProjectsTabs = [
     label: 'Personal Projects',
     items: [
       {
-        title: 'Vikunja Home Assistant Integration',
+        title: 'Vikunja AI Integration',
         status: 'Active',
         statusCode: 1,
         subTitle:
-          'A community-driven integration with 100+ downloads, multiple resolved issues, and merged pull requests from contributors.',
+          'A open-source Home Assistant integration with 100+ downloads, multiple resolved issues, and merged pull requests from contributors.',
         image: projects.vikunjaHA,
         technologies: [
           technologies.python,
           technologies.homeAssistant,
         ],
+        github: 'https://github.com/NeoHuncho/vikunja-voice-assistant',
+        period: '2025'
       },
       {
         title: 'Open Source Contributions',
@@ -312,9 +326,16 @@ const myProjectsTabs = [
           technologies.electron,
           technologies.python,
         ],
+        github: [
+          'https://github.com/go-vikunja/vikunja',
+          'https://github.com/toeverything/AFFiNE',
+          'https://github.com/home-assistant/brands'
+        ],
+        period: '2024 - Present'
+        
       },
       {
-        title: 'Second — Second-Hand Marketplace Comparison Platform',
+        title: 'Second — Marketplace  Platform',
         status: 'Archived',
         statusCode: 3,
         subTitle:
@@ -323,10 +344,14 @@ const myProjectsTabs = [
         technologies: [
           technologies.typescript,
           technologies.nextjs,
+          technologies.react,
           technologies.prisma,
           technologies.tailwind,
           technologies.trpc,
         ],
+        period: '2023',
+        link: 'https://second-five.vercel.app/',
+        github: 'https://github.com/NeoHuncho/second'
       },
       {
         title: 'Portfolio Website',
@@ -337,10 +362,13 @@ const myProjectsTabs = [
         image: projects.portfolio,
         technologies: [
           technologies.typescript,
+          technologies.nextjs,
           technologies.react,
           technologies.tailwind,
           technologies.framerMotion,
         ],
+        period: '2023 - Present',
+        github: 'https://github.com/NeoHuncho/my-portfolio'
       },
       {
         title: 'Brawl Max',
@@ -358,6 +386,7 @@ const myProjectsTabs = [
           technologies.gcPlatform,
           technologies.firebase,
         ],
+        period: '2021 - 2022'
       },
     ],
   },

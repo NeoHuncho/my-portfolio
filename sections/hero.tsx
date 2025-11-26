@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { FaArrowDown } from 'react-icons/fa';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -27,20 +28,31 @@ export default function IndexPage({
   };
   return (
     <div
-      className="flex flex-col relative min-h-screen h-full justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)]"
-      style={{ zIndex: link ? 2 : 1, minHeight: link && isSmall ? '70vh' : '100vh' }}
+      id="hero"
+      className="flex flex-col relative min-h-screen h-full justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] snap-start"
+      style={{ zIndex: link ? 2 : 1, minHeight: link && isSmall ? '70vh' : '100vh', scrollSnapStop: 'normal' }}
     >
       {!link && (
-        <div className="fixed z-1" style={{ bottom:'0px !important'}}>
-          <Image
-            src="/assets/ui/scrollDownBar.svg"
-            width={!isSmall ? 60 : 45}
-            height={!isSmall ? 140 : 105}
-            alt="Scroll down"
-          />
-        </div>
+        <button 
+          onClick={() => {
+            const projectsSection = document.getElementById('projects-section');
+            if (projectsSection) {
+              projectsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10 cursor-pointer hover:opacity-80 transition-opacity"
+          aria-label="Scroll to projects"
+        >
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4 shadow-lg"
+          >
+            <FaArrowDown size={24} color="white" />
+          </motion.div>
+        </button>
       )}
-      <div className={`w-full items-center grid grid-cols-12 ${isSmall ? '-mt-[30%]' : '-mt-24'}`}>
+      <div className={`w-full items-center grid grid-cols-12 px-4 md:px-8 ${isSmall ? '-mt-[30%]' : '-mt-24'}`}>
         <div className={`flex ${!isSmall ? 'col-span-6 order-1' : 'col-span-12 order-3'}`}>
           <Link href={link || ''} passHref>
             <motion.div

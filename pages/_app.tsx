@@ -1,4 +1,5 @@
 import Header from '@components/header';
+import { Analytics } from "@vercel/analytics/next";
 import NextApp, { AppContext, AppProps } from 'next/app';
 import Head from 'next/head';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -21,15 +22,13 @@ export default function App(props: AppProps) {
         style={{
           background:
             'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
-          padding: !isSmall ? '20px 20px 0px 20px' : '10px 10px 0px 10px',
         }}
       >
-        <header className="h-[60px] w-full bg-transparent border-none">
-          <Header />
-        </header>
+        <Header />
         <main className="flex-1">
           <Component {...pageProps} />
         </main>
+        <Analytics />
       </div>
     </>
   );
