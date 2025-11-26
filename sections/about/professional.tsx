@@ -2,8 +2,11 @@ import profileImage from '@assets/about/profile.jpg';
 import { professionalPoints } from '@config/about';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useState } from 'react';
 
 export default function ProfessionalTab() {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -14,7 +17,14 @@ export default function ProfessionalTab() {
     >
       {/* Profile Image - Smaller on mobile */}
       <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-3 border-blue-500/40 shadow-xl bg-gray-800 shrink-0">
-        <Image src={profileImage} alt="Profile" fill style={{ objectFit: 'cover' }} />
+        <Image 
+          src={profileImage} 
+          alt="Profile" 
+          fill 
+          style={{ objectFit: 'cover' }} 
+          className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoadingComplete={() => setImageLoaded(true)}
+        />
       </div>
 
       {/* Points Grid - Mobile optimized */}

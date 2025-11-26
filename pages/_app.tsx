@@ -1,13 +1,11 @@
 import Header from '@components/header';
 import { Analytics } from "@vercel/analytics/next";
-import NextApp, { AppContext, AppProps } from 'next/app';
+import { AppProps } from 'next/app';
 import Head from 'next/head';
-import { useMediaQuery } from '../hooks/useMediaQuery';
 import '../styles/globals.css';
 
 export default function App(props: AppProps) {
   const { Component, pageProps } = props;
-  const isSmall = useMediaQuery('(max-width: 850px)');
 
   return (
     <>
@@ -33,10 +31,3 @@ export default function App(props: AppProps) {
     </>
   );
 }
-
-App.getInitialProps = async (appContext: AppContext) => {
-  const appProps = await NextApp.getInitialProps(appContext);
-  return {
-    ...appProps,
-  };
-};

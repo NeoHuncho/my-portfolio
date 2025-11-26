@@ -29,7 +29,7 @@ export default function IndexPage({
   return (
     <div
       id="hero"
-      className="flex flex-col relative min-h-screen h-full justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] snap-start"
+      className="flex flex-col relative min-h-screen h-full justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] snap-start overflow-x-hidden"
       style={{ zIndex: link ? 2 : 1, minHeight: link && isSmall ? '70vh' : '100vh', scrollSnapStop: 'normal' }}
     >
       {!link && (

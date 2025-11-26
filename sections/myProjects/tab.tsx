@@ -27,6 +27,7 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
   const [needsCarousel, setNeedsCarousel] = useState(true);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const techContainerRef = useRef<HTMLDivElement>(null);
   const [techEmblaRef, techEmblaApi] = useEmblaCarousel({ 
     align: 'start', 
@@ -116,9 +117,10 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
               alt={item.image.name}
               fill
               style={{ objectFit: 'cover' }}
-              className={`select-none ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
+              className={`select-none transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
               unoptimized
               draggable={false}
+              onLoadingComplete={() => setImageLoaded(true)}
            />
         </div>
       </a>
