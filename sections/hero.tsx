@@ -5,17 +5,20 @@ import { FaArrowDown } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { smoothScrollToElement } from '../utils/smoothScrollToElement';
 
 export default function IndexPage({
   title,
   image,
   link,
   subTitle,
+  ctaLabel,
 }: {
   title: string;
   image: any;
   link?: string;
   subTitle?: string;
+  ctaLabel?: string;
 }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const isSmall = useMediaQuery('(max-width: 1000px)');
@@ -29,19 +32,14 @@ export default function IndexPage({
   return (
     <div
       id="hero"
-      className="flex flex-col relative min-h-screen h-full justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] snap-start overflow-x-hidden"
-      style={{ zIndex: link ? 2 : 1, minHeight: link && isSmall ? '70vh' : '100vh', scrollSnapStop: 'normal' }}
+      className="flex flex-col relative min-h-screen h-screen justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] scroll-section overflow-x-hidden"
+      style={{ zIndex: link ? 2 : 1 }}
     >
       {!link && (
         <button 
-          onClick={() => {
-            const projectsSection = document.getElementById('projects-section');
-            if (projectsSection) {
-              projectsSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
+          onClick={() => smoothScrollToElement('projects-section')}
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10 cursor-pointer hover:opacity-80 transition-opacity"
-          aria-label="Scroll to projects"
+          aria-label={ctaLabel ?? 'Scroll to projects'}
         >
           <motion.div
             animate={{ y: [0, 8, 0] }}
@@ -83,25 +81,17 @@ export default function IndexPage({
               }
               style={{ cursor: link ? 'pointer' : '' }}
             >
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{
-                  duration: 5,
-                  ease: 'easeInOut',
-                  repeat: Infinity,
-                  type: "tween"
-                }}
-              >
+              <div className="animate-float">
                 <Image
                   src={image.src}
                   alt="Computer"
                   width={image.width}
                   height={image.height}
-                  layout="responsive"
+                  style={{ width: '100%', height: 'auto' }}
                   priority
-                  onLoadingComplete={() => setImageLoaded(true)}
+                  onLoad={() => setImageLoaded(true)}
                 />
-              </motion.div>
+              </div>
             </motion.div>
           </Link>
         </div>

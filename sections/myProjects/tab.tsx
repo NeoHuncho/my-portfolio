@@ -1,27 +1,14 @@
+'use client';
+import type { ProjectCardItem } from '@config/projects';
 import useEmblaCarousel from 'embla-carousel-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaChevronLeft, FaChevronRight, FaGithub } from 'react-icons/fa';
+import { useLanguage } from '../../hooks/useLanguage';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
-interface Technology {
-  name: string;
-  image: { src: string };
-}
-
-interface ProjectItem {
-  link?: string;
-  image: { name: string; image: { src: string } };
-  title: string;
-  github?: string | string[];
-  subTitle: string;
-  technologies: Technology[];
-  statusCode: number;
-  status: string;
-  period?: string;
-}
-
-const ProjectCard = ({ item }: { item: ProjectItem }) => {
+const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompactArrows: boolean }) => {
   const [hovered, setHovered] = useState(false);
   const [hoveredTech, setHoveredTech] = useState<string | null>(null);
   const [needsCarousel, setNeedsCarousel] = useState(true);
@@ -96,17 +83,22 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
 
   const githubLinks = item.github ? (Array.isArray(item.github) ? item.github : [item.github]) : [];
 
-  return (
+  const { strings, locale } = useLanguage();
+  const statusText = strings.projects.statuses[item.statusCode] ?? item.status;
+  const localizedTitle = item.title[locale];
+  const localizedSubTitle = item.subTitle[locale];
+
+    return (
     <div
-      className="flex flex-col h-full max-h-[75vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden transition-all duration-300 ease-out select-none"
+      className="flex flex-col h-full max-h-[80vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden transition-all duration-300 ease-out select-none"
       style={{
         transform: hovered && item.link ? 'scale(1.02)' : 'scale(1)',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <a href={item.link} target="_blank" rel="noreferrer" className="block relative w-full group flex-shrink min-h-[150px] md:flex-shrink-0 h-[35vh] md:h-auto">
-        <div className="relative h-full md:h-80 w-full overflow-hidden bg-gray-900">
+      <a href={item.link} target="_blank" rel="noreferrer" className="block relative w-full group shrink min-h-[120px] md:shrink-0 md:h-auto">
+        <div className="relative h-[25vh] md:h-80 w-full overflow-hidden bg-gray-900">
            {item.period && (
              <div className="absolute top-3 left-3 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-lg">
                {item.period}
@@ -120,17 +112,17 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
               className={`select-none transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
               unoptimized
               draggable={false}
-              onLoadingComplete={() => setImageLoaded(true)}
+              onLoad={() => setImageLoaded(true)}
            />
         </div>
       </a>
       
-      <div className="flex flex-col flex-grow p-6 overflow-y-auto">
-        <div className="flex-grow">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-2xl font-bold text-white pr-2">{item.title}</h3>
+      <div className="flex flex-col grow p-4 md:p-6 overflow-hidden">
+        <div className="grow">
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <h3 className="text-xl md:text-2xl font-bold text-white pr-2">{localizedTitle}</h3>
             {githubLinks.length > 0 && (
-              <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-2 shrink-0">
                 {githubLinks.map((link, index) => (
                   <a 
                     key={index}
@@ -145,23 +137,23 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
               </div>
             )}
           </div>
-          <h5 className="text-base font-medium text-gray-300 leading-relaxed mb-4">
-            {item.subTitle}
+          <h5 className="text-sm md:text-base font-medium text-gray-300 leading-relaxed mb-2 md:mb-4 line-clamp-3 md:line-clamp-none">
+            {localizedSubTitle}
           </h5>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-gray-700">
+        <div className="mt-auto pt-2 md:pt-4 border-t border-gray-700">
           <div ref={techContainerRef}>
             {needsCarousel ? (
-              <div className="relative mb-5">
+              <div className="relative mb-3 md:mb-5">
                 {canScrollPrev && (
                   <button
                     onClick={scrollPrev}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white p-2 rounded-full shadow-lg transition-all"
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white shadow-lg transition-all ${isCompactArrows ? 'p-1.5' : 'p-2.5'}`}
                     aria-label="Scroll left"
                   >
-                    <FaChevronLeft size={12} />
+                    <FaChevronLeft size={isCompactArrows ? 10 : 12} />
                   </button>
                 )}
                 <div 
@@ -175,7 +167,7 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
                     {item.technologies.map((technology, index) => (
                       <div 
                         key={index} 
-                        className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all flex-shrink-0"
+                        className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all shrink-0"
                         onMouseEnter={() => setHoveredTech(technology.name)}
                         onMouseLeave={() => setHoveredTech(null)}
                       >
@@ -203,15 +195,15 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
                   <button
                     onClick={scrollNext}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white p-2 rounded-full shadow-lg transition-all"
+                    className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white shadow-lg transition-all ${isCompactArrows ? 'p-1.5' : 'p-2.5'}`}
                     aria-label="Scroll right"
                   >
-                    <FaChevronRight size={12} />
+                    <FaChevronRight size={isCompactArrows ? 10 : 12} />
                   </button>
                 )}
               </div>
             ) : (
-              <div className="flex gap-3 justify-center mb-5">
+              <div className="flex gap-3 justify-center mb-3 md:mb-5">
                 {item.technologies.map((technology, index) => (
                   <div 
                     key={index} 
@@ -245,7 +237,7 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
             disabled
             className={`w-full py-2.5 rounded-lg font-semibold text-white text-sm tracking-wide uppercase shadow-md ${getStatusColor(item.statusCode)}`}
           >
-            {item.status}
+            {statusText}
           </button>
         </div>
       </div>
@@ -253,10 +245,11 @@ const ProjectCard = ({ item }: { item: ProjectItem }) => {
   );
 };
 
-const ProjectTab = ({ items }: { items: ProjectItem[] }) => {
+const ProjectTab = ({ items }: { items: ProjectCardItem[] }) => {
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const isCompactArrows = useMediaQuery('(max-width: 768px)');
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
       align: 'start', 
       slidesToScroll: 1,
@@ -301,43 +294,43 @@ const ProjectTab = ({ items }: { items: ProjectItem[] }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="h-auto 2xl:h-full flex flex-col justify-center"
+      className="h-full flex flex-col justify-center"
     >
       <div className="relative">
         {canScrollPrev && (
           <button
             onClick={scrollPrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-gray-900/80 hover:bg-gray-900 text-white p-3 rounded-full shadow-xl transition-all backdrop-blur-sm border border-gray-700/50"
+            className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-gray-900/80 hover:bg-gray-900 text-white rounded-full shadow-xl transition-all backdrop-blur-sm border border-gray-700/50 ${isCompactArrows ? 'p-2' : 'p-3'}`}
             aria-label="Scroll left"
           >
-            <FaChevronLeft size={16} />
+            <FaChevronLeft size={isCompactArrows ? 14 : 16} />
           </button>
         )}
         {canScrollNext && (
           <button
             onClick={scrollNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-gray-900/80 hover:bg-gray-900 text-white p-3 rounded-full shadow-xl transition-all backdrop-blur-sm border border-gray-700/50"
+            className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-gray-900/80 hover:bg-gray-900 text-white rounded-full shadow-xl transition-all backdrop-blur-sm border border-gray-700/50 ${isCompactArrows ? 'p-2' : 'p-3'}`}
             aria-label="Scroll right"
           >
-            <FaChevronRight size={16} />
+            <FaChevronRight size={isCompactArrows ? 14 : 16} />
           </button>
         )}
         <div className="overflow-hidden cursor-grab active:cursor-grabbing h-auto flex flex-col justify-center" ref={emblaRef}>
           <div className="flex -ml-6 py-4">
-              {items.map((item) => (
-              <div 
-                  className={`flex-[0_0_100%] md:flex-[0_0_60%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center`} 
-                  key={item.title}
-              >
-                  <ProjectCard item={item} />
-              </div>
-              ))}
+            {items.map((item, index) => (
+            <div 
+              className={`flex-[0_0_100%] md:flex-[0_0_60%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center`} 
+              key={`${item.image.name}-${index}`}
+            >
+              <ProjectCard item={item} isCompactArrows={isCompactArrows} />
+            </div>
+            ))}
           </div>
         </div>
       </div>
       
       {items.length > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2 mt-4 pb-4">
           {items.map((_, index) => (
             <button
               key={index}

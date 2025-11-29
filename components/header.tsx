@@ -1,15 +1,19 @@
+'use client';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
+import { useLanguage } from '../hooks/useLanguage';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { smoothScrollToElement } from '../utils/smoothScrollToElement';
 
 export default function Header() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInProjectsSection, setIsInProjectsSection] = useState(false);
   const isSmall = useMediaQuery('(max-width: 850px)');
   const [menuOpen, setMenuOpen] = useState(false);
+  const { strings, toggleLocale } = useLanguage();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -26,7 +30,7 @@ export default function Header() {
     };
 
     // Attach scroll listener to the scrollable container instead of window
-    const scrollContainer = document.querySelector('.snap-y');
+    const scrollContainer = document.querySelector('.scroll-container');
     if (scrollContainer) {
       scrollContainer.addEventListener('scroll', handleScroll);
     }
@@ -49,14 +53,7 @@ export default function Header() {
             <h2
               className={`font-medium text-white cursor-pointer text-2xl ${isSmall ? 'pt-1' : ''}`}
               style={{ color: 'white' }}
-              onClick={() => {
-                const scrollContainer = document.querySelector('.snap-y');
-                if (scrollContainer) {
-                  scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
+              onClick={() => smoothScrollToElement('hero')}
             >
               W.G
             </h2>
@@ -93,6 +90,17 @@ export default function Header() {
             </a>
           </motion.div>
         </div>
+        {!isInProjectsSection && (
+          <button
+            type="button"
+            aria-label={strings.language.ariaLabel}
+            title={strings.language.toggleLabel}
+            onClick={toggleLocale}
+            className="pointer-events-auto absolute right-6 top-4 text-white bg-white/10 hover:bg-white/20 transition-colors rounded-full p-2 border border-white/30"
+          >
+            <span className="text-lg leading-none">{strings.language.flagEmoji}</span>
+          </button>
+        )}
       </div>
     );
 }

@@ -2,6 +2,7 @@ import Header from '@components/header';
 import { Analytics } from "@vercel/analytics/next";
 import { AppProps } from 'next/app';
 import Head from 'next/head';
+import { LanguageProvider } from '../contexts/LanguageContext';
 import '../styles/globals.css';
 
 export default function App(props: AppProps) {
@@ -22,10 +23,12 @@ export default function App(props: AppProps) {
             'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
         }}
       >
-        <Header />
-        <main className="flex-1">
-          <Component {...pageProps} />
-        </main>
+        <LanguageProvider>
+          <Header />
+          <main className="flex-1">
+            <Component {...pageProps} />
+          </main>
+        </LanguageProvider>
         <Analytics />
       </div>
     </>

@@ -1,50 +1,35 @@
-import profileImage from '@assets/about/profile.jpg';
+'use client';
 import { professionalPoints } from '@config/about';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
-import { useState } from 'react';
+import { useLanguage } from '../../hooks/useLanguage';
 
 export default function ProfessionalTab() {
-  const [imageLoaded, setImageLoaded] = useState(false);
-
+  const { locale } = useLanguage();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5 }}
-      className="flex flex-col items-center gap-8 max-w-4xl mx-auto px-2"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col items-center w-full"
     >
-      {/* Profile Image - Smaller on mobile */}
-      <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-3 border-blue-500/40 shadow-xl bg-gray-800 shrink-0">
-        <Image 
-          src={profileImage} 
-          alt="Profile" 
-          fill 
-          style={{ objectFit: 'cover' }} 
-          className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-          onLoadingComplete={() => setImageLoaded(true)}
-        />
-      </div>
-
-      {/* Points Grid - Mobile optimized */}
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      {/* Points Grid - Centered */}
+      <div className="w-full max-w-4xl sm:h-96 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {professionalPoints.map((point, index) => (
-          <motion.div
+          <div
             key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
-            className="bg-gray-800/60 p-4 rounded-xl border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 hover:bg-gray-800/80"
+            className={`bg-gray-800/60 p-4 md:p-5 rounded-xl border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 hover:bg-gray-800/80 ${
+              index === professionalPoints.length - 1 ? 'mb-4 md:mb-0' : ''
+            }`}
           >
             <div className="flex items-start gap-3">
               <span className="text-2xl shrink-0">{point.icon}</span>
               <div className="min-w-0">
-                <h3 className="text-base font-bold text-blue-400 mb-1">{point.title}</h3>
-                <p className="text-gray-300 text-sm leading-relaxed">{point.description}</p>
+                <h3 className="text-base md:text-lg font-bold text-blue-400 mb-1">{point.title[locale]}</h3>
+                <p className="text-gray-300 text-sm md:text-base leading-relaxed">{point.description[locale]}</p>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </motion.div>

@@ -6,6 +6,20 @@
   }
 }
 
+/* Scroll container with smooth mandatory snapping */
+.scroll-container {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100vh;
+}
+
+/* Each section snaps and stops */
+.scroll-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 body {
   font-family: 'Tahoma', sans-serif;
   background: radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%);
@@ -57,4 +71,19 @@ body {
 
 .animate-glow-fadeout {
   animation: glow-fadeout 1.2s ease-out forwards;
+}
+
+/* Smooth floating animation using CSS for better performance */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+  will-change: transform;
 }

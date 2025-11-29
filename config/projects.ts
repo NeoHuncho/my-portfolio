@@ -11,6 +11,7 @@ import paprikaWeb from '@assets/projects/professionalWork/paprikaWeb.webp';
 import sam from '@assets/projects/professionalWork/sam.webp';
 import zenrideBackend from '@assets/projects/professionalWork/zenrideBackend.webp';
 import zenrideFrontend from '@assets/projects/professionalWork/zenrideFrontend.webp';
+import type { StaticImageData } from 'next/image';
 
 // Technology images
 import algolia from '@assets/technologies/algolia.webp';
@@ -53,7 +54,43 @@ import wordPress from '@assets/technologies/Wordpress.webp';
 import zustand from '@assets/technologies/zustand.webp';
 
 
-const projects = {
+export type LocalizedString = {
+  en: string;
+  fr: string;
+};
+
+export type TabsKey = 'professional' | 'personal';
+export type ProjectStatusCode = 1 | 2 | 3;
+
+export type ProjectImage = {
+  image: StaticImageData;
+  name: string;
+};
+
+export type ProjectTechnology = {
+  image: StaticImageData;
+  name: string;
+};
+
+export type ProjectCardItem = {
+  link?: string;
+  image: ProjectImage;
+  title: LocalizedString;
+  github?: string | string[];
+  subTitle: LocalizedString;
+  technologies: ProjectTechnology[];
+  statusCode: ProjectStatusCode;
+  status: string;
+  period?: string;
+};
+
+export type ProjectTabConfig = {
+  id: TabsKey;
+  label: string;
+  items: ProjectCardItem[];
+};
+
+const projects: Record<string, ProjectImage> = {
   cpMobile: { image: cpMobile, name: 'Cagette et Paprika Mobile App' },
   cpWeb: { image: cpWeb, name: 'Cagette et Paprika Web App' },
   cpBackend: { image: cpBackend, name: 'Cagette et Paprika Backend' },
@@ -68,7 +105,7 @@ const projects = {
   portfolio: { image: portfolio, name: 'Portfolio Website' },
 };
 
-const technologies = {
+const technologies: Record<string, ProjectTechnology> = {
   express: { image: express, name: 'Express.js' },
   mongodb: { image: mongodb, name: 'MongoDB' },
   node: { image: node, name: 'Node.js' },
@@ -177,15 +214,19 @@ const technologies = {
 //2 - Acquired
 //3 - Archived
 
-const myProjectsTabs = [
+const myProjectsTabs: ProjectTabConfig[] = [
   {
+    id: 'professional',
     label: 'Professional Work',
     items: [
       {
-        title: 'Zenride - Frontend',
+        title: { en: 'Zenride - Frontend', fr: 'Zenride - Frontend' },
         status: 'Active',
         statusCode: 1,
-        subTitle: 'Multi-portal web app for employee bike leasing, retailer checkout, contract management, and fleet dashboards.',
+        subTitle: {
+          en: 'Multi-portal web app for employee bike leasing, retailer checkout, contract management, and fleet dashboards.',
+          fr: 'Application multi-portails pour leasing de vélos salariés, caisse magasins, gestion de contrats et tableaux de bord de flotte.',
+        },
         image: projects.zenrideFrontend,
         technologies: [
           technologies.react,
@@ -201,10 +242,13 @@ const myProjectsTabs = [
         link:'https://www.zenride.co/'
       },
       {
-        title: 'Zenride - Backend',
+        title: { en: 'Zenride - Backend', fr: 'Zenride - Backend' },
         status: 'Active',
         statusCode: 1,
-        subTitle: 'Comprehensive bike fleet management system with contract lifecycle, payments, insurance, and third-party integrations.',
+        subTitle: {
+          en: 'Comprehensive bike fleet management system with contract lifecycle, payments, insurance, and third-party integrations.',
+          fr: "Système complet de gestion de flotte vélo (cycle de contrats, paiements, assurances, intégrations tierces).",
+        },
         image: projects.zenrideBackend,
         technologies: [
           technologies.node,
@@ -223,10 +267,13 @@ const myProjectsTabs = [
         period: '2023 - Present',
       },
       {
-        title: 'Cagette & Paprika Website',
+        title: { en: 'Cagette & Paprika Website', fr: 'Site Cagette & Paprika' },
         status: 'Acquired by Auchan Retail',
         statusCode: 2,
-        subTitle: 'Ported PHP frontend to React TS. Added new features and improved UX.',
+        subTitle: {
+          en: 'Ported PHP frontend to React TS. Added new features and improved UX.',
+          fr: 'Migration du frontend PHP vers React TS avec ajout de fonctionnalités et optimisation de l’UX.',
+        },
         image: projects.paprikaWeb,
         technologies: [
           technologies.typescript,
@@ -238,11 +285,13 @@ const myProjectsTabs = [
         period: '2021 - 2023',
       },
       {
-        title: 'Cagette & Paprika React Native App',
+        title: { en: 'Cagette & Paprika React Native App', fr: 'Application Cagette & Paprika (React Native)' },
         status: 'Acquired by Auchan Retail',
         statusCode: 2,
-        subTitle:
-          'Groceries Home delivery App. Available for users from Lille (France), on Android & IOS.',
+        subTitle: {
+          en: 'Groceries Home delivery App. Available for users from Lille (France), on Android & IOS.',
+          fr: "Application de livraison de courses à domicile disponible pour Lille (France), sur Android et iOS.",
+        },
         image: projects.cpMobile,
         technologies: [
           technologies.typescript,
@@ -254,10 +303,13 @@ const myProjectsTabs = [
         period: '2021 - 2023',
       },
       {
-        title: 'Cagette et Paprika Backend',
+        title: { en: 'Cagette et Paprika Backend', fr: 'Backend Cagette et Paprika' },
         status: 'Acquired by Auchan Retail',
         statusCode: 2,
-        subTitle: 'Backend hosted on OVH server. Powered by Node and PHP.',
+        subTitle: {
+          en: 'Backend hosted on OVH server. Powered by Node and PHP.',
+          fr: 'Backend hébergé sur OVH, propulsé par Node et PHP.',
+        },
         image: projects.cpBackend,
         technologies: [
           technologies.node,
@@ -270,11 +322,13 @@ const myProjectsTabs = [
         period: '2021 - 2023',
       },
       {
-        title: "Slot Allocation Management System (SAM)",
-        status: "Acquired by Auchan Retail",
+        title: { en: 'Slot Allocation Management System (SAM)', fr: 'Slot Allocation Management System (SAM)' },
+        status: 'Acquired by Auchan Retail',
         statusCode: 2,
-        subTitle:
-          "A web application to manage the allocation of slots to maximize the efficiency of milkman style delivery.",
+        subTitle: {
+          en: 'A web application to manage the allocation of slots to maximize the efficiency of milkman style delivery.',
+          fr: "Application web pour gérer l'allocation des créneaux afin d'optimiser l'efficacité des livraisons à la manière des livreurs-laitiers.",
+        },
         image: projects.sam,
         technologies: [
           technologies.typescript,
@@ -287,10 +341,13 @@ const myProjectsTabs = [
         period: '2021 - 2023',
       },
       {
-        title: 'Cagette & Paprika website (legacy)',
+        title: { en: 'Cagette & Paprika website (legacy)', fr: 'Site Cagette & Paprika (legacy)' },
         status: 'Archived',
         statusCode: 3,
-        subTitle: 'Wordpress frontend with WooCommerce(PHP).',
+        subTitle: {
+          en: 'Wordpress frontend with WooCommerce(PHP).',
+          fr: 'Frontend Wordpress avec WooCommerce (PHP).',
+        },
         image: projects.cpWeb,
         technologies: [technologies.wordPress, technologies.PHP, technologies.wooCommerce],
         period: '2021 - 2022',
@@ -298,14 +355,17 @@ const myProjectsTabs = [
     ],
   },
   {
+    id: 'personal',
     label: 'Personal Projects',
     items: [
       {
-        title: 'Vikunja AI Integration',
+        title: { en: 'Vikunja AI Integration', fr: 'Intégration Vikunja AI' },
         status: 'Active',
         statusCode: 1,
-        subTitle:
-          'A open-source Home Assistant integration with 100+ downloads, multiple resolved issues, and merged pull requests from contributors.',
+        subTitle: {
+          en: 'A open-source Home Assistant integration with 100+ downloads, multiple resolved issues, and merged pull requests from contributors.',
+          fr: "Intégration open-source Home Assistant (100+ téléchargements, issues résolues et PR fusionnées).",
+        },
         image: projects.vikunjaHA,
         technologies: [
           technologies.python,
@@ -315,11 +375,13 @@ const myProjectsTabs = [
         period: '2025'
       },
       {
-        title: 'Open Source Contributions',
+        title: { en: 'Open Source Contributions', fr: 'Contributions open-source' },
         status: 'Active',
         statusCode: 1,
-        subTitle:
-          'Contributed to Vikunja, Affine, and Home Assistant with merged pull requests, gaining full end-to-end contributor experience across three major projects.',
+        subTitle: {
+          en: 'Contributed to Vikunja, Affine, and Home Assistant with merged pull requests, gaining full end-to-end contributor experience across three major projects.',
+          fr: 'Contributions à Vikunja, AFFiNE et Home Assistant avec PR fusionnées, pour une expérience complète de contributeur.',
+        },
         image: projects.openSource,
         technologies: [
           technologies.vue,
@@ -335,11 +397,13 @@ const myProjectsTabs = [
         
       },
       {
-        title: 'Second — Marketplace  Platform',
+        title: { en: 'Second — Marketplace  Platform', fr: 'Second — Plateforme Marketplace' },
         status: 'Archived',
         statusCode: 3,
-        subTitle:
-          'A fully-fledged platform aggregating listings from multiple second-hand marketplaces. Built as a complete product, though never publicly released.',
+        subTitle: {
+          en: 'A fully-fledged platform aggregating listings from multiple second-hand marketplaces. Built as a complete product, though never publicly released.',
+          fr: 'Plateforme complète qui agrége des annonces de plusieurs marchés de seconde main, conçue comme un produit final malgré une non-publication.',
+        },
         image: projects.second,
         technologies: [
           technologies.typescript,
@@ -354,11 +418,13 @@ const myProjectsTabs = [
         github: 'https://github.com/NeoHuncho/second'
       },
       {
-        title: 'Portfolio Website',
+        title: { en: 'Portfolio Website', fr: 'Site portfolio' },
         status: 'Active',
         statusCode: 1,
-        subTitle:
-          'A component-reusable, high-performance portfolio with lightning-fast load speeds, built with modern web technologies.',
+        subTitle: {
+          en: 'A component-reusable, high-performance portfolio with lightning-fast load speeds, built with modern web technologies.',
+          fr: 'Portfolio performant, modulaire et ultra rapide construit avec les dernières technologies web.',
+        },
         image: projects.portfolio,
         technologies: [
           technologies.typescript,
@@ -371,11 +437,13 @@ const myProjectsTabs = [
         github: 'https://github.com/NeoHuncho/my-portfolio'
       },
       {
-        title: 'Brawl Max',
+        title: { en: 'Brawl Max', fr: 'Brawl Max' },
         status: 'Archived',
         statusCode: 3,
-        subTitle:
-          'React Native game-companion app, with multiple functionalities to help players improve. Available on Android & IOS.',
+        subTitle: {
+          en: 'React Native game-companion app, with multiple functionalities to help players improve. Available on Android & IOS.',
+          fr: 'Application compagnon React Native avec fonctionnalités pour aider les joueurs à progresser. Disponible sur Android et iOS.',
+        },
         image: projects.brawlMax,
         technologies: [
           technologies.javascript,
