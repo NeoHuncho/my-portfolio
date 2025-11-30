@@ -33,9 +33,9 @@ export default function ProjectsPanel() {
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden justify-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.00)' }}>
-      <div className="flex flex-col items-center px-4 md:px-8">
+      <div className="flex flex-col items-center justify-center gap-3 md:gap-6 px-4 md:px-8 w-full">
         {/* Tabs - 12px above carousel */}
-        <div id="project-tabs-container" className="shrink-0 w-full flex justify-center z-20 mb-3">
+        <div id="project-tabs-container" className="shrink-0 w-full flex justify-center z-20">
           <div className={`relative bg-gray-900/50 p-1.5 rounded-xl inline-flex gap-2 shadow-lg border border-gray-700/50 backdrop-blur-sm ${showGlow ? 'animate-glow' : 'animate-glow-fadeout'}`}>
             {projectTabs.map((tab, index) => {
               const localizedLabel = strings.projects.tabs[tab.id];
@@ -68,7 +68,7 @@ export default function ProjectsPanel() {
         </div>
 
         {/* Carousel */}
-        <div className="w-full">
+        <div className="w-full flex flex-col justify-center md:block">
           <AnimatePresence mode="wait">
             <ProjectTab key={activeTab} items={projectTabs[activeTabIndex].items} />
           </AnimatePresence>

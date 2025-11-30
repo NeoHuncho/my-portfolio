@@ -364,7 +364,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
         statusCode: 1,
         subTitle: {
           en: 'A open-source Home Assistant integration with 100+ downloads, multiple resolved issues, and merged pull requests from contributors.',
-          fr: "Intégration open-source Home Assistant (100+ téléchargements, issues résolues et PR fusionnées).",
+          fr: "Intégration open-source Home Assistant (100+ téléchargements, issues résolues et PR mergés).",
         },
         image: projects.vikunjaHA,
         technologies: [
@@ -380,7 +380,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
         statusCode: 1,
         subTitle: {
           en: 'Contributed to Vikunja, Affine, and Home Assistant with merged pull requests, gaining full end-to-end contributor experience across three major projects.',
-          fr: 'Contributions à Vikunja, AFFiNE et Home Assistant avec PR fusionnées, pour une expérience complète de contributeur.',
+          fr: 'Contributions à Vikunja, AFFiNE et Home Assistant avec PR mergés, pour une expérience complète de contributeur.',
         },
         image: projects.openSource,
         technologies: [

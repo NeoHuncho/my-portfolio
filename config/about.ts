@@ -30,6 +30,14 @@ export const professionalPoints: AboutPoint[] = [
     },
   },
   {
+    icon: '🤖',
+    title: { en: 'AI-Enhanced', fr: 'IA augmentée' },
+    description: {
+          en: 'I leverage AI and automation to streamline workflows and boost productivity.',
+          fr: "J'exploite l'IA et l'automatisation pour rationaliser les flux de travail et booster la productivité.",
+    },
+  },
+  {
     icon: '🚀',
     title: { en: 'Challenge-Driven', fr: 'Motivé par les défis' },
     description: {
@@ -47,18 +55,10 @@ export const professionalPoints: AboutPoint[] = [
   },
   {
     icon: '⚡',
-    title: { en: 'Fast & Responsive', fr: 'Rapide et réactif' },
+    title: { en: 'Fast & Responsive', fr: 'Rapide & Réactif' },
     description: {
       en: 'Quick context switching. Fast replies to DMs and technical questions.',
-      fr: 'Je change rapidement de contexte et réponds promptement aux messages et questions techniques.',
-    },
-  },
-  {
-    icon: '🤖',
-    title: { en: 'AI-Enhanced', fr: 'IA augmentée' },
-    description: {
-          en: 'I leverage AI and automation to streamline workflows and boost productivity.',
-          fr: "J'exploite l'IA et l'automatisation pour rationaliser les flux de travail et booster la productivité.",
+      fr: 'Je réponds avec précision aux questions complexes, même en cas de changement de contexte rapide.',
     },
   },
   {
@@ -93,7 +93,7 @@ export const personalPoints: AboutPoint[] = [
     title: { en: 'Strategist', fr: 'Stratège' },
     description: {
       en: 'Complex board games and collaborative strategy.',
-      fr: 'Je suis attiré par les jeux de société complexes et la stratégie collaborative.',
+      fr: "J'aime les jeux de société complexes et la stratégie collaborative.",
     },
   },
   {

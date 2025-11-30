@@ -149,35 +149,39 @@ export default function AboutPanel() {
       </div>
 
       {/* Right Side - Content (60%) */}
-      <div className="w-[60%] flex flex-col justify-center items-center py-8 px-8">
+      <div className="w-[60%] h-full overflow-y-auto flex flex-col items-center py-8 px-8">
         {/* Content area with cards */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-full my-auto">
           <div className="shrink-0 flex justify-center mb-8">
             <div className={`relative bg-gray-900/50 p-1.5 rounded-xl inline-flex gap-2 shadow-lg border border-gray-700/50 backdrop-blur-sm ${showGlow ? 'animate-glow' : 'animate-glow-fadeout'}`}>
-              {aboutTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabClick(tab.id)}
-                  className={`relative px-10 lg:px-14 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 cursor-pointer group rounded-lg ${
-                    !hasUserSwitched && activeTab !== tab.id
-                      ? 'animate-[pulse_2s_ease-in-out_infinite]'
-                      : ''
-                  }`}
-                >
-                  <span className={`transition-colors duration-300 ${
-                    activeTab === tab.id
-                      ? 'text-blue-400'
-                      : 'text-gray-300 group-hover:text-white'
-                  }`}>
-                    {tab.label}
-                  </span>
-                  <span className={`absolute bottom-1 left-2 right-2 h-0.5 bg-linear-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-300 shadow-sm shadow-blue-400/50 ${
-                    activeTab === tab.id
-                      ? 'opacity-100 scale-x-100'
-                      : 'opacity-0 scale-x-0 group-hover:opacity-50 group-hover:scale-x-100'
-                  }`} />
-                </button>
-              ))}
+              {aboutTabs.map((tab) => {
+                const tabKey = tab.id as 'professional' | 'personal';
+                const localizedLabel = strings.about.tabs[tabKey];
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabClick(tab.id)}
+                    className={`relative px-10 lg:px-14 py-3 lg:py-4 text-sm lg:text-lg font-semibold transition-all duration-300 cursor-pointer group rounded-lg ${
+                      !hasUserSwitched && activeTab !== tab.id
+                        ? 'animate-[pulse_2s_ease-in-out_infinite]'
+                        : ''
+                    }`}
+                  >
+                    <span className={`transition-colors duration-300 ${
+                      activeTab === tab.id
+                        ? 'text-blue-400'
+                        : 'text-gray-300 group-hover:text-white'
+                    }`}>
+                      {localizedLabel}
+                    </span>
+                    <span className={`absolute bottom-1 left-2 right-2 h-0.5 bg-linear-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-300 shadow-sm shadow-blue-400/50 ${
+                      activeTab === tab.id
+                        ? 'opacity-100 scale-x-100'
+                        : 'opacity-0 scale-x-0 group-hover:opacity-50 group-hover:scale-x-100'
+                    }`} />
+                  </button>
+                );
+              })}
             </div>
           </div>
           

@@ -14,7 +14,7 @@ export default function ProfessionalTab() {
       className="flex flex-col items-center w-full"
     >
       {/* Points Grid - Centered */}
-      <div className="w-full max-w-4xl sm:h-96 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
         {professionalPoints.map((point, index) => (
           <div
             key={index}

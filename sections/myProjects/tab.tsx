@@ -90,15 +90,20 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
 
     return (
     <div
-      className="flex flex-col h-full max-h-[80vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden transition-all duration-300 ease-out select-none"
+      className="flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden transition-all duration-300 ease-out select-none"
       style={{
         transform: hovered && item.link ? 'scale(1.02)' : 'scale(1)',
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      <a href={item.link} target="_blank" rel="noreferrer" className="block relative w-full group shrink min-h-[120px] md:shrink-0 md:h-auto">
-        <div className="relative h-[25vh] md:h-80 w-full overflow-hidden bg-gray-900">
+      <a
+        href={item.link}
+        target="_blank"
+        rel="noreferrer"
+        className="block relative w-full group shrink min-h-[120px] md:shrink-0 md:h-auto"
+        onMouseEnter={() => item.link && setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <div className="relative h-[25vh] md:h-80 [@media(max-height:800px)]:md:h-60 w-full overflow-hidden bg-gray-900">
            {item.period && (
              <div className="absolute top-3 left-3 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-lg">
                {item.period}
@@ -117,10 +122,10 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
         </div>
       </a>
       
-      <div className="flex flex-col grow p-4 md:p-6 overflow-hidden">
+      <div className="flex flex-col grow p-4 md:p-6 [@media(max-height:800px)]:md:p-4 overflow-hidden">
         <div className="grow">
-          <div className="flex items-center justify-between mb-2 md:mb-3">
-            <h3 className="text-xl md:text-2xl font-bold text-white pr-2">{localizedTitle}</h3>
+          <div className="flex items-center justify-between mb-2 md:mb-3 [@media(max-height:800px)]:md:mb-2">
+            <h3 className="text-xl md:text-2xl [@media(max-height:800px)]:md:text-xl font-bold text-white pr-2">{localizedTitle}</h3>
             {githubLinks.length > 0 && (
                 <div className="flex gap-2 shrink-0">
                 {githubLinks.map((link, index) => (
@@ -137,7 +142,7 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
               </div>
             )}
           </div>
-          <h5 className="text-sm md:text-base font-medium text-gray-300 leading-relaxed mb-2 md:mb-4 line-clamp-3 md:line-clamp-none">
+          <h5 className="text-sm md:text-base [@media(max-height:800px)]:md:text-sm font-medium text-gray-300 leading-relaxed mb-2 md:mb-4 [@media(max-height:800px)]:md:mb-2 line-clamp-3 md:line-clamp-none">
             {localizedSubTitle}
           </h5>
         </div>
@@ -145,7 +150,7 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
         <div className="mt-auto pt-2 md:pt-4 border-t border-gray-700">
           <div ref={techContainerRef}>
             {needsCarousel ? (
-              <div className="relative mb-3 md:mb-5">
+              <div className="relative mb-3 md:mb-5 [@media(max-height:800px)]:md:mb-3">
                 {canScrollPrev && (
                   <button
                     onClick={scrollPrev}
@@ -157,7 +162,7 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
                   </button>
                 )}
                 <div 
-                  className="overflow-hidden cursor-grab active:cursor-grabbing" 
+                  className="overflow-hidden cursor-grab active:cursor-grabbing pt-12 -mt-12" 
                   ref={techEmblaRef}
                   data-tech-carousel
                   onPointerDown={handleTechInteraction}
@@ -203,10 +208,10 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
                 )}
               </div>
             ) : (
-              <div className="flex gap-3 justify-center mb-3 md:mb-5">
+              <div className="flex gap-3 justify-center mb-3 md:mb-5 [@media(max-height:800px)]:md:mb-3">
                 {item.technologies.map((technology, index) => (
                   <div 
-                    key={index} 
+                    key={index}  
                     className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all"
                     onMouseEnter={() => setHoveredTech(technology.name)}
                     onMouseLeave={() => setHoveredTech(null)}
@@ -294,7 +299,7 @@ const ProjectTab = ({ items }: { items: ProjectCardItem[] }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="h-full flex flex-col justify-center"
+      className="flex flex-col justify-center"
     >
       <div className="relative">
         {canScrollPrev && (
@@ -319,7 +324,7 @@ const ProjectTab = ({ items }: { items: ProjectCardItem[] }) => {
           <div className="flex -ml-6 py-4">
             {items.map((item, index) => (
             <div 
-              className={`flex-[0_0_100%] md:flex-[0_0_60%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center`} 
+              className={`flex-[0_0_100%] md:flex-[0_0_60%] [@media(max-height:800px)]:md:flex-[0_0_50%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center`} 
               key={`${item.image.name}-${index}`}
             >
               <ProjectCard item={item} isCompactArrows={isCompactArrows} />

@@ -5,6 +5,7 @@ const easeOutQuart = (t: number): number => 1 - Math.pow(1 - t, 4);
 export function useSmoothSectionScroll(containerSelector: string) {
   const isAnimating = useRef(false);
   const currentSectionIndex = useRef(0);
+  const cooldownTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const container = document.querySelector(containerSelector) as HTMLElement;
@@ -42,6 +43,16 @@ export function useSmoothSectionScroll(containerSelector: string) {
       section.style.scrollSnapAlign = 'none';
     });
 
+    const scheduleAnimationEnd = () => {
+      if (cooldownTimeout.current) {
+        clearTimeout(cooldownTimeout.current);
+      }
+      cooldownTimeout.current = window.setTimeout(() => {
+        isAnimating.current = false;
+        cooldownTimeout.current = null;
+      }, 350);
+    };
+
     const animateToSection = (targetIndex: number) => {
       if (targetIndex < 0 || targetIndex >= sections.length) return;
       if (isAnimating.current) return;
@@ -66,7 +77,7 @@ export function useSmoothSectionScroll(containerSelector: string) {
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          isAnimating.current = false;
+          scheduleAnimationEnd();
         }
       };
 
@@ -136,6 +147,9 @@ export function useSmoothSectionScroll(containerSelector: string) {
       sections.forEach((section, index) => {
         section.style.scrollSnapAlign = originalSectionSnapAligns[index];
       });
+      if (cooldownTimeout.current) {
+        clearTimeout(cooldownTimeout.current);
+      }
     };
   }, [containerSelector]);
 }

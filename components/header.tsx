@@ -96,9 +96,13 @@ export default function Header() {
             aria-label={strings.language.ariaLabel}
             title={strings.language.toggleLabel}
             onClick={toggleLocale}
-            className="pointer-events-auto absolute right-6 top-4 text-white bg-white/10 hover:bg-white/20 transition-colors rounded-full p-2 border border-white/30"
+            className={`pointer-events-auto absolute right-6 top-4 transition-colors aspect-square flex items-center justify-center ${
+              isSmall
+                ? 'text-white bg-white/10 hover:bg-white/20 rounded-full p-2 border border-white/30'
+                : 'text-white bg-white/90 hover:bg-white rounded-full w-8 h-8 border border-white shadow-sm'
+            }`}
           >
-            <span className="text-lg leading-none">{strings.language.flagEmoji}</span>
+            <span className="text-lg leading-none lg:-mt-1 lg:-mr-0.5">{strings.language.flagEmoji}</span>
           </button>
         )}
       </div>
