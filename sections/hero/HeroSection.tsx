@@ -4,31 +4,36 @@ import { FaArrowDown } from 'react-icons/fa';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMediaQuery } from '../hooks/useMediaQuery';
-import { smoothScrollToElement } from '../utils/smoothScrollToElement';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { smoothScrollToElement } from '../../utils/smoothScrollToElement';
 
-export default function IndexPage({
+interface HeroSectionProps {
+  title: string;
+  image: {
+    src: string;
+    width: number;
+    height: number;
+  };
+  link?: string;
+  subTitle?: string;
+  ctaLabel?: string;
+}
+
+export default function HeroSection({
   title,
   image,
   link,
   subTitle,
   ctaLabel,
-}: {
-  title: string;
-  image: any;
-  link?: string;
-  subTitle?: string;
-  ctaLabel?: string;
-}) {
+}: HeroSectionProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const isSmall = useMediaQuery('(max-width: 1000px)');
-  
-  
 
   const variantstext = {
     hidden: { opacity: 0, x: -50 },
     visible: { opacity: 1, x: 0 },
   };
+
   return (
     <div
       id="hero"

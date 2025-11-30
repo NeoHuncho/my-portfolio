@@ -1,14 +1,17 @@
 'use client';
 import type { ProjectCardItem } from '@config/projects';
 import useEmblaCarousel from 'embla-carousel-react';
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaChevronLeft, FaChevronRight, FaGithub } from 'react-icons/fa';
 import { useLanguage } from '../../hooks/useLanguage';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
 
-const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompactArrows: boolean }) => {
+interface ProjectCardProps {
+  item: ProjectCardItem;
+  isCompactArrows: boolean;
+}
+
+export default function ProjectCard({ item, isCompactArrows }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false);
   const [hoveredTech, setHoveredTech] = useState<string | null>(null);
   const [needsCarousel, setNeedsCarousel] = useState(true);
@@ -21,6 +24,8 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
     containScroll: 'trimSnaps',
     dragFree: true
   });
+
+  const { strings, locale } = useLanguage();
 
   const checkOverflow = useCallback(() => {
     if (techContainerRef.current) {
@@ -73,22 +78,20 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
   }, []);
 
   const getStatusColor = (code: number) => {
-      switch(code) {
-          case 1: return 'bg-blue-600';
-          case 2: return 'bg-green-600';
-          case 3: return 'bg-red-600';
-          default: return 'bg-blue-600';
-      }
+    switch(code) {
+      case 1: return 'bg-blue-600';
+      case 2: return 'bg-green-600';
+      case 3: return 'bg-red-600';
+      default: return 'bg-blue-600';
+    }
   };
 
   const githubLinks = item.github ? (Array.isArray(item.github) ? item.github : [item.github]) : [];
-
-  const { strings, locale } = useLanguage();
   const statusText = strings.projects.statuses[item.statusCode] ?? item.status;
   const localizedTitle = item.title[locale];
   const localizedSubTitle = item.subTitle[locale];
 
-    return (
+  return (
     <div
       className="flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden transition-all duration-300 ease-out select-none"
       style={{
@@ -104,21 +107,21 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
         onMouseLeave={() => setHovered(false)}
       >
         <div className="relative h-[25vh] md:h-80 [@media(max-height:800px)]:md:h-60 w-full overflow-hidden bg-gray-900">
-           {item.period && (
-             <div className="absolute top-3 left-3 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-lg">
-               {item.period}
-             </div>
-           )}
-           <Image
-              src={item.image.image.src}
-              alt={item.image.name}
-              fill
-              style={{ objectFit: 'cover' }}
-              className={`select-none transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
-              unoptimized
-              draggable={false}
-              onLoad={() => setImageLoaded(true)}
-           />
+          {item.period && (
+            <div className="absolute top-3 left-3 z-10 bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold shadow-lg">
+              {item.period}
+            </div>
+          )}
+          <Image
+            src={item.image.image.src}
+            alt={item.image.name}
+            fill
+            style={{ objectFit: 'cover' }}
+            className={`select-none transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
+            unoptimized
+            draggable={false}
+            onLoad={() => setImageLoaded(true)}
+          />
         </div>
       </a>
       
@@ -127,7 +130,7 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
           <div className="flex items-center justify-between mb-2 md:mb-3 [@media(max-height:800px)]:md:mb-2">
             <h3 className="text-xl md:text-2xl [@media(max-height:800px)]:md:text-xl font-bold text-white pr-2">{localizedTitle}</h3>
             {githubLinks.length > 0 && (
-                <div className="flex gap-2 shrink-0">
+              <div className="flex gap-2 shrink-0">
                 {githubLinks.map((link, index) => (
                   <a 
                     key={index}
@@ -248,110 +251,4 @@ const ProjectCard = ({ item, isCompactArrows }: { item: ProjectCardItem; isCompa
       </div>
     </div>
   );
-};
-
-const ProjectTab = ({ items }: { items: ProjectCardItem[] }) => {
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const isCompactArrows = useMediaQuery('(max-width: 768px)');
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-      align: 'start', 
-      slidesToScroll: 1,
-      containScroll: 'trimSnaps',
-      dragFree: true,
-      watchDrag: (emblaApi, evt) => {
-        const target = evt.target as HTMLElement;
-        // Prevent dragging if the event originated from tech carousel
-        return !target.closest('[data-tech-carousel]');
-      }
-  });
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-    return () => {
-      emblaApi.off('select', onSelect);
-      emblaApi.off('reInit', onSelect);
-    };
-  }, [emblaApi, onSelect]);
-
-  const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
-
-  const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex flex-col justify-center"
-    >
-      <div className="relative">
-        {canScrollPrev && (
-          <button
-            onClick={scrollPrev}
-            className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-gray-900/80 hover:bg-gray-900 text-white rounded-full shadow-xl transition-all backdrop-blur-sm border border-gray-700/50 ${isCompactArrows ? 'p-2' : 'p-3'}`}
-            aria-label="Scroll left"
-          >
-            <FaChevronLeft size={isCompactArrows ? 14 : 16} />
-          </button>
-        )}
-        {canScrollNext && (
-          <button
-            onClick={scrollNext}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-gray-900/80 hover:bg-gray-900 text-white rounded-full shadow-xl transition-all backdrop-blur-sm border border-gray-700/50 ${isCompactArrows ? 'p-2' : 'p-3'}`}
-            aria-label="Scroll right"
-          >
-            <FaChevronRight size={isCompactArrows ? 14 : 16} />
-          </button>
-        )}
-        <div className="overflow-hidden cursor-grab active:cursor-grabbing h-auto flex flex-col justify-center" ref={emblaRef}>
-          <div className="flex -ml-6 py-4">
-            {items.map((item, index) => (
-            <div 
-              className={`flex-[0_0_100%] md:flex-[0_0_60%] [@media(max-height:800px)]:md:flex-[0_0_50%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center`} 
-              key={`${item.image.name}-${index}`}
-            >
-              <ProjectCard item={item} isCompactArrows={isCompactArrows} />
-            </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      {items.length > 1 && (
-        <div className="flex justify-center gap-2 mt-4 pb-4">
-          {items.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => emblaApi?.scrollTo(index)}
-              className={`transition-all duration-300 rounded-full ${
-                index === selectedIndex
-                  ? 'w-3 h-3 bg-blue-400 ring-2 ring-blue-200 shadow-[0_0_8px_rgba(59,130,246,0.45)]'
-                  : 'w-2 h-2 bg-gray-600 hover:bg-gray-500 ring-1 ring-transparent'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
-};
-
-export default ProjectTab;
+}

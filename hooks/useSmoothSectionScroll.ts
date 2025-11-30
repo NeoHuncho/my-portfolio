@@ -5,7 +5,7 @@ const easeOutQuart = (t: number): number => 1 - Math.pow(1 - t, 4);
 export function useSmoothSectionScroll(containerSelector: string) {
   const isAnimating = useRef(false);
   const currentSectionIndex = useRef(0);
-  const cooldownTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cooldownTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     const container = document.querySelector(containerSelector) as HTMLElement;

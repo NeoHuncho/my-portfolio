@@ -1,12 +1,10 @@
 import computer from '@assets/floatingComputer.svg';
 import MobileSocialShortcut from '@components/MobileSocialShortcut';
-import Section from '@components/section';
+import Section from '@components/Section';
 import { useLanguage } from 'hooks/useLanguage';
 import { useSmoothSectionScroll } from 'hooks/useSmoothSectionScroll';
 import Head from 'next/head';
-import AboutPanel from 'sections/about/panel';
-import Hero from 'sections/hero';
-import ProjectsPanel from 'sections/myProjects/panel';
+import { AboutSection, HeroSection, ProjectsSection } from 'sections';
 
 export default function Home() {
   // Enable smooth section scrolling for Chrome
@@ -20,14 +18,14 @@ export default function Home() {
         <meta name="description" content="William Guinaudie Portfolio" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Hero
+      <HeroSection
         title="WILLIAM GUINAUDIE"
         image={{ src: computer, width: 657, height: 506 }}
         subTitle={strings.heroSubtitle}
         ctaLabel={strings.heroScrollLabel}
       />
-      <Section Component={ProjectsPanel} id="projects-section" />
-      <Section Component={AboutPanel} id="about-section" />
+      <Section Component={ProjectsSection} id="projects-section" />
+      <Section Component={AboutSection} id="about-section" />
       <MobileSocialShortcut />
     </div>
   );

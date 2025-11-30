@@ -37,6 +37,18 @@
       ],
       "@styles/*": [
         "./styles/*"
+      ],
+      "@sections/*": [
+        "./sections/*"
+      ],
+      "@hooks/*": [
+        "./hooks/*"
+      ],
+      "@contexts/*": [
+        "./contexts/*"
+      ],
+      "@utils/*": [
+        "./utils/*"
       ]
     }
   },

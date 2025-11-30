@@ -1,4 +1,4 @@
-import Header from '@components/header';
+import Header from '@components/Header';
 import { Analytics } from "@vercel/analytics/next";
 import { AppProps } from 'next/app';
 import Head from 'next/head';
