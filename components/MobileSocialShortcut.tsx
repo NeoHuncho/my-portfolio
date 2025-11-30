@@ -14,7 +14,7 @@ const socialLinks: Array<{ label: string; href: string; icon: IconType }> = [
   },
   {
     label: 'LinkedIn',
-    href: 'https://www.linkedin.com/in/william-guinaudie/',
+    href: 'https://www.linkedin.com/in/william-g-178156180/',
     icon: FaLinkedin,
   },
   {

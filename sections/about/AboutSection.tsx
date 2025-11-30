@@ -73,6 +73,7 @@ export default function AboutSection() {
                       src={profileImage}
                       alt="Profile"
                       fill
+                      sizes="112px"
                       style={{ objectFit: 'cover' }}
                       className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
@@ -122,6 +123,7 @@ export default function AboutSection() {
                 src={profileImage}
                 alt="Profile"
                 fill
+                sizes="(max-width: 1024px) 256px, (max-width: 1280px) 320px, 384px"
                 style={{ objectFit: 'cover' }}
                 className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setImageLoaded(true)}

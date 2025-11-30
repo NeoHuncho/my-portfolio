@@ -92,6 +92,7 @@ export default function HeroSection({
                   alt="Computer"
                   width={image.width}
                   height={image.height}
+                  sizes="(max-width: 1000px) 95vw, 50vw"
                   style={{ width: '100%', height: 'auto' }}
                   priority
                   onLoad={() => setImageLoaded(true)}

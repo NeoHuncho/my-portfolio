@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 
 interface InfoCardProps {
   icon: ReactNode;
@@ -10,7 +10,7 @@ interface InfoCardProps {
   isLast?: boolean;
 }
 
-export default function InfoCard({
+function InfoCard({
   icon,
   title,
   description,
@@ -38,3 +38,5 @@ export default function InfoCard({
     </div>
   );
 }
+
+export default memo(InfoCard);

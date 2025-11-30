@@ -1,5 +1,7 @@
 'use client';
 
+import { memo } from 'react';
+
 interface Tab {
   id: string;
   label: string;
@@ -14,7 +16,7 @@ interface TabSelectorProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export default function TabSelector({
+function TabSelector({
   tabs,
   activeTab,
   onTabChange,
@@ -65,3 +67,5 @@ export default function TabSelector({
     </div>
   );
 }
+
+export default memo(TabSelector);

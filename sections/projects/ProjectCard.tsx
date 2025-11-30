@@ -2,7 +2,7 @@
 import type { ProjectCardItem } from '@config/projects';
 import useEmblaCarousel from 'embla-carousel-react';
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { FaChevronLeft, FaChevronRight, FaGithub } from 'react-icons/fa';
 import { useLanguage } from '../../hooks/useLanguage';
 
@@ -11,7 +11,7 @@ interface ProjectCardProps {
   isCompactArrows: boolean;
 }
 
-export default function ProjectCard({ item, isCompactArrows }: ProjectCardProps) {
+function ProjectCard({ item, isCompactArrows }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false);
   const [hoveredTech, setHoveredTech] = useState<string | null>(null);
   const [needsCarousel, setNeedsCarousel] = useState(true);
@@ -116,9 +116,9 @@ export default function ProjectCard({ item, isCompactArrows }: ProjectCardProps)
             src={item.image.image.src}
             alt={item.image.name}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 35vw"
             style={{ objectFit: 'cover' }}
             className={`select-none transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
-            unoptimized
             draggable={false}
             onLoad={() => setImageLoaded(true)}
           />
@@ -184,6 +184,7 @@ export default function ProjectCard({ item, isCompactArrows }: ProjectCardProps)
                             alt={technology.name}
                             src={technology.image.src}
                             fill
+                            sizes="24px"
                             style={{ objectFit: 'contain' }}
                             className="select-none"
                             draggable={false}
@@ -224,6 +225,7 @@ export default function ProjectCard({ item, isCompactArrows }: ProjectCardProps)
                         alt={technology.name}
                         src={technology.image.src}
                         fill
+                        sizes="24px"
                         style={{ objectFit: 'contain' }}
                         className="select-none"
                         draggable={false}
@@ -252,3 +254,5 @@ export default function ProjectCard({ item, isCompactArrows }: ProjectCardProps)
     </div>
   );
 }
+
+export default memo(ProjectCard);

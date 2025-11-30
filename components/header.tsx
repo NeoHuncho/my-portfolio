@@ -78,7 +78,7 @@ export default function Header() {
 
             <a
               className="cursor-pointer"
-              href="https://www.linkedin.com/in/william-guinaudie/" 
+              href="https://www.linkedin.com/in/william-g-178156180/" 
               target="_blank"
               rel="noreferrer"
             >

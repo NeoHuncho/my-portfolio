@@ -67,10 +67,12 @@ body {
 
 .animate-glow {
   animation: glow 3s ease-in-out infinite;
+  will-change: box-shadow;
 }
 
 .animate-glow-fadeout {
   animation: glow-fadeout 1.2s ease-out forwards;
+  will-change: box-shadow;
 }
 
 /* Smooth floating animation using CSS for better performance */

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -14,6 +14,7 @@ function Section({ Component, id }: SectionProps) {
   const isSmall = useMediaQuery('(max-width: 800px)');
   const { ref, inView } = useInView({
     threshold: 0,
+    triggerOnce: true,
   });
 
   
@@ -36,4 +37,4 @@ function Section({ Component, id }: SectionProps) {
   );
 }
 
-export default Section;
+export default memo(Section);

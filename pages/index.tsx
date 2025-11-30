@@ -3,8 +3,17 @@ import MobileSocialShortcut from '@components/MobileSocialShortcut';
 import Section from '@components/Section';
 import { useLanguage } from 'hooks/useLanguage';
 import { useSmoothSectionScroll } from 'hooks/useSmoothSectionScroll';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { AboutSection, HeroSection, ProjectsSection } from 'sections';
+import { HeroSection } from 'sections';
+
+// Lazy load sections that are below the fold
+const ProjectsSection = dynamic(() => import('sections/projects/ProjectsSection'), {
+  loading: () => null,
+});
+const AboutSection = dynamic(() => import('sections/about/AboutSection'), {
+  loading: () => null,
+});
 
 export default function Home() {
   // Enable smooth section scrolling for Chrome

@@ -1,14 +1,9 @@
-export { aboutTabs, professionalPoints, personalPoints } from './about';
+export { aboutTabs, personalPoints, professionalPoints } from './about';
 export type { AboutPoint } from './about';
 export { default as projectTabs } from './projects';
 export type {
-  LocalizedString,
-  TabsKey,
-  ProjectStatusCode,
-  ProjectImage,
-  ProjectTechnology,
-  ProjectCardItem,
-  ProjectTabConfig,
+    LocalizedString, ProjectCardItem, ProjectImage, ProjectStatusCode, ProjectTabConfig, ProjectTechnology, TabsKey
 } from './projects';
 export { translations } from './translations';
-export type { Locale, TranslationStrings, StatusCode } from './translations';
+export type { Locale, StatusCode, TranslationStrings } from './translations';
+
