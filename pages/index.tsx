@@ -7,12 +7,12 @@ import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { HeroSection } from 'sections';
 
-// Lazy load sections that are below the fold
+// Dynamic imports with ssr: false to reduce initial bundle but load immediately on client
 const ProjectsSection = dynamic(() => import('sections/projects/ProjectsSection'), {
-  loading: () => null,
+  ssr: false,
 });
 const AboutSection = dynamic(() => import('sections/about/AboutSection'), {
-  loading: () => null,
+  ssr: false,
 });
 
 export default function Home() {

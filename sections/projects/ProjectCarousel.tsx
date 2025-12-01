@@ -2,7 +2,7 @@
 import type { ProjectCardItem } from '@config/projects';
 import useEmblaCarousel from 'embla-carousel-react';
 import { motion } from 'framer-motion';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import ProjectCard from './ProjectCard';
@@ -27,6 +27,22 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
       return !target.closest('[data-tech-carousel]');
     }
   });
+
+  // Calculate which slides should have their images preloaded (current + 2 ahead)
+  const preloadIndices = useMemo(() => {
+    const indices = new Set<number>();
+    // Always preload current and next 2 slides
+    for (let i = 0; i <= 2; i++) {
+      if (selectedIndex + i < items.length) {
+        indices.add(selectedIndex + i);
+      }
+    }
+    // Also preload previous slide for back navigation
+    if (selectedIndex > 0) {
+      indices.add(selectedIndex - 1);
+    }
+    return indices;
+  }, [selectedIndex, items.length]);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -88,7 +104,7 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
                 className="flex-[0_0_100%] md:flex-[0_0_60%] [@media(max-height:800px)]:md:flex-[0_0_50%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center" 
                 key={`${item.image.name}-${index}`}
               >
-                <ProjectCard item={item} isCompactArrows={isCompactArrows} />
+                <ProjectCard item={item} isCompactArrows={isCompactArrows} shouldPreload={preloadIndices.has(index)} />
               </div>
             ))}
           </div>

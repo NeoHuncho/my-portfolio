@@ -9,9 +9,10 @@ import { useLanguage } from '../../hooks/useLanguage';
 interface ProjectCardProps {
   item: ProjectCardItem;
   isCompactArrows: boolean;
+  shouldPreload?: boolean;
 }
 
-function ProjectCard({ item, isCompactArrows }: ProjectCardProps) {
+function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false);
   const [hoveredTech, setHoveredTech] = useState<string | null>(null);
   const [needsCarousel, setNeedsCarousel] = useState(true);
@@ -121,6 +122,8 @@ function ProjectCard({ item, isCompactArrows }: ProjectCardProps) {
             className={`select-none transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
             draggable={false}
             onLoad={() => setImageLoaded(true)}
+            priority={shouldPreload}
+            loading={shouldPreload ? 'eager' : 'lazy'}
           />
         </div>
       </a>

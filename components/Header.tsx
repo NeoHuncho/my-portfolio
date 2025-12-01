@@ -102,7 +102,7 @@ export default function Header() {
                 : 'text-white bg-white/90 hover:bg-white rounded-full w-8 h-8 border border-white shadow-sm'
             }`}
           >
-            <span className="text-lg leading-none lg:-mt-1 lg:-mr-0.5">{strings.language.flagEmoji}</span>
+            <span className="text-xl leading-none lg:-mt-0.5 ">{strings.language.flagEmoji}</span>
           </button>
         )}
       </div>

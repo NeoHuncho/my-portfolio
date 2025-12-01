@@ -15,6 +15,7 @@ function Section({ Component, id }: SectionProps) {
   const { ref, inView } = useInView({
     threshold: 0,
     triggerOnce: true,
+    rootMargin: '200px 0px', // Start loading 200px before section enters viewport
   });
 
   
