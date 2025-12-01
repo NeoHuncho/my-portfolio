@@ -1,14 +1,14 @@
 'use client';
+import { useState } from 'react';
+import Image from 'next/image';
+import { AnimatePresence, motion } from 'framer-motion';
 import profileImage from '@assets/about/profile.webp';
 import TabSelector from '@components/TabSelector';
 import { aboutTabs } from '@config/about';
-import { AnimatePresence, motion } from 'framer-motion';
-import Image from 'next/image';
-import { useState } from 'react';
-import { useLanguage } from '../../hooks/useLanguage';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
 import AboutPersonal from './AboutPersonal';
 import AboutProfessional from './AboutProfessional';
+import { useLanguage } from '../../hooks/useLanguage';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 export default function AboutSection() {
   const [activeTab, setActiveTab] = useState(aboutTabs[0].id);
@@ -93,7 +93,9 @@ export default function AboutSection() {
                 className="flex flex-col items-center gap-4 pb-16"
               >
                 <div className="text-center py-2">
-                  <h2 className="text-2xl font-bold text-white mb-1">{strings.about.mobileTitle}</h2>
+                  <h2 className="text-2xl font-bold text-white mb-1">
+                    {strings.about.mobileTitle}
+                  </h2>
                   <p className="text-gray-400 text-sm">{strings.about.mobileSubtitle}</p>
                 </div>
                 <AboutPersonal />
@@ -115,9 +117,7 @@ export default function AboutSection() {
           animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 0.9 }}
           transition={{ duration: 0.5 }}
         >
-          <div
-            className="animate-float relative w-64 h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96"
-          >
+          <div className="animate-float relative w-64 h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96">
             <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl shadow-blue-500/20">
               <Image
                 src={profileImage}
@@ -148,7 +148,7 @@ export default function AboutSection() {
               size="md"
             />
           </div>
-          
+
           <AnimatePresence mode="wait">
             {activeTab === 'professional' ? (
               <AboutProfessional key="professional" />

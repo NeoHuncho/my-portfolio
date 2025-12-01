@@ -9,23 +9,27 @@ export function useSmoothSectionScroll(containerSelector: string) {
 
   useEffect(() => {
     const container = document.querySelector(containerSelector) as HTMLElement;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const sections = container.querySelectorAll('.scroll-section') as NodeListOf<HTMLElement>;
-    if (sections.length === 0) return;
+    if (sections.length === 0) {
+      return;
+    }
 
     // Detect if browser is Chrome (doesn't support smooth scroll with snap)
     const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
-    
+
     // Detect mobile
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
+
     // On Chrome mobile, use a simpler approach - just let native scroll-snap handle it
     if (isChrome && isMobile) {
       // Keep scroll-snap enabled for Chrome mobile - it works better than custom handling
       return;
     }
-    
+
     if (!isChrome) {
       // Firefox and Safari handle this natively
       return;
@@ -35,11 +39,14 @@ export function useSmoothSectionScroll(containerSelector: string) {
     // Disable CSS scroll-snap and smooth scrolling for Chrome so the manual animation can start immediately
     const originalScrollSnapType = container.style.scrollSnapType;
     const originalScrollBehavior = container.style.scrollBehavior;
-    const originalSectionSnapAligns = Array.from(sections, section => section.style.scrollSnapAlign);
+    const originalSectionSnapAligns = Array.from(
+      sections,
+      (section) => section.style.scrollSnapAlign
+    );
 
     container.style.scrollSnapType = 'none';
     container.style.scrollBehavior = 'auto';
-    sections.forEach(section => {
+    sections.forEach((section) => {
       section.style.scrollSnapAlign = 'none';
     });
 
@@ -54,8 +61,12 @@ export function useSmoothSectionScroll(containerSelector: string) {
     };
 
     const animateToSection = (targetIndex: number) => {
-      if (targetIndex < 0 || targetIndex >= sections.length) return;
-      if (isAnimating.current) return;
+      if (targetIndex < 0 || targetIndex >= sections.length) {
+        return;
+      }
+      if (isAnimating.current) {
+        return;
+      }
 
       isAnimating.current = true;
       currentSectionIndex.current = targetIndex;
@@ -86,9 +97,9 @@ export function useSmoothSectionScroll(containerSelector: string) {
 
     // Determine current section based on scroll position
     const getCurrentSection = (): number => {
-      const scrollTop = container.scrollTop;
+      const { scrollTop } = container;
       const viewportHeight = container.clientHeight;
-      
+
       for (let i = sections.length - 1; i >= 0; i--) {
         if (scrollTop >= sections[i].offsetTop - viewportHeight / 2) {
           return i;
@@ -99,10 +110,12 @@ export function useSmoothSectionScroll(containerSelector: string) {
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      
+
       // If already animating, ignore
-      if (isAnimating.current) return;
-      
+      if (isAnimating.current) {
+        return;
+      }
+
       // Update current section based on actual position
       currentSectionIndex.current = getCurrentSection();
 
@@ -117,8 +130,10 @@ export function useSmoothSectionScroll(containerSelector: string) {
 
     // Keyboard navigation
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isAnimating.current) return;
-      
+      if (isAnimating.current) {
+        return;
+      }
+
       currentSectionIndex.current = getCurrentSection();
 
       if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {

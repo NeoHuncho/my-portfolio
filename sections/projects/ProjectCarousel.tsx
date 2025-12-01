@@ -1,23 +1,23 @@
 'use client';
-import type { ProjectCardItem } from '@config/projects';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { motion } from 'framer-motion';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
 import ProjectCard from './ProjectCard';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import type { ProjectCardItem } from '@config/projects';
 
-interface ProjectCarouselProps {
+type ProjectCarouselProps = {
   items: ProjectCardItem[];
-}
+};
 
 export default function ProjectCarousel({ items }: ProjectCarouselProps) {
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const isCompactArrows = useMediaQuery('(max-width: 768px)');
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    align: 'start', 
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: 'start',
     slidesToScroll: 1,
     containScroll: 'trimSnaps',
     dragFree: true,
@@ -25,7 +25,7 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
       const target = evt.target as HTMLElement;
       // Prevent dragging if the event originated from tech carousel
       return !target.closest('[data-tech-carousel]');
-    }
+    },
   });
 
   // Calculate which slides should have their images preloaded (current + 2 ahead)
@@ -45,14 +45,18 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
   }, [selectedIndex, items.length]);
 
   const onSelect = useCallback(() => {
-    if (!emblaApi) return;
+    if (!emblaApi) {
+      return;
+    }
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
     setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
   useEffect(() => {
-    if (!emblaApi) return;
+    if (!emblaApi) {
+      return;
+    }
     onSelect();
     emblaApi.on('select', onSelect);
     emblaApi.on('reInit', onSelect);
@@ -63,11 +67,15 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
   }, [emblaApi, onSelect]);
 
   const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
+    if (emblaApi) {
+      emblaApi.scrollPrev();
+    }
   }, [emblaApi]);
 
   const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
+    if (emblaApi) {
+      emblaApi.scrollNext();
+    }
   }, [emblaApi]);
 
   return (
@@ -97,20 +105,27 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
             <FaChevronRight size={isCompactArrows ? 14 : 16} />
           </button>
         )}
-        <div className="overflow-hidden cursor-grab active:cursor-grabbing h-auto flex flex-col justify-center" ref={emblaRef}>
+        <div
+          className="overflow-hidden cursor-grab active:cursor-grabbing h-auto flex flex-col justify-center"
+          ref={emblaRef}
+        >
           <div className="flex -ml-6 py-4">
             {items.map((item, index) => (
-              <div 
-                className="flex-[0_0_100%] md:flex-[0_0_60%] [@media(max-height:800px)]:md:flex-[0_0_50%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center" 
+              <div
+                className="flex-[0_0_100%] md:flex-[0_0_60%] [@media(max-height:800px)]:md:flex-[0_0_50%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center"
                 key={`${item.image.name}-${index}`}
               >
-                <ProjectCard item={item} isCompactArrows={isCompactArrows} shouldPreload={preloadIndices.has(index)} />
+                <ProjectCard
+                  item={item}
+                  isCompactArrows={isCompactArrows}
+                  shouldPreload={preloadIndices.has(index)}
+                />
               </div>
             ))}
           </div>
         </div>
       </div>
-      
+
       {items.length > 1 && (
         <div className="flex justify-center gap-2 mt-4 pb-4">
           {items.map((_, index) => (

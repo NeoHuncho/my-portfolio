@@ -12,7 +12,6 @@ import sam from '@assets/projects/professionalWork/sam.webp';
 import zenrideBackend from '@assets/projects/professionalWork/zenrideBackend.webp';
 import zenrideFrontend from '@assets/projects/professionalWork/zenrideFrontend.webp';
 import type { StaticImageData } from 'next/image';
-
 // Technology images
 import algolia from '@assets/technologies/algolia.webp';
 import docker from '@assets/technologies/docker.webp';
@@ -52,7 +51,6 @@ import vue from '@assets/technologies/vue.webp';
 import wooCommerce from '@assets/technologies/wooCommerce.webp';
 import wordPress from '@assets/technologies/Wordpress.webp';
 import zustand from '@assets/technologies/zustand.webp';
-
 
 export type LocalizedString = {
   en: string;
@@ -166,7 +164,7 @@ const technologies: Record<string, ProjectTechnology> = {
   ovh: {
     image: ovh,
     name: 'OVH',
-  },  
+  },
   reactAdmin: {
     image: reactAdmin,
     name: 'React Admin',
@@ -209,10 +207,10 @@ const technologies: Record<string, ProjectTechnology> = {
   },
 };
 
-//statusCodes Equivilants
-//1- Active
-//2 - Acquired
-//3 - Archived
+// statusCodes Equivilants
+// 1- Active
+// 2 - Acquired
+// 3 - Archived
 
 const myProjectsTabs: ProjectTabConfig[] = [
   {
@@ -239,7 +237,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
           technologies.jest,
         ],
         period: '2023 - Present',
-        link:'https://www.zenride.co/'
+        link: 'https://www.zenride.co/',
       },
       {
         title: { en: 'Zenride - Backend', fr: 'Zenride - Backend' },
@@ -247,7 +245,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
         statusCode: 1,
         subTitle: {
           en: 'Comprehensive bike fleet management system with contract lifecycle, payments, insurance, and third-party integrations.',
-          fr: "Système complet de gestion de flotte vélo (cycle de contrats, paiements, assurances, intégrations tierces).",
+          fr: 'Système complet de gestion de flotte vélo (cycle de contrats, paiements, assurances, intégrations tierces).',
         },
         image: projects.zenrideBackend,
         technologies: [
@@ -261,8 +259,6 @@ const myProjectsTabs: ProjectTabConfig[] = [
           technologies.puppeteer,
           technologies.sentry,
           technologies.jest,
-
-
         ],
         period: '2023 - Present',
       },
@@ -285,12 +281,15 @@ const myProjectsTabs: ProjectTabConfig[] = [
         period: '2021 - 2023',
       },
       {
-        title: { en: 'Cagette & Paprika React Native App', fr: 'Application Cagette & Paprika (React Native)' },
+        title: {
+          en: 'Cagette & Paprika React Native App',
+          fr: 'Application Cagette & Paprika (React Native)',
+        },
         status: 'Acquired by Auchan Retail',
         statusCode: 2,
         subTitle: {
           en: 'Groceries Home delivery App. Available for users from Lille (France), on Android & IOS.',
-          fr: "Application de livraison de courses à domicile disponible pour Lille (France), sur Android et iOS.",
+          fr: 'Application de livraison de courses à domicile disponible pour Lille (France), sur Android et iOS.',
         },
         image: projects.cpMobile,
         technologies: [
@@ -322,7 +321,10 @@ const myProjectsTabs: ProjectTabConfig[] = [
         period: '2021 - 2023',
       },
       {
-        title: { en: 'Slot Allocation Management System (SAM)', fr: 'Slot Allocation Management System (SAM)' },
+        title: {
+          en: 'Slot Allocation Management System (SAM)',
+          fr: 'Slot Allocation Management System (SAM)',
+        },
         status: 'Acquired by Auchan Retail',
         statusCode: 2,
         subTitle: {
@@ -364,15 +366,12 @@ const myProjectsTabs: ProjectTabConfig[] = [
         statusCode: 1,
         subTitle: {
           en: 'A open-source Home Assistant integration with 100+ downloads, multiple resolved issues, and merged pull requests from contributors.',
-          fr: "Intégration open-source Home Assistant (100+ téléchargements, issues résolues et PR mergés).",
+          fr: 'Intégration open-source Home Assistant (100+ téléchargements, issues résolues et PR mergés).',
         },
         image: projects.vikunjaHA,
-        technologies: [
-          technologies.python,
-          technologies.homeAssistant,
-        ],
+        technologies: [technologies.python, technologies.homeAssistant],
         github: 'https://github.com/NeoHuncho/vikunja-voice-assistant',
-        period: '2025'
+        period: '2025',
       },
       {
         title: { en: 'Open Source Contributions', fr: 'Contributions open-source' },
@@ -383,18 +382,13 @@ const myProjectsTabs: ProjectTabConfig[] = [
           fr: 'Contributions à Vikunja, AFFiNE et Home Assistant avec PR mergés, pour une expérience complète de contributeur.',
         },
         image: projects.openSource,
-        technologies: [
-          technologies.vue,
-          technologies.electron,
-          technologies.python,
-        ],
+        technologies: [technologies.vue, technologies.electron, technologies.python],
         github: [
           'https://github.com/go-vikunja/vikunja',
           'https://github.com/toeverything/AFFiNE',
-          'https://github.com/home-assistant/brands'
+          'https://github.com/home-assistant/brands',
         ],
-        period: '2024 - Present'
-        
+        period: '2024 - Present',
       },
       {
         title: { en: 'Second — Marketplace  Platform', fr: 'Second — Plateforme Marketplace' },
@@ -415,7 +409,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
         ],
         period: '2023',
         link: 'https://second-five.vercel.app/',
-        github: 'https://github.com/NeoHuncho/second'
+        github: 'https://github.com/NeoHuncho/second',
       },
       {
         title: { en: 'Portfolio Website', fr: 'Site portfolio' },
@@ -434,7 +428,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
           technologies.framerMotion,
         ],
         period: '2023 - Present',
-        github: 'https://github.com/NeoHuncho/my-portfolio'
+        github: 'https://github.com/NeoHuncho/my-portfolio',
       },
       {
         title: { en: 'Brawl Max', fr: 'Brawl Max' },
@@ -454,7 +448,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
           technologies.gcPlatform,
           technologies.firebase,
         ],
-        period: '2021 - 2022'
+        period: '2021 - 2022',
       },
     ],
   },

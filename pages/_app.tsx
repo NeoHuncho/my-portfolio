@@ -1,7 +1,7 @@
-import Header from '@components/Header';
-import { Analytics } from "@vercel/analytics/next";
-import { AppProps } from 'next/app';
+import { type AppProps } from 'next/app';
 import Head from 'next/head';
+import { Analytics } from '@vercel/analytics/next';
+import Header from '@components/Header';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import '../styles/globals.css';
 
@@ -19,11 +19,10 @@ export default function App(props: AppProps) {
         <link rel="preconnect" href="https://vitals.vercel-insights.com" />
       </Head>
 
-      <div 
+      <div
         className="min-h-screen flex flex-col overflow-hidden"
         style={{
-          background:
-            'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
+          background: 'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
         }}
       >
         <LanguageProvider>

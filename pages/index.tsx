@@ -1,10 +1,10 @@
+import dynamic from 'next/dynamic';
+import Head from 'next/head';
 import computer from '@assets/floatingComputer.svg';
 import MobileSocialShortcut from '@components/MobileSocialShortcut';
 import Section from '@components/Section';
 import { useLanguage } from 'hooks/useLanguage';
 import { useSmoothSectionScroll } from 'hooks/useSmoothSectionScroll';
-import dynamic from 'next/dynamic';
-import Head from 'next/head';
 import { HeroSection } from 'sections';
 
 // Dynamic imports with ssr: false to reduce initial bundle but load immediately on client
@@ -39,4 +39,3 @@ export default function Home() {
     </div>
   );
 }
-

@@ -5,13 +5,15 @@ const easeOutQuart = (t: number): number => 1 - Math.pow(1 - t, 4);
  */
 export const smoothScrollToElement = (
   elementId: string,
-  containerSelector: string = '.scroll-container',
-  duration: number = 600
+  containerSelector = '.scroll-container',
+  duration = 600
 ) => {
   const container = document.querySelector(containerSelector) as HTMLElement;
   const element = document.getElementById(elementId);
-  
-  if (!container || !element) return;
+
+  if (!container || !element) {
+    return;
+  }
 
   const start = container.scrollTop;
   const targetPosition = element.offsetTop;

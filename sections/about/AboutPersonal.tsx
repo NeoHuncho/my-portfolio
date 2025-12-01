@@ -1,12 +1,11 @@
 'use client';
+import { motion } from 'framer-motion';
 import InfoCard from '@components/InfoCard';
 import { personalPoints } from '@config/about';
-import { motion } from 'framer-motion';
 import { useLanguage } from '../../hooks/useLanguage';
 
 export default function AboutPersonal() {
   const { locale } = useLanguage();
-  
   return (
     <motion.div
       initial={{ opacity: 0 }}

@@ -1,14 +1,14 @@
 'use client';
 
-import { memo, ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
-interface InfoCardProps {
+type InfoCardProps = {
   icon: ReactNode;
   title: string;
   description: string;
   variant?: 'default' | 'professional';
   isLast?: boolean;
-}
+};
 
 function InfoCard({
   icon,

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { IconType } from 'react-icons';
+import { type IconType } from 'react-icons';
 import { FaComments, FaGithub, FaLinkedin } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { useLanguage } from '../hooks/useLanguage';
@@ -38,11 +38,15 @@ export default function MobileSocialShortcut() {
     }
 
     const scrollContainer = document.querySelector('.scroll-container');
-    if (!scrollContainer) return;
+    if (!scrollContainer) {
+      return;
+    }
 
     const evaluateVisibility = () => {
       const projectsSection = document.getElementById('projects-section');
-      if (!projectsSection) return;
+      if (!projectsSection) {
+        return;
+      }
 
       const threshold = window.innerHeight * 0.1;
       const projectsTop = projectsSection.getBoundingClientRect().top;

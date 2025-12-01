@@ -1,13 +1,21 @@
 'use client';
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Locale, translations, TranslationStrings } from '../config/translations';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { type Locale, translations, type TranslationStrings } from '../config/translations';
 
-interface LanguageContextValue {
+type LanguageContextValue = {
   locale: Locale;
   toggleLocale: () => void;
   strings: TranslationStrings;
-}
+};
 
 const defaultContext: LanguageContextValue = {
   locale: 'en',
@@ -21,7 +29,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>('en');
 
   useEffect(() => {
-    if (typeof navigator === 'undefined') return;
+    if (typeof navigator === 'undefined') {
+      return;
+    }
     const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase();
     setLocale(browserLang.startsWith('fr') ? 'fr' : 'en');
   }, []);

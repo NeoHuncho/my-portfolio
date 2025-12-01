@@ -5,4 +5,3 @@ export { default as HeroSection } from './hero/HeroSection';
 export { default as ProjectCard } from './projects/ProjectCard';
 export { default as ProjectCarousel } from './projects/ProjectCarousel';
 export { default as ProjectsSection } from './projects/ProjectsSection';
-

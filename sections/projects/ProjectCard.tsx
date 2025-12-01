@@ -1,16 +1,16 @@
 'use client';
-import type { ProjectCardItem } from '@config/projects';
-import useEmblaCarousel from 'embla-carousel-react';
-import Image from 'next/image';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import useEmblaCarousel from 'embla-carousel-react';
 import { FaChevronLeft, FaChevronRight, FaGithub } from 'react-icons/fa';
 import { useLanguage } from '../../hooks/useLanguage';
+import type { ProjectCardItem } from '@config/projects';
 
-interface ProjectCardProps {
+type ProjectCardProps = {
   item: ProjectCardItem;
   isCompactArrows: boolean;
   shouldPreload?: boolean;
-}
+};
 
 function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false);
@@ -20,10 +20,10 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const techContainerRef = useRef<HTMLDivElement>(null);
-  const [techEmblaRef, techEmblaApi] = useEmblaCarousel({ 
-    align: 'start', 
+  const [techEmblaRef, techEmblaApi] = useEmblaCarousel({
+    align: 'start',
     containScroll: 'trimSnaps',
-    dragFree: true
+    dragFree: true,
   });
 
   const { strings, locale } = useLanguage();
@@ -40,13 +40,17 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
   }, [item.technologies.length]);
 
   const onSelect = useCallback(() => {
-    if (!techEmblaApi) return;
+    if (!techEmblaApi) {
+      return;
+    }
     setCanScrollPrev(techEmblaApi.canScrollPrev());
     setCanScrollNext(techEmblaApi.canScrollNext());
   }, [techEmblaApi]);
 
   useEffect(() => {
-    if (!techEmblaApi) return;
+    if (!techEmblaApi) {
+      return;
+    }
     onSelect();
     techEmblaApi.on('select', onSelect);
     techEmblaApi.on('reInit', onSelect);
@@ -62,28 +66,45 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
     return () => window.removeEventListener('resize', checkOverflow);
   }, [checkOverflow]);
 
-  const scrollPrev = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (techEmblaApi) techEmblaApi.scrollPrev();
-  }, [techEmblaApi]);
+  const scrollPrev = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (techEmblaApi) {
+        techEmblaApi.scrollPrev();
+      }
+    },
+    [techEmblaApi]
+  );
 
-  const scrollNext = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (techEmblaApi) techEmblaApi.scrollNext();
-  }, [techEmblaApi]);
+  const scrollNext = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (techEmblaApi) {
+        techEmblaApi.scrollNext();
+      }
+    },
+    [techEmblaApi]
+  );
 
-  const handleTechInteraction = useCallback((e: React.MouseEvent | React.TouchEvent | React.WheelEvent) => {
-    e.stopPropagation();
-  }, []);
+  const handleTechInteraction = useCallback(
+    (e: React.MouseEvent | React.TouchEvent | React.WheelEvent) => {
+      e.stopPropagation();
+    },
+    []
+  );
 
   const getStatusColor = (code: number) => {
-    switch(code) {
-      case 1: return 'bg-blue-600';
-      case 2: return 'bg-green-600';
-      case 3: return 'bg-red-600';
-      default: return 'bg-blue-600';
+    switch (code) {
+      case 1:
+        return 'bg-blue-600';
+      case 2:
+        return 'bg-green-600';
+      case 3:
+        return 'bg-red-600';
+      default:
+        return 'bg-blue-600';
     }
   };
 
@@ -127,18 +148,20 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
           />
         </div>
       </a>
-      
+
       <div className="flex flex-col grow p-4 md:p-6 [@media(max-height:800px)]:md:p-4 overflow-hidden">
         <div className="grow">
           <div className="flex items-center justify-between mb-2 md:mb-3 [@media(max-height:800px)]:md:mb-2">
-            <h3 className="text-xl md:text-2xl [@media(max-height:800px)]:md:text-xl font-bold text-white pr-2">{localizedTitle}</h3>
+            <h3 className="text-xl md:text-2xl [@media(max-height:800px)]:md:text-xl font-bold text-white pr-2">
+              {localizedTitle}
+            </h3>
             {githubLinks.length > 0 && (
               <div className="flex gap-2 shrink-0">
                 {githubLinks.map((link, index) => (
-                  <a 
+                  <a
                     key={index}
-                    href={link} 
-                    target="_blank" 
+                    href={link}
+                    target="_blank"
                     rel="noreferrer"
                     className="hover:opacity-80 transition-opacity"
                   >
@@ -167,8 +190,8 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                     <FaChevronLeft size={isCompactArrows ? 10 : 12} />
                   </button>
                 )}
-                <div 
-                  className="overflow-hidden cursor-grab active:cursor-grabbing pt-12 -mt-12" 
+                <div
+                  className="overflow-hidden cursor-grab active:cursor-grabbing pt-12 -mt-12"
                   ref={techEmblaRef}
                   data-tech-carousel
                   onPointerDown={handleTechInteraction}
@@ -176,8 +199,8 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                 >
                   <div className="flex gap-3">
                     {item.technologies.map((technology, index) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all shrink-0"
                         onMouseEnter={() => setHoveredTech(technology.name)}
                         onMouseLeave={() => setHoveredTech(null)}
@@ -196,7 +219,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                         {hoveredTech === technology.name && (
                           <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg z-20 pointer-events-none">
                             {technology.name}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
                           </div>
                         )}
                       </div>
@@ -217,8 +240,8 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
             ) : (
               <div className="flex gap-3 justify-center mb-3 md:mb-5 [@media(max-height:800px)]:md:mb-3">
                 {item.technologies.map((technology, index) => (
-                  <div 
-                    key={index}  
+                  <div
+                    key={index}
                     className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all"
                     onMouseEnter={() => setHoveredTech(technology.name)}
                     onMouseLeave={() => setHoveredTech(null)}
@@ -237,7 +260,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                     {hoveredTech === technology.name && (
                       <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg z-20 pointer-events-none">
                         {technology.name}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
                       </div>
                     )}
                   </div>

@@ -2,19 +2,19 @@
 
 import { memo } from 'react';
 
-interface Tab {
+type Tab = {
   id: string;
   label: string;
-}
+};
 
-interface TabSelectorProps {
+type TabSelectorProps = {
   tabs: Tab[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
   showGlow?: boolean;
   hasUserSwitched?: boolean;
   size?: 'sm' | 'md' | 'lg';
-}
+};
 
 function TabSelector({
   tabs,
@@ -48,9 +48,7 @@ function TabSelector({
         >
           <span
             className={`transition-colors duration-300 ${
-              activeTab === tab.id
-                ? 'text-blue-400'
-                : 'text-gray-300 group-hover:text-white'
+              activeTab === tab.id ? 'text-blue-400' : 'text-gray-300 group-hover:text-white'
             }`}
           >
             {tab.label}

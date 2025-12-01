@@ -1,13 +1,12 @@
-import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { FaArrowDown } from 'react-icons/fa';
-
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { FaArrowDown } from 'react-icons/fa';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { smoothScrollToElement } from '../../utils/smoothScrollToElement';
 
-interface HeroSectionProps {
+type HeroSectionProps = {
   title: string;
   image: {
     src: string;
@@ -17,15 +16,9 @@ interface HeroSectionProps {
   link?: string;
   subTitle?: string;
   ctaLabel?: string;
-}
+};
 
-export default function HeroSection({
-  title,
-  image,
-  link,
-  subTitle,
-  ctaLabel,
-}: HeroSectionProps) {
+export default function HeroSection({ title, image, link, subTitle, ctaLabel }: HeroSectionProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const isSmall = useMediaQuery('(max-width: 1000px)');
 
@@ -41,21 +34,23 @@ export default function HeroSection({
       style={{ zIndex: link ? 2 : 1 }}
     >
       {!link && (
-        <button 
+        <button
           onClick={() => smoothScrollToElement('projects-section')}
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10 cursor-pointer hover:opacity-80 transition-opacity"
           aria-label={ctaLabel ?? 'Scroll to projects'}
         >
           <motion.div
             animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4 shadow-lg"
           >
             <FaArrowDown size={24} color="white" />
           </motion.div>
         </button>
       )}
-      <div className={`w-full items-center grid grid-cols-12 px-4 md:px-8 ${isSmall ? '-mt-[30%]' : '-mt-24'}`}>
+      <div
+        className={`w-full items-center grid grid-cols-12 px-4 md:px-8 ${isSmall ? '-mt-[30%]' : '-mt-24'}`}
+      >
         <div className={`flex ${!isSmall ? 'col-span-6 order-1' : 'col-span-12 order-3'}`}>
           <Link href={link || ''} passHref>
             <motion.div
@@ -65,10 +60,21 @@ export default function HeroSection({
               transition={{ ease: 'easeOut', duration: 1 }}
               style={{ cursor: link ? 'pointer' : '' }}
             >
-              <h1 className='font-extrabold' style={{ fontSize: !isSmall ? 90 : 50, color: 'whitesmoke' }}>{title}</h1>
-              <span className={`bg-[#196dbd] block mt-[1vh] h-[0.26vh] rounded-[5px] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`} />
-              <span className={`bg-[#196dbd] block rounded-[5px] h-[0.26vh] mt-[2vh] mb-[2vh] ml-[7vw] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`} />
-              {subTitle && <h2 style={{ fontWeight: 300, fontSize: 37, color: 'white' }}>{subTitle}</h2>}
+              <h1
+                className="font-extrabold"
+                style={{ fontSize: !isSmall ? 90 : 50, color: 'whitesmoke' }}
+              >
+                {title}
+              </h1>
+              <span
+                className={`bg-[#196dbd] block mt-[1vh] h-[0.26vh] rounded-[5px] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`}
+              />
+              <span
+                className={`bg-[#196dbd] block rounded-[5px] h-[0.26vh] mt-[2vh] mb-[2vh] ml-[7vw] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`}
+              />
+              {subTitle && (
+                <h2 style={{ fontWeight: 300, fontSize: 37, color: 'white' }}>{subTitle}</h2>
+              )}
             </motion.div>
           </Link>
         </div>
