@@ -14,6 +14,7 @@ type TabSelectorProps = {
   showGlow?: boolean;
   hasUserSwitched?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  fullWidth?: boolean;
 };
 
 function TabSelector({
@@ -23,6 +24,7 @@ function TabSelector({
   showGlow = false,
   hasUserSwitched = true,
   size = 'md',
+  fullWidth = false,
 }: TabSelectorProps) {
   const sizeClasses = {
     sm: 'px-4 py-2 text-sm',
@@ -32,7 +34,7 @@ function TabSelector({
 
   return (
     <div
-      className={`relative bg-gray-900/50 p-1.5 rounded-xl inline-flex gap-2 shadow-lg border border-gray-700/50 backdrop-blur-sm ${
+      className={`relative bg-gray-900/50 p-1.5 rounded-xl ${fullWidth ? 'flex w-full' : 'inline-flex'} gap-2 shadow-lg border border-gray-700/50 backdrop-blur-sm ${
         showGlow ? 'animate-glow' : 'animate-glow-fadeout'
       }`}
     >
@@ -40,7 +42,7 @@ function TabSelector({
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`relative ${sizeClasses[size]} font-semibold transition-all duration-300 cursor-pointer group rounded-lg ${
+          className={`relative ${sizeClasses[size]} ${fullWidth ? 'flex-1' : ''} font-semibold transition-all duration-300 cursor-pointer group rounded-lg ${
             !hasUserSwitched && activeTab !== tab.id
               ? 'animate-[pulse_2s_ease-in-out_infinite]'
               : ''

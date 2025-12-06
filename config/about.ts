@@ -50,15 +50,15 @@ export const professionalPoints: AboutPoint[] = [
     title: { en: 'Team Player', fr: "Esprit d'équipe" },
     description: {
       en: 'I build genuine relationships with colleagues—fluid conversations, shared laughs, and collaboration.',
-      fr: 'Je crée des relations authentiques avec mes collègues—échanges fluides, rires partagés et collaboration.',
+      fr: 'Je crée des relations authentiques avec mes collègues—échanges fluides, rires et collaboration.',
     },
   },
   {
     icon: '⚡',
     title: { en: 'Fast & Responsive', fr: 'Rapide & Réactif' },
     description: {
-      en: 'Quick context switching. Fast replies to DMs and technical questions.',
-      fr: 'Je réponds avec précision aux questions complexes, même en cas de changement de contexte rapide.',
+      en: 'I quickly adapt to new contexts and provide fast, clear replies to messages and technical questions.',
+      fr: 'Je réponds précisément aux questions complexes, même en cas de changement de contexte rapide.',
     },
   },
   {
@@ -76,48 +76,48 @@ export const personalPoints: AboutPoint[] = [
     icon: '🌍',
     title: { en: 'Bilingual', fr: 'Bilingue' },
     description: {
-      en: 'Native fluency in English & French.',
-      fr: 'Maîtrise native de l’anglais et du français.',
+      en: 'I navigate different cultural contexts with ease, possessing native fluency in both English and French.',
+      fr: "Je navigue aisément entre différentes cultures avec une maîtrise native de l'anglais et du français.",
     },
   },
   {
     icon: '🔧',
-    title: { en: 'Tinkerer', fr: 'Bidouilleur' },
+    title: { en: 'Tech Tinkerer', fr: 'Bidouilleur' },
     description: {
-      en: 'Self-hosting, HomeLabs, and Open Source enthusiast.',
-      fr: "Passionné d'auto-hébergement, de HomeLabs et d'Open Source.",
-    },
-  },
-  {
-    icon: '🎲',
-    title: { en: 'Strategist', fr: 'Stratège' },
-    description: {
-      en: 'Complex board games and collaborative strategy.',
-      fr: "J'aime les jeux de société complexes et la stratégie collaborative.",
+      en: 'I value digital ownership by building and maintaining self-hosted open-source environments.',
+      fr: 'Je valorise la propriété numérique en bâtissant des environnements open-source auto-hébergés.',
     },
   },
   {
     icon: '🥗',
-    title: { en: 'Health-Conscious', fr: 'Souci de santé' },
+    title: { en: 'Health', fr: 'Santé' },
     description: {
-      en: 'Invested in nutrition and overall well-being.',
-      fr: 'Investi dans la nutrition et le bien-être global.',
+      en: 'I optimize performance and long-term well-being through a disciplined approach to nutrition.',
+      fr: "J'optimise ma performance et mon bien-être par une approche disciplinée de la nutrition.",
     },
   },
   {
     icon: '😊',
     title: { en: 'Positive Energy', fr: 'Énergie positive' },
     description: {
-      en: 'I embrace life with a smile and optimism.',
-      fr: 'Je vis avec le sourire et l’optimisme.',
+      en: 'I maintain resilience by rationalizing setbacks to return quickly to optimism.',
+      fr: "Je reste résilient en rationalisant les revers pour revenir rapidement à l'optimisme.",
     },
   },
   {
     icon: '🏃',
-    title: { en: 'Active Lifestyle', fr: 'Mode de vie actif' },
+    title: { en: 'Active Lifestyle', fr: 'Vie active' },
     description: {
-      en: 'From climbing to swimming—I thrive on physical challenges and diverse sports.',
-      fr: "De l'escalade à la natation, je m'épanouis dans les défis physiques et les sports variés.",
+      en: 'I thrive on physical discipline, pushing limits through sports like climbing and swimming.',
+      fr: "Je m'épanouis dans la discipline physique, repoussant mes limites via l'escalade et la natation.",
+    },
+  },
+  {
+    icon: '🎲',
+    title: { en: 'Strategist', fr: 'Stratège' },
+    description: {
+      en: 'I seek complex challenges—like strategic board games—that offer rewarding tactical depth.',
+      fr: "J'aime relever des défis et jeux complexes offrant une profondeur tactique gratifiante.",
     },
   },
 ];

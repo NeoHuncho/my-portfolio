@@ -42,7 +42,7 @@ export default function ProjectsSection() {
       className="h-full flex flex-col relative overflow-hidden justify-center"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.00)' }}
     >
-      <div className="flex flex-col items-center justify-center gap-3 md:gap-6 px-4 md:px-8 w-full">
+      <div className="flex flex-col items-center justify-center gap-3 md:gap-6 px-4 md:px-8 w-full -mt-[50px] md:mt-0">
         {/* Tabs - 12px above carousel */}
         <div id="project-tabs-container" className="shrink-0 w-full flex justify-center z-20">
           <TabSelector

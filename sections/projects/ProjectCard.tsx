@@ -1,10 +1,10 @@
 'use client';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import type { ProjectCardItem } from '@config/projects';
 import useEmblaCarousel from 'embla-carousel-react';
+import Image from 'next/image';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { FaChevronLeft, FaChevronRight, FaGithub } from 'react-icons/fa';
 import { useLanguage } from '../../hooks/useLanguage';
-import type { ProjectCardItem } from '@config/projects';
 
 type ProjectCardProps = {
   item: ProjectCardItem;
@@ -179,19 +179,19 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
         <div className="mt-auto pt-2 md:pt-4 border-t border-gray-700">
           <div ref={techContainerRef}>
             {needsCarousel ? (
-              <div className="relative mb-3 md:mb-5 [@media(max-height:800px)]:md:mb-3">
+              <div className="relative mb-1 md:mb-2">
                 {canScrollPrev && (
                   <button
                     onClick={scrollPrev}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white shadow-lg transition-all ${isCompactArrows ? 'p-1.5' : 'p-2.5'}`}
+                    className={`absolute -left-2 md:left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white shadow-lg transition-all ${isCompactArrows ? 'p-1.5' : 'p-2.5'}`}
                     aria-label="Scroll left"
                   >
                     <FaChevronLeft size={isCompactArrows ? 10 : 12} />
                   </button>
                 )}
                 <div
-                  className="overflow-hidden cursor-grab active:cursor-grabbing pt-12 -mt-12"
+                  className="overflow-hidden cursor-grab active:cursor-grabbing"
                   ref={techEmblaRef}
                   data-tech-carousel
                   onPointerDown={handleTechInteraction}
@@ -230,7 +230,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                   <button
                     onClick={scrollNext}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white shadow-lg transition-all ${isCompactArrows ? 'p-1.5' : 'p-2.5'}`}
+                    className={`absolute -right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-900/90 hover:bg-gray-900 text-white shadow-lg transition-all ${isCompactArrows ? 'p-1.5' : 'p-2.5'}`}
                     aria-label="Scroll right"
                   >
                     <FaChevronRight size={isCompactArrows ? 10 : 12} />
@@ -238,7 +238,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                 )}
               </div>
             ) : (
-              <div className="flex gap-3 justify-center mb-3 md:mb-5 [@media(max-height:800px)]:md:mb-3">
+              <div className="flex gap-3 justify-center mb-1 md:mb-2">
                 {item.technologies.map((technology, index) => (
                   <div
                     key={index}
@@ -269,13 +269,13 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
             )}
           </div>
 
-          <button
-            disabled
-            className={`w-full py-2.5 rounded-lg font-semibold text-white text-sm tracking-wide uppercase shadow-md ${getStatusColor(item.statusCode)}`}
-          >
-            {statusText}
-          </button>
         </div>
+      </div>
+
+      <div
+        className={`py-2.5 text-center font-semibold text-white text-sm tracking-wide uppercase pointer-events-none ${getStatusColor(item.statusCode)}`}
+      >
+        {statusText}
       </div>
     </div>
   );

@@ -37,8 +37,31 @@ export default function AboutSection() {
   if (isMobile) {
     return (
       <div className="h-full flex flex-col relative bg-gray-900/30 overflow-y-auto overflow-x-hidden">
-        {/* Tabs at top */}
-        <div className="shrink-0 flex justify-center pt-4 pb-4">
+        {/* Profile Image at top - shared for both tabs */}
+        <div className="shrink-0 flex justify-center pt-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 0.9 }}
+            transition={{ duration: 0.5 }}
+            className="relative w-28 h-28"
+          >
+            <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl shadow-blue-500/20">
+              <Image
+                src={profileImage}
+                alt="Profile"
+                fill
+                sizes="112px"
+                style={{ objectFit: 'cover' }}
+                className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                onLoad={() => setImageLoaded(true)}
+                priority
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Full-width Tabs below image */}
+        <div className="shrink-0 px-4 pt-4 pb-4">
           <TabSelector
             tabs={tabs}
             activeTab={activeTab}
@@ -46,6 +69,7 @@ export default function AboutSection() {
             showGlow={showGlow}
             hasUserSwitched={hasUserSwitched}
             size="sm"
+            fullWidth
           />
         </div>
 
@@ -61,26 +85,6 @@ export default function AboutSection() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col items-center gap-4 pb-16"
               >
-                {/* Profile Image for Professional - No hover animation on mobile */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 0.9 }}
-                  transition={{ duration: 0.5 }}
-                  className="relative w-28 h-28"
-                >
-                  <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl shadow-blue-500/20">
-                    <Image
-                      src={profileImage}
-                      alt="Profile"
-                      fill
-                      sizes="112px"
-                      style={{ objectFit: 'cover' }}
-                      className={`transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                      onLoad={() => setImageLoaded(true)}
-                      priority
-                    />
-                  </div>
-                </motion.div>
                 <AboutProfessional />
               </motion.div>
             ) : (
@@ -92,12 +96,6 @@ export default function AboutSection() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col items-center gap-4 pb-16"
               >
-                <div className="text-center py-2">
-                  <h2 className="text-2xl font-bold text-white mb-1">
-                    {strings.about.mobileTitle}
-                  </h2>
-                  <p className="text-gray-400 text-sm">{strings.about.mobileSubtitle}</p>
-                </div>
                 <AboutPersonal />
               </motion.div>
             )}
