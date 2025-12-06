@@ -1,10 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import TabSelector from '@components/TabSelector';
 import projectTabs, { type ProjectTabConfig } from '@config/projects';
-import ProjectCarousel from './ProjectCarousel';
+import { AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
+import ProjectCarousel from './ProjectCarousel';
 
 export default function ProjectsSection() {
   const [activeTab, setActiveTab] = useState<ProjectTabConfig['id']>(projectTabs[0].id);

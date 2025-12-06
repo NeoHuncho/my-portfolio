@@ -1,14 +1,14 @@
 'use client';
-import { useState } from 'react';
-import Image from 'next/image';
-import { AnimatePresence, motion } from 'framer-motion';
 import profileImage from '@assets/about/profile.webp';
 import TabSelector from '@components/TabSelector';
 import { aboutTabs } from '@config/about';
-import AboutPersonal from './AboutPersonal';
-import AboutProfessional from './AboutProfessional';
+import { AnimatePresence, motion } from 'framer-motion';
+import Image from 'next/image';
+import { useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import AboutPersonal from './AboutPersonal';
+import AboutProfessional from './AboutProfessional';
 
 export default function AboutSection() {
   const [activeTab, setActiveTab] = useState(aboutTabs[0].id);
