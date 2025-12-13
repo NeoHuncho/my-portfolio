@@ -3,16 +3,21 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
+import { IoDocumentText } from 'react-icons/io5';
 import { MdEmail } from 'react-icons/md';
 import { useLanguage } from '../hooks/useLanguage';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { smoothScrollToElement } from '../utils/smoothScrollToElement';
+const CV_URLS = {
+  en: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_English.pdf',
+  fr: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_French.pdf',
+};
 
 export default function Header() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInProjectsSection, setIsInProjectsSection] = useState(false);
   const isSmall = useMediaQuery('(max-width: 850px)');
-  const { strings, toggleLocale } = useLanguage();
+  const { strings, toggleLocale, locale } = useLanguage();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -48,7 +53,7 @@ export default function Header() {
     <div
       className={`fixed z-10 top-0 left-0 w-full px-6 md:px-[1%] pt-4 pb-2 grid grid-cols-12 items-center pointer-events-none transition-transform duration-200 ${isSmall && isInProjectsSection ? '-translate-y-full' : ''}`}
     >
-      <div className="col-span-4 transition-opacity duration-300 pointer-events-auto">
+      <div className={`${isSmall ?'col-span-3':'col-span-4'}  transition-opacity duration-300 pointer-events-auto`}>
         <Link passHref href="/">
           <h2
             className={`font-medium text-white cursor-pointer text-2xl ${isSmall ? 'pt-1' : ''}`}
@@ -60,7 +65,7 @@ export default function Header() {
         </Link>
       </div>
       <div
-        className={`transition-all duration-300 pointer-events-none flex items-center ${isInProjectsSection ? 'col-span-8 justify-end pr-8' : isSmall ? 'col-span-6' : 'absolute left-0 w-full justify-center'}`}
+        className={`transition-all duration-300 pointer-events-none flex items-center ${isInProjectsSection ? 'col-span-8 justify-end pr-8' : isSmall ? 'col-span-5 ml-2' : 'absolute left-0 w-full justify-center'}`}
       >
         <motion.div
           key={isInProjectsSection ? 'projects' : 'hero'}
@@ -69,6 +74,15 @@ export default function Header() {
           transition={{ duration: 0.3 }}
           className={`flex gap-4 items-center pointer-events-auto ${isInProjectsSection ? 'justify-end' : isSmall ? 'pt-2 justify-start' : 'justify-center'}`}
         >
+          <a
+            className="cursor-pointer"
+            href={CV_URLS[locale]}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <IoDocumentText   size={26} color="white" />
+          </a>
+
           <a
             className="cursor-pointer"
             href="https://github.com/NeoHuncho"
