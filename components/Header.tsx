@@ -9,8 +9,8 @@ import { useLanguage } from '../hooks/useLanguage';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { smoothScrollToElement } from '../utils/smoothScrollToElement';
 const CV_URLS = {
-  en: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_English.pdf',
-  fr: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_French.pdf',
+  en: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_EN_William_Guinaudie.pdf',
+  fr: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_FR_William_Guinaudie.pdf',
 };
 
 export default function Header() {

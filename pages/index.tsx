@@ -1,10 +1,9 @@
-import dynamic from 'next/dynamic';
-import Head from 'next/head';
-import computer from '@assets/floatingComputer.svg';
 import MobileSocialShortcut from '@components/MobileSocialShortcut';
 import Section from '@components/Section';
 import { useLanguage } from 'hooks/useLanguage';
 import { useSmoothSectionScroll } from 'hooks/useSmoothSectionScroll';
+import dynamic from 'next/dynamic';
+import Head from 'next/head';
 import { HeroSection } from 'sections';
 
 // Dynamic imports with ssr: false to reduce initial bundle but load immediately on client
@@ -18,7 +17,7 @@ const AboutSection = dynamic(() => import('sections/about/AboutSection'), {
 export default function Home() {
   // Enable smooth section scrolling for Chrome
   useSmoothSectionScroll('.scroll-container');
-  const { strings } = useLanguage();
+  const { strings, locale } = useLanguage();
 
   return (
     <div style={{ margin: 0 }} className="scroll-container">
@@ -29,9 +28,10 @@ export default function Home() {
       </Head>
       <HeroSection
         title="WILLIAM GUINAUDIE"
-        image={{ src: computer, width: 657, height: 506 }}
+        image={{ src: '/assets/floatingComputer.svg', width: 657, height: 506 }}
         subTitle={strings.heroSubtitle}
         ctaLabel={strings.heroScrollLabel}
+        locale={locale}
       />
       <Section Component={ProjectsSection} id="projects-section" />
       <Section Component={AboutSection} id="about-section" />

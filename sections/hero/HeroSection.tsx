@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { useState } from 'react';
 import { FaArrowDown } from 'react-icons/fa';
+import type { Locale } from '../../config/translations';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { smoothScrollToElement } from '../../utils/smoothScrollToElement';
 
@@ -16,11 +16,13 @@ type HeroSectionProps = {
   link?: string;
   subTitle?: string;
   ctaLabel?: string;
+  locale?: Locale;
 };
 
-export default function HeroSection({ title, image, link, subTitle, ctaLabel }: HeroSectionProps) {
+export default function HeroSection({ title, image, link, subTitle, ctaLabel, locale }: HeroSectionProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const isSmall = useMediaQuery('(max-width: 1000px)');
+  const isNarrow = useMediaQuery('(max-width: 410px)');
 
   const variantstext = {
     hidden: { opacity: 0, x: -50 },
@@ -73,7 +75,7 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel }: 
                 className={`bg-[#196dbd] block rounded-[5px] h-[0.26vh] mt-[2vh] mb-[2vh] ml-[7vw] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`}
               />
               {subTitle && (
-                <h2 style={{ fontWeight: 300, fontSize: 37, color: 'white' }}>{subTitle}</h2>
+                <h2 style={{ fontWeight: 300, fontSize: isNarrow && locale === 'fr' ? 33 : 37, color: 'white' }}>{subTitle}</h2>
               )}
             </motion.div>
           </Link>
@@ -82,26 +84,24 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel }: 
           <Link href={link || ''} passHref>
             <motion.div
               initial={link ? { opacity: 0, x: 0 } : { opacity: 0, x: 50, y: -50 }}
-              animate={imageLoaded && (link ? { opacity: [0, 0, 1] } : { opacity: 1, x: 0, y: 0 })}
+              animate={link ? { opacity: imageLoaded ? 1 : 0 } : { opacity: 1, x: 0, y: 0 }}
               transition={
-                imageLoaded
-                  ? link
-                    ? { times: [0, 0.6, 1], ease: 'easeInOut' }
-                    : { ease: 'easeOut', duration: 1.5 }
-                  : {}
+                link
+                  ? { ease: 'easeInOut', duration: 0.6 }
+                  : { ease: 'easeOut', duration: 1.5 }
               }
               style={{ cursor: link ? 'pointer' : '' }}
             >
               <div className="animate-float">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={image.src}
                   alt="Computer"
                   width={image.width}
                   height={image.height}
-                  sizes="(max-width: 1000px) 95vw, 50vw"
                   style={{ width: '100%', height: 'auto' }}
-                  priority
                   onLoad={() => setImageLoaded(true)}
+                  fetchPriority="high"
                 />
               </div>
             </motion.div>
