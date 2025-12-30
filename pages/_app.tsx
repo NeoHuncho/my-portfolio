@@ -14,7 +14,7 @@ export default function App(props: AppProps) {
       <Head>
         <title>Portfolio</title>
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
-        <link rel="shortcut icon" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="dns-prefetch" href="https://github.com" />
         <link rel="dns-prefetch" href="https://linkedin.com" />
         <link rel="preconnect" href="https://vitals.vercel-insights.com" />
