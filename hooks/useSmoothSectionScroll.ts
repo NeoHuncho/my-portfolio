@@ -7,6 +7,7 @@ export function useSmoothSectionScroll(containerSelector: string) {
   const isAnimating = useRef(false);
   const currentSectionIndex = useRef(0);
   const animationFrameId = useRef<number | null>(null);
+  const cooldownTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     const container = document.querySelector(containerSelector) as HTMLElement;
@@ -64,6 +65,11 @@ export function useSmoothSectionScroll(containerSelector: string) {
         cancelAnimationFrame(animationFrameId.current);
       }
 
+      // Clear any existing cooldown
+      if (cooldownTimeout.current) {
+        clearTimeout(cooldownTimeout.current);
+      }
+
       isAnimating.current = true;
       currentSectionIndex.current = targetIndex;
 
@@ -99,8 +105,13 @@ export function useSmoothSectionScroll(containerSelector: string) {
         } else {
           // Ensure we land exactly on target
           container.scrollTop = targetPosition;
-          isAnimating.current = false;
           animationFrameId.current = null;
+
+          // Add cooldown period to prevent immediate re-triggering
+          cooldownTimeout.current = window.setTimeout(() => {
+            isAnimating.current = false;
+            cooldownTimeout.current = null;
+          }, 300); // 300ms cooldown after animation ends
         }
       };
 
@@ -120,50 +131,45 @@ export function useSmoothSectionScroll(containerSelector: string) {
       return 0;
     };
 
-    // Accumulate wheel delta for better trackpad support
-    let accumulatedDelta = 0;
-    let wheelTimeout: number | null = null;
-    const DELTA_THRESHOLD = 50; // Minimum delta to trigger scroll
+    // Track last scroll direction and time to prevent accidental double-scrolls
+    let lastScrollTime = 0;
+    let lastScrollDirection = 0;
+    const SCROLL_COOLDOWN = 800; // Minimum time between scroll triggers in same direction
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      // If already animating, ignore
+      // If already animating, ignore completely
       if (isAnimating.current) {
         return;
       }
 
-      // Accumulate delta for smoother trackpad handling
-      accumulatedDelta += e.deltaY;
+      const now = Date.now();
+      const direction = e.deltaY > 0 ? 1 : -1;
 
-      // Clear previous timeout
-      if (wheelTimeout) {
-        clearTimeout(wheelTimeout);
+      // Prevent rapid scrolling in the same direction
+      if (direction === lastScrollDirection && now - lastScrollTime < SCROLL_COOLDOWN) {
+        return;
       }
 
-      // Reset accumulated delta after inactivity
-      wheelTimeout = window.setTimeout(() => {
-        accumulatedDelta = 0;
-      }, 150);
-
-      // Only trigger if threshold is reached
-      if (Math.abs(accumulatedDelta) < DELTA_THRESHOLD) {
+      // Require minimum delta to trigger (filters out tiny trackpad movements)
+      if (Math.abs(e.deltaY) < 30) {
         return;
       }
 
       // Update current section based on actual position
       currentSectionIndex.current = getCurrentSection();
 
-      if (accumulatedDelta > 0) {
+      lastScrollTime = now;
+      lastScrollDirection = direction;
+
+      if (direction > 0) {
         // Scrolling down
         animateToSection(currentSectionIndex.current + 1);
-      } else if (accumulatedDelta < 0) {
+      } else {
         // Scrolling up
         animateToSection(currentSectionIndex.current - 1);
       }
-
-      // Reset after triggering
-      accumulatedDelta = 0;
     };
 
     // Keyboard navigation
@@ -202,6 +208,9 @@ export function useSmoothSectionScroll(containerSelector: string) {
       });
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
+      }
+      if (cooldownTimeout.current) {
+        clearTimeout(cooldownTimeout.current);
       }
     };
   }, [containerSelector]);
