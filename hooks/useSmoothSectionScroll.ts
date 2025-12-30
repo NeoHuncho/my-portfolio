@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 
-const easeOutQuart = (t: number): number => 1 - Math.pow(1 - t, 4);
+// Smoother easing - cubic bezier approximation for a more natural feel
+const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
 
 export function useSmoothSectionScroll(containerSelector: string) {
   const isAnimating = useRef(false);
   const currentSectionIndex = useRef(0);
-  const cooldownTimeout = useRef<number | null>(null);
+  const animationFrameId = useRef<number | null>(null);
 
   useEffect(() => {
     const container = document.querySelector(containerSelector) as HTMLElement;
@@ -50,22 +51,17 @@ export function useSmoothSectionScroll(containerSelector: string) {
       section.style.scrollSnapAlign = 'none';
     });
 
-    const scheduleAnimationEnd = () => {
-      if (cooldownTimeout.current) {
-        clearTimeout(cooldownTimeout.current);
-      }
-      cooldownTimeout.current = window.setTimeout(() => {
-        isAnimating.current = false;
-        cooldownTimeout.current = null;
-      }, 350);
-    };
-
     const animateToSection = (targetIndex: number) => {
       if (targetIndex < 0 || targetIndex >= sections.length) {
         return;
       }
       if (isAnimating.current) {
         return;
+      }
+
+      // Cancel any pending animation frame
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
       }
 
       isAnimating.current = true;
@@ -75,24 +71,40 @@ export function useSmoothSectionScroll(containerSelector: string) {
       const start = container.scrollTop;
       const targetPosition = targetSection.offsetTop;
       const distance = targetPosition - start;
-      const duration = 600; // ms - smooth animation
-      const startTime = performance.now();
+
+      // Skip animation if distance is negligible
+      if (Math.abs(distance) < 1) {
+        isAnimating.current = false;
+        return;
+      }
+
+      const duration = 500; // Slightly faster for snappier feel
+      let startTime: number | null = null;
 
       const animate = (currentTime: number) => {
+        if (startTime === null) {
+          startTime = currentTime;
+        }
+
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = easeOutQuart(progress);
+        const easedProgress = easeOutCubic(progress);
 
-        container.scrollTop = start + distance * easedProgress;
+        // Round to avoid sub-pixel jitter
+        const newScrollTop = Math.round(start + distance * easedProgress);
+        container.scrollTop = newScrollTop;
 
         if (progress < 1) {
-          requestAnimationFrame(animate);
+          animationFrameId.current = requestAnimationFrame(animate);
         } else {
-          scheduleAnimationEnd();
+          // Ensure we land exactly on target
+          container.scrollTop = targetPosition;
+          isAnimating.current = false;
+          animationFrameId.current = null;
         }
       };
 
-      requestAnimationFrame(animate);
+      animationFrameId.current = requestAnimationFrame(animate);
     };
 
     // Determine current section based on scroll position
@@ -108,6 +120,11 @@ export function useSmoothSectionScroll(containerSelector: string) {
       return 0;
     };
 
+    // Accumulate wheel delta for better trackpad support
+    let accumulatedDelta = 0;
+    let wheelTimeout: number | null = null;
+    const DELTA_THRESHOLD = 50; // Minimum delta to trigger scroll
+
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
@@ -116,16 +133,37 @@ export function useSmoothSectionScroll(containerSelector: string) {
         return;
       }
 
+      // Accumulate delta for smoother trackpad handling
+      accumulatedDelta += e.deltaY;
+
+      // Clear previous timeout
+      if (wheelTimeout) {
+        clearTimeout(wheelTimeout);
+      }
+
+      // Reset accumulated delta after inactivity
+      wheelTimeout = window.setTimeout(() => {
+        accumulatedDelta = 0;
+      }, 150);
+
+      // Only trigger if threshold is reached
+      if (Math.abs(accumulatedDelta) < DELTA_THRESHOLD) {
+        return;
+      }
+
       // Update current section based on actual position
       currentSectionIndex.current = getCurrentSection();
 
-      if (e.deltaY > 0) {
+      if (accumulatedDelta > 0) {
         // Scrolling down
         animateToSection(currentSectionIndex.current + 1);
-      } else if (e.deltaY < 0) {
+      } else if (accumulatedDelta < 0) {
         // Scrolling up
         animateToSection(currentSectionIndex.current - 1);
       }
+
+      // Reset after triggering
+      accumulatedDelta = 0;
     };
 
     // Keyboard navigation
@@ -162,8 +200,8 @@ export function useSmoothSectionScroll(containerSelector: string) {
       sections.forEach((section, index) => {
         section.style.scrollSnapAlign = originalSectionSnapAligns[index];
       });
-      if (cooldownTimeout.current) {
-        clearTimeout(cooldownTimeout.current);
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
       }
     };
   }, [containerSelector]);

@@ -88,9 +88,10 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
               transition={
                 link
                   ? { ease: 'easeInOut', duration: 0.6 }
-                  : { ease: 'easeOut', duration: 1.5 }
+                  : { ease: 'easeOut', duration: 1 }
               }
               style={{ cursor: link ? 'pointer' : '' }}
+              className="transform-gpu"
             >
               <div className="animate-float">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

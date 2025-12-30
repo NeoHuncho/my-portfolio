@@ -62,8 +62,17 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
 
   useEffect(() => {
     checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
+    // Throttled resize handler for better performance
+    let timeoutId: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(checkOverflow, 150);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
   }, [checkOverflow]);
 
   const scrollPrev = useCallback(
@@ -115,10 +124,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
 
   return (
     <div
-      className="flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden transition-all duration-300 ease-out select-none"
-      style={{
-        transform: hovered && item.link ? 'scale(1.02)' : 'scale(1)',
-      }}
+      className={`flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden select-none transform-gpu transition-transform duration-300 ease-out ${hovered && item.link ? 'scale-[1.02]' : 'scale-100'}`}
     >
       <a
         href={item.link}
@@ -140,7 +146,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 35vw"
             style={{ objectFit: 'cover' }}
-            className={`select-none transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105' : ''}`}
+            className={`select-none transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105 transform-gpu' : ''}`}
             draggable={false}
             onLoad={() => setImageLoaded(true)}
             priority={shouldPreload}
@@ -191,13 +197,13 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                   </button>
                 )}
                 <div
-                  className="overflow-hidden cursor-grab active:cursor-grabbing"
+                  className="overflow-hidden cursor-grab active:cursor-grabbing transform-gpu"
                   ref={techEmblaRef}
                   data-tech-carousel
                   onPointerDown={handleTechInteraction}
                   onWheel={handleTechInteraction}
                 >
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 transform-gpu">
                     {item.technologies.map((technology, index) => (
                       <div
                         key={index}

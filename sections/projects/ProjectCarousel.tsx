@@ -83,7 +83,7 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.2 }}
       className="flex flex-col justify-center"
     >
       <div className="relative">
@@ -106,13 +106,13 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
           </button>
         )}
         <div
-          className="overflow-hidden cursor-grab active:cursor-grabbing h-auto flex flex-col justify-center"
+          className="overflow-hidden cursor-grab active:cursor-grabbing h-auto flex flex-col justify-center transform-gpu"
           ref={emblaRef}
         >
-          <div className="flex -ml-6 py-4">
+          <div className="flex -ml-6 py-4 transform-gpu">
             {items.map((item, index) => (
               <div
-                className="flex-[0_0_100%] sm:flex-[0_0_60%] lg:flex-[0_0_40%] [@media(max-height:650px)]:lg:flex-[0_0_50%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center"
+                className="flex-[0_0_100%] sm:flex-[0_0_60%] lg:flex-[0_0_40%] [@media(max-height:650px)]:lg:flex-[0_0_50%] 2xl:flex-[0_0_35%] min-w-0 pl-6 flex flex-col justify-center transform-gpu"
                 key={`${item.image.name}-${index}`}
               >
                 <ProjectCard
