@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { FaArrowDown } from 'react-icons/fa';
@@ -59,7 +60,7 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
               initial="hidden"
               animate="visible"
               variants={variantstext}
-              transition={{ ease: 'easeOut', duration: 1 }}
+              transition={{ ease: 'easeOut', duration: 0.8 }}
               style={{ cursor: link ? 'pointer' : '' }}
             >
               <h1
@@ -83,26 +84,22 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
         <div className={`${!isSmall ? 'col-span-6 order-2' : 'col-span-12 order-1'}`}>
           <Link href={link || ''} passHref>
             <motion.div
-              initial={link ? { opacity: 0, x: 0 } : { opacity: 0, x: 50, y: -50 }}
-              animate={link ? { opacity: imageLoaded ? 1 : 0 } : { opacity: 1, x: 0, y: 0 }}
-              transition={
-                link
-                  ? { ease: 'easeInOut', duration: 0.6 }
-                  : { ease: 'easeOut', duration: 1 }
-              }
+              initial={link ? { opacity: 0, x: 0 } : { opacity: 0, x: 30, y: -30 }}
+              animate={link ? { opacity: imageLoaded ? 1 : 0 } : { opacity: imageLoaded ? 1 : 0, x: 0, y: 0 }}
+              transition={link ? { ease: 'easeOut', duration: 0.5 } : { ease: 'easeOut', duration: 0.8 }}
               style={{ cursor: link ? 'pointer' : '' }}
-              className="transform-gpu"
+              className="transform-gpu will-change-transform"
             >
               <div className="animate-float">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={image.src}
-                  alt="Computer"
+                  alt=""
                   width={image.width}
                   height={image.height}
                   style={{ width: '100%', height: 'auto' }}
                   onLoad={() => setImageLoaded(true)}
-                  fetchPriority="high"
+                  priority
+                  unoptimized
                 />
               </div>
             </motion.div>

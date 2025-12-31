@@ -83,7 +83,7 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: 0.15 }}
       className="flex flex-col justify-center"
     >
       <div className="relative">

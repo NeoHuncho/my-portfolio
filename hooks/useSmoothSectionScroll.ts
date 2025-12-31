@@ -84,7 +84,7 @@ export function useSmoothSectionScroll(containerSelector: string) {
         return;
       }
 
-      const duration = 500; // Slightly faster for snappier feel
+      const duration = 400; // Faster for snappier feel
       let startTime: number | null = null;
 
       const animate = (currentTime: number) => {
@@ -111,7 +111,7 @@ export function useSmoothSectionScroll(containerSelector: string) {
           cooldownTimeout.current = window.setTimeout(() => {
             isAnimating.current = false;
             cooldownTimeout.current = null;
-          }, 300); // 300ms cooldown after animation ends
+          }, 250); // 250ms cooldown after animation ends
         }
       };
 

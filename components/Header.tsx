@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { IoDocumentText } from 'react-icons/io5';
 import { MdEmail } from 'react-icons/md';
@@ -18,32 +18,47 @@ export default function Header() {
   const [isInProjectsSection, setIsInProjectsSection] = useState(false);
   const isSmall = useMediaQuery('(max-width: 850px)');
   const { strings, toggleLocale, locale } = useLanguage();
+  const rafId = useRef<number | null>(null);
+  const lastScrollCheck = useRef(0);
+
+  const handleScroll = useCallback(() => {
+    // Throttle scroll checks to every 100ms using requestAnimationFrame
+    const now = Date.now();
+    if (now - lastScrollCheck.current < 100) {
+      return;
+    }
+    lastScrollCheck.current = now;
+
+    if (rafId.current) {
+      cancelAnimationFrame(rafId.current);
+    }
+
+    rafId.current = requestAnimationFrame(() => {
+      const projectsSection = document.getElementById('projects-section');
+      if (projectsSection) {
+        const projectsTop = projectsSection.getBoundingClientRect().top;
+        setIsInProjectsSection(projectsTop <= 200);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     setIsLoaded(true);
 
-    const handleScroll = (_e: Event) => {
-      const projectsSection = document.getElementById('projects-section');
-
-      if (projectsSection) {
-        const projectsTop = projectsSection.getBoundingClientRect().top;
-        // Trigger transition when projects section is near the top (e.g. 200px threshold)
-        setIsInProjectsSection(projectsTop <= 200);
-      }
-    };
-
-    // Attach scroll listener to the scrollable container instead of window
     const scrollContainer = document.querySelector('.scroll-container');
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
     }
 
     return () => {
       if (scrollContainer) {
         scrollContainer.removeEventListener('scroll', handleScroll);
       }
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
-  }, []);
+  }, [handleScroll]);
 
   if (!isLoaded) {
     return null;

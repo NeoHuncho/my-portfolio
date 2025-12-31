@@ -40,9 +40,9 @@ export default function AboutSection() {
         {/* Profile Image at top - shared for both tabs */}
         <div className="shrink-0 flex justify-center pt-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 0.9 }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: imageLoaded ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
             className="relative w-28 h-28"
           >
             <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl shadow-blue-500/20">
@@ -82,7 +82,7 @@ export default function AboutSection() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
                 className="flex flex-col items-center gap-4 pb-16"
               >
                 <AboutProfessional />
@@ -93,7 +93,7 @@ export default function AboutSection() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
                 className="flex flex-col items-center gap-4 pb-16"
               >
                 <AboutPersonal />
@@ -111,9 +111,9 @@ export default function AboutSection() {
       {/* Left Side - Floating Profile Image (40%) */}
       <div className="w-[40%] flex items-center justify-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 0.9 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: imageLoaded ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
         >
           <div className="animate-float relative w-64 h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96">
             <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl shadow-blue-500/20">

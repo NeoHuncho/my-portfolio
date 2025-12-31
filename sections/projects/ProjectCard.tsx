@@ -124,7 +124,8 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
 
   return (
     <div
-      className={`flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden select-none transform-gpu transition-transform duration-300 ease-out ${hovered && item.link ? 'scale-[1.02]' : 'scale-100'}`}
+      className={`flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden select-none will-change-transform ${hovered && item.link ? 'scale-[1.02]' : ''}`}
+      style={{ transition: 'transform 0.2s ease-out' }}
     >
       <a
         href={item.link}
@@ -146,7 +147,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 35vw"
             style={{ objectFit: 'cover' }}
-            className={`select-none transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'transition-transform duration-300 group-hover:scale-105 transform-gpu' : ''}`}
+            className={`select-none transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${item.link ? 'group-hover:scale-[1.03] transition-transform duration-200 transform-gpu' : ''}`}
             draggable={false}
             onLoad={() => setImageLoaded(true)}
             priority={shouldPreload}

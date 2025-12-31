@@ -378,7 +378,7 @@ const myProjectsTabs: ProjectTabConfig[] = [
         status: 'Active',
         statusCode: 1,
         subTitle: {
-          en: 'Contributed to Vikunja, Affine, and Home Assistant with merged pull requests, gaining full end-to-end contributor experience across three major projects.',
+          en: "Contributed to Vikunja, Affine, and Home Assistant with merged PR's, gaining full end-to-end contributor experience across three major projects.",
           fr: 'Contributions à Vikunja, AFFiNE et Home Assistant avec PR mergés, pour une expérience complète de contributeur.',
         },
         image: projects.openSource,
