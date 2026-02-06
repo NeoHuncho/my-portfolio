@@ -1,6 +1,6 @@
 # William Guinaudie Portfolio
 
-A personal portfolio website built with Next.js, TypeScript, and Tailwind CSS.
+Personal portfolio built with Next.js, TypeScript, and Tailwind CSS.
 
 ## Features
 
@@ -11,8 +11,6 @@ A personal portfolio website built with Next.js, TypeScript, and Tailwind CSS.
 - Storybook for component development
 - Jest with React Testing Library for testing
 - Strict ESLint and Prettier configuration
-
-## npm scripts
 
 ### Build and dev scripts
 
