@@ -1,56 +1,5 @@
-// Project images
-import brawlMax from '@assets/projects/fullStackProjects/brawlMax.webp';
-import openSource from '@assets/projects/fullStackProjects/openSource.webp';
-import portfolio from '@assets/projects/fullStackProjects/portfolio.webp';
-import second from '@assets/projects/fullStackProjects/second.webp';
-import vikunjaHA from '@assets/projects/fullStackProjects/vikunjaHA.webp';
-import cpBackend from '@assets/projects/professionalWork/cpBackend.webp';
-import cpMobile from '@assets/projects/professionalWork/CPMobile.webp';
-import cpWeb from '@assets/projects/professionalWork/CPWeb.webp';
-import paprikaWeb from '@assets/projects/professionalWork/paprikaWeb.webp';
-import sam from '@assets/projects/professionalWork/sam.webp';
-import zenrideBackend from '@assets/projects/professionalWork/zenrideBackend.webp';
-import zenrideFrontend from '@assets/projects/professionalWork/zenrideFrontend.webp';
-import type { StaticImageData } from 'next/image';
-// Technology images
-import algolia from '@assets/technologies/algolia.webp';
-import docker from '@assets/technologies/docker.webp';
-import electron from '@assets/technologies/electron.webp';
-import express from '@assets/technologies/express.webp';
-import firebase from '@assets/technologies/firebase.webp';
-import framerMotion from '@assets/technologies/framerMotion.webp';
-import gcPlatform from '@assets/technologies/gcPlatform.webp';
-import homeAssistant from '@assets/technologies/homeAssistant.webp';
-import jest from '@assets/technologies/jest.webp';
-import javascript from '@assets/technologies/js.webp';
-import kubernetes from '@assets/technologies/kubernetes.webp';
-import leaflet from '@assets/technologies/leaflet.webp';
-import lingui from '@assets/technologies/lingui.webp';
-import mantine from '@assets/technologies/mantine.webp';
-import mongodb from '@assets/technologies/mongodb.webp';
-import mySQL from '@assets/technologies/mySQL.webp';
-import nextjs from '@assets/technologies/nextjs.webp';
-import node from '@assets/technologies/node.webp';
-import ovh from '@assets/technologies/ovh.webp';
-import PHP from '@assets/technologies/PHP.webp';
-import prisma from '@assets/technologies/prisma.webp';
-import puppeteer from '@assets/technologies/puppeteer.webp';
-import python from '@assets/technologies/python.webp';
-import react from '@assets/technologies/react.webp';
-import reactAdmin from '@assets/technologies/reactAdmin.webp';
-import reactQuery from '@assets/technologies/reactQuery.webp';
-import redis from '@assets/technologies/redis.webp';
-import redux from '@assets/technologies/redux.webp';
-import rnNavigation from '@assets/technologies/rnNavigation.webp';
-import sentry from '@assets/technologies/sentry.webp';
-import sequelize from '@assets/technologies/sequelize.webp';
-import tailwind from '@assets/technologies/tailwind.webp';
-import trpc from '@assets/technologies/trpc.webp';
-import typescript from '@assets/technologies/typescript.webp';
-import vue from '@assets/technologies/vue.webp';
-import wooCommerce from '@assets/technologies/wooCommerce.webp';
-import wordPress from '@assets/technologies/Wordpress.webp';
-import zustand from '@assets/technologies/zustand.webp';
+// Use string paths instead of static imports for lazy loading
+// Images will be loaded by Next.js Image component on-demand
 
 export type LocalizedString = {
   en: string;
@@ -61,12 +10,12 @@ export type TabsKey = 'professional' | 'personal';
 export type ProjectStatusCode = 1 | 2 | 3;
 
 export type ProjectImage = {
-  image: StaticImageData;
+  image: string;
   name: string;
 };
 
 export type ProjectTechnology = {
-  image: StaticImageData;
+  image: string;
   name: string;
 };
 
@@ -89,120 +38,156 @@ export type ProjectTabConfig = {
 };
 
 const projects: Record<string, ProjectImage> = {
-  cpMobile: { image: cpMobile, name: 'Cagette et Paprika Mobile App' },
-  cpWeb: { image: cpWeb, name: 'Cagette et Paprika Web App' },
-  cpBackend: { image: cpBackend, name: 'Cagette et Paprika Backend' },
-  brawlMax: { image: brawlMax, name: 'Brawl Max Mobile App' },
-  sam: { image: sam, name: 'Slot Allocation Management System (SAM)' },
-  paprikaWeb: { image: paprikaWeb, name: 'Paprika Web App' },
-  zenrideFrontend: { image: zenrideFrontend, name: 'Zenride Frontend' },
-  zenrideBackend: { image: zenrideBackend, name: 'Zenride Backend' },
-  vikunjaHA: { image: vikunjaHA, name: 'Vikunja Home Assistant Integration' },
-  openSource: { image: openSource, name: 'Open Source Contributions' },
-  second: { image: second, name: 'Second Marketplace' },
-  portfolio: { image: portfolio, name: 'Portfolio Website' },
+  cpMobile: {
+    image: '/assets/projects/professionalWork/CPMobile.webp',
+    name: 'Cagette et Paprika Mobile App',
+  },
+  cpWeb: {
+    image: '/assets/projects/professionalWork/CPWeb.webp',
+    name: 'Cagette et Paprika Web App',
+  },
+  cpBackend: {
+    image: '/assets/projects/professionalWork/cpBackend.webp',
+    name: 'Cagette et Paprika Backend',
+  },
+  brawlMax: {
+    image: '/assets/projects/fullStackProjects/brawlMax.webp',
+    name: 'Brawl Max Mobile App',
+  },
+  sam: {
+    image: '/assets/projects/professionalWork/sam.webp',
+    name: 'Slot Allocation Management System',
+  },
+  paprikaWeb: {
+    image: '/assets/projects/professionalWork/paprikaWeb.webp',
+    name: 'Paprika Web App',
+  },
+  zenrideFrontend: {
+    image: '/assets/projects/professionalWork/zenrideFrontend.webp',
+    name: 'Zenride Frontend',
+  },
+  zenrideBackend: {
+    image: '/assets/projects/professionalWork/zenrideBackend.webp',
+    name: 'Zenride Backend',
+  },
+  vikunjaHA: {
+    image: '/assets/projects/fullStackProjects/vikunjaHA.webp',
+    name: 'Vikunja Home Assistant Integration',
+  },
+  openSource: {
+    image: '/assets/projects/fullStackProjects/openSource.webp',
+    name: 'Open Source Contributions',
+  },
+  second: { image: '/assets/projects/fullStackProjects/second.webp', name: 'Second Marketplace' },
+  portfolio: {
+    image: '/assets/projects/fullStackProjects/portfolio.webp',
+    name: 'Portfolio Website',
+  },
 };
 
 const technologies: Record<string, ProjectTechnology> = {
-  express: { image: express, name: 'Express.js' },
-  mongodb: { image: mongodb, name: 'MongoDB' },
-  node: { image: node, name: 'Node.js' },
-  react: { image: react, name: 'React.js' },
-  javascript: { image: javascript, name: 'JavaScript' },
-  redux: { image: redux, name: 'Redux' },
-  mantine: { image: mantine, name: 'Mantine' },
-  reactQuery: { image: reactQuery, name: 'React Query' },
-  wordPress: { image: wordPress, name: 'WordPress' },
-  wooCommerce: { image: wooCommerce, name: 'WooCommerce' },
-  typescript: { image: typescript, name: 'TypeScript' },
-  rnNavigation: { image: rnNavigation, name: 'React Native Navigation' },
-  PHP: { image: PHP, name: 'PHP' },
-  gcPlatform: { image: gcPlatform, name: 'Google Cloud Platform' },
-  mySQL: { image: mySQL, name: 'MySQL' },
-  algolia: { image: algolia, name: 'Algolia' },
-  tailwind: { image: tailwind, name: 'Tailwind' },
+  express: { image: '/assets/technologies/express.webp', name: 'Express.js' },
+  mongodb: { image: '/assets/technologies/mongodb.webp', name: 'MongoDB' },
+  node: { image: '/assets/technologies/node.webp', name: 'Node.js' },
+  react: { image: '/assets/technologies/react.webp', name: 'React.js' },
+  javascript: { image: '/assets/technologies/js.webp', name: 'JavaScript' },
+  redux: { image: '/assets/technologies/redux.webp', name: 'Redux' },
+  mantine: { image: '/assets/technologies/mantine.webp', name: 'Mantine' },
+  reactQuery: { image: '/assets/technologies/reactQuery.webp', name: 'React Query' },
+  wordPress: { image: '/assets/technologies/Wordpress.webp', name: 'WordPress' },
+  wooCommerce: { image: '/assets/technologies/wooCommerce.webp', name: 'WooCommerce' },
+  typescript: { image: '/assets/technologies/typescript.webp', name: 'TypeScript' },
+  rnNavigation: {
+    image: '/assets/technologies/rnNavigation.webp',
+    name: 'React Native Navigation',
+  },
+  PHP: { image: '/assets/technologies/PHP.webp', name: 'PHP' },
+  gcPlatform: { image: '/assets/technologies/gcPlatform.webp', name: 'Google Cloud Platform' },
+  mySQL: { image: '/assets/technologies/mySQL.webp', name: 'MySQL' },
+  algolia: { image: '/assets/technologies/algolia.webp', name: 'Algolia' },
+  tailwind: { image: '/assets/technologies/tailwind.webp', name: 'Tailwind' },
   firebase: {
-    image: firebase,
+    image: '/assets/technologies/firebase.webp',
     name: 'Firebase',
   },
   python: {
-    image: python,
+    image: '/assets/technologies/python.webp',
     name: 'Python',
   },
   zustand: {
-    image: zustand,
+    image: '/assets/technologies/zustand.webp',
     name: 'Zustand',
   },
   sentry: {
-    image: sentry,
+    image: '/assets/technologies/sentry.webp',
     name: 'Sentry',
   },
   lingui: {
-    image: lingui,
+    image: '/assets/technologies/lingui.webp',
     name: 'LinguiJS',
   },
   leaflet: {
-    image: leaflet,
+    image: '/assets/technologies/leaflet.webp',
     name: 'Leaflet',
   },
   jest: {
-    image: jest,
+    image: '/assets/technologies/jest.webp',
     name: 'Jest',
   },
   sequelize: {
-    image: sequelize,
+    image: '/assets/technologies/sequelize.webp',
     name: 'Sequelize',
   },
   redis: {
-    image: redis,
+    image: '/assets/technologies/redis.webp',
     name: 'Redis',
   },
   puppeteer: {
-    image: puppeteer,
+    image: '/assets/technologies/puppeteer.webp',
     name: 'Puppeteer',
   },
   ovh: {
-    image: ovh,
+    image: '/assets/technologies/ovh.webp',
     name: 'OVH',
   },
   reactAdmin: {
-    image: reactAdmin,
+    image: '/assets/technologies/reactAdmin.webp',
     name: 'React Admin',
   },
   vue: {
-    image: vue,
+    image: '/assets/technologies/vue.webp',
     name: 'Vue.js',
   },
   electron: {
-    image: electron,
+    image: '/assets/technologies/electron.webp',
     name: 'Electron',
   },
   nextjs: {
-    image: nextjs,
+    image: '/assets/technologies/nextjs.webp',
     name: 'Next.js',
   },
   prisma: {
-    image: prisma,
+    image: '/assets/technologies/prisma.webp',
     name: 'Prisma',
   },
   trpc: {
-    image: trpc,
+    image: '/assets/technologies/trpc.webp',
     name: 'tRPC',
   },
   framerMotion: {
-    image: framerMotion,
+    image: '/assets/technologies/framerMotion.webp',
     name: 'Framer Motion',
   },
   homeAssistant: {
-    image: homeAssistant,
+    image: '/assets/technologies/homeAssistant.webp',
     name: 'Home Assistant',
   },
   docker: {
-    image: docker,
+    image: '/assets/technologies/docker.webp',
     name: 'Docker',
   },
   kubernetes: {
-    image: kubernetes,
+    image: '/assets/technologies/kubernetes.webp',
     name: 'Kubernetes',
   },
 };
@@ -322,8 +307,8 @@ const myProjectsTabs: ProjectTabConfig[] = [
       },
       {
         title: {
-          en: 'Slot Allocation Management System (SAM)',
-          fr: 'Slot Allocation Management System (SAM)',
+          en: 'Slot Allocation Management System',
+          fr: 'Slot Allocation Management System',
         },
         status: 'Acquired by Auchan Retail',
         statusCode: 2,

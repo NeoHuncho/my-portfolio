@@ -1,7 +1,6 @@
 'use client';
 import TabSelector from '@components/TabSelector';
 import projectTabs, { type ProjectTabConfig } from '@config/projects';
-import { AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import ProjectCarousel from './ProjectCarousel';
@@ -39,12 +38,15 @@ export default function ProjectsSection() {
 
   return (
     <div
-      className="h-full flex flex-col relative overflow-hidden justify-center"
+      className="h-full flex flex-col relative overflow-hidden"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.00)' }}
     >
-      <div className="flex flex-col items-center justify-center gap-3 md:gap-6 px-4 md:px-8 w-full -mt-[50px] md:mt-0">
-        {/* Tabs - 12px above carousel */}
-        <div id="project-tabs-container" className="shrink-0 w-full flex justify-center z-20">
+      <div className="flex flex-col items-center h-full px-4 md:px-8 w-full">
+        {/* Top spacer for vertical centering */}
+        <div className="flex-1 min-h-5" />
+        
+        {/* Tabs - fixed position */}
+        <div id="project-tabs-container" className="shrink-0 w-full flex justify-center z-20 mb-3 md:mb-6">
           <TabSelector
             tabs={tabs}
             activeTab={activeTab}
@@ -55,12 +57,13 @@ export default function ProjectsSection() {
           />
         </div>
 
-        {/* Carousel */}
-        <div className="w-full flex flex-col justify-center md:block">
-          <AnimatePresence mode="wait">
-            <ProjectCarousel key={activeTab} items={projectTabs[activeTabIndex].items} />
-          </AnimatePresence>
+        {/* Carousel - fixed height prevents tab shifting */}
+        <div className="w-full shrink-0 h-[70vh] md:h-[75vh]">
+          <ProjectCarousel key={activeTab} items={projectTabs[activeTabIndex].items} />
         </div>
+        
+        {/* Bottom spacer */}
+        <div className="flex-1 min-h-5" />
       </div>
     </div>
   );

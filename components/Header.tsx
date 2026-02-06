@@ -1,5 +1,4 @@
 'use client';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
@@ -82,12 +81,10 @@ export default function Header() {
       <div
         className={`transition-all duration-300 pointer-events-none flex items-center ${isInProjectsSection ? 'col-span-8 justify-end pr-8' : isSmall ? 'col-span-5 ml-2' : 'absolute left-0 w-full justify-center'}`}
       >
-        <motion.div
+        <div
           key={isInProjectsSection ? 'projects' : 'hero'}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className={`flex gap-4 items-center pointer-events-auto ${isInProjectsSection ? 'justify-end' : isSmall ? 'pt-2 justify-start' : 'justify-center'}`}
+          className={`flex gap-4 items-center pointer-events-auto transition-opacity duration-300 ${isInProjectsSection ? 'justify-end' : isSmall ? 'pt-2 justify-start' : 'justify-center'}`}
+          style={{ opacity: 1 }}
         >
           <a
             className="cursor-pointer"
@@ -119,7 +116,7 @@ export default function Header() {
           <a className="cursor-pointer" href="mailto:william.guinaudie@gmail.com">
             <MdEmail size={28} color="white" />
           </a>
-        </motion.div>
+        </div>
       </div>
       {!isInProjectsSection && (
         <button

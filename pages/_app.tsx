@@ -1,8 +1,8 @@
+import Header from '@components/Header';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { type AppProps } from 'next/app';
 import Head from 'next/head';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import Header from '@components/Header';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import '../styles/globals.css';
 
@@ -18,6 +18,8 @@ export default function App(props: AppProps) {
         <link rel="dns-prefetch" href="https://github.com" />
         <link rel="dns-prefetch" href="https://linkedin.com" />
         <link rel="preconnect" href="https://vitals.vercel-insights.com" />
+        <link rel="preconnect" href="https://vntoja45q3vx3ti5.public.blob.vercel-storage.com" />
+        {/* Preload critical fonts if any */}
       </Head>
 
       <div

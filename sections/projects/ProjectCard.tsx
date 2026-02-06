@@ -142,7 +142,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
             </div>
           )}
           <Image
-            src={item.image.image.src}
+            src={item.image.image}
             alt={item.image.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 35vw"
@@ -215,7 +215,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                         <div className="relative w-6 h-6">
                           <Image
                             alt={technology.name}
-                            src={technology.image.src}
+                            src={technology.image}
                             fill
                             sizes="24px"
                             style={{ objectFit: 'contain' }}
@@ -256,7 +256,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                     <div className="relative w-6 h-6">
                       <Image
                         alt={technology.name}
-                        src={technology.image.src}
+                        src={technology.image}
                         fill
                         sizes="24px"
                         style={{ objectFit: 'contain' }}

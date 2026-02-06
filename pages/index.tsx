@@ -6,12 +6,12 @@ import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { HeroSection } from 'sections';
 
-// Dynamic imports with ssr: false to reduce initial bundle but load immediately on client
+// Lazy load sections with proper SSR for better initial load
 const ProjectsSection = dynamic(() => import('sections/projects/ProjectsSection'), {
-  ssr: false,
+  loading: () => <div className="h-screen" />,
 });
 const AboutSection = dynamic(() => import('sections/about/AboutSection'), {
-  ssr: false,
+  loading: () => <div className="h-screen" />,
 });
 
 export default function Home() {

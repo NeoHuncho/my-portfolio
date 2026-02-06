@@ -16,6 +16,7 @@ export default function AboutSection() {
   const [showGlow, setShowGlow] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const isUnder1450 = useMediaQuery('(max-width: 1450px)');
   const { strings } = useLanguage();
 
   const handleTabClick = (tabId: string) => {
@@ -73,8 +74,8 @@ export default function AboutSection() {
           />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 px-4">
+        {/* Content - fixed height to prevent tab shifting */}
+        <div className="flex-1 min-h-0 px-4">
           <AnimatePresence mode="wait">
             {activeTab === 'professional' ? (
               <motion.div
@@ -134,8 +135,10 @@ export default function AboutSection() {
 
       {/* Right Side - Content (60%) */}
       <div className="w-[60%] h-full overflow-y-auto flex flex-col items-center py-8 px-8">
-        {/* Content area with cards */}
-        <div className="flex flex-col items-center w-full my-auto">
+        {/* Content area with cards - fixed structure prevents shift */}
+        <div className="flex flex-col items-center w-full h-full">
+          <div className="flex-1 min-h-8" />
+          
           <div className="shrink-0 flex justify-center mb-8">
             <TabSelector
               tabs={tabs}
@@ -147,13 +150,17 @@ export default function AboutSection() {
             />
           </div>
 
-          <AnimatePresence mode="wait">
-            {activeTab === 'professional' ? (
-              <AboutProfessional key="professional" />
-            ) : (
-              <AboutPersonal key="personal" />
-            )}
-          </AnimatePresence>
+          <div className={`w-full shrink-0 max-w-4xl min-h-[50vh]  overflow-y-auto`}>
+            <AnimatePresence mode="wait">
+              {activeTab === 'professional' ? (
+                <AboutProfessional key="professional" />
+              ) : (
+                <AboutPersonal key="personal" />
+              )}
+            </AnimatePresence>
+          </div>
+          
+          <div className="flex-1 min-h-8" />
         </div>
       </div>
     </div>

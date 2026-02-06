@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -25,11 +24,6 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
   const isSmall = useMediaQuery('(max-width: 1000px)');
   const isNarrow = useMediaQuery('(max-width: 410px)');
 
-  const variantstext = {
-    hidden: { opacity: 0, x: -50 },
-    visible: { opacity: 1, x: 0 },
-  };
-
   return (
     <div
       id="hero"
@@ -42,13 +36,11 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10 cursor-pointer hover:opacity-80 transition-opacity"
           aria-label={ctaLabel ?? 'Scroll to projects'}
         >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4 shadow-lg"
+          <div
+            className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4 shadow-lg animate-bounce-slow"
           >
             <FaArrowDown size={24} color="white" />
-          </motion.div>
+          </div>
         </button>
       )}
       <div
@@ -56,12 +48,13 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
       >
         <div className={`flex ${!isSmall ? 'col-span-6 order-1' : 'col-span-12 order-3'}`}>
           <Link href={link || ''} passHref>
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={variantstext}
-              transition={{ ease: 'easeOut', duration: 0.8 }}
-              style={{ cursor: link ? 'pointer' : '' }}
+            <div
+              className={imageLoaded ? 'animate-fade-in-left' : ''}
+              style={{ 
+                cursor: link ? 'pointer' : '', 
+                animationDelay: imageLoaded ? '100ms' : '0ms',
+                opacity: imageLoaded ? undefined : 0
+              }}
             >
               <h1
                 className="font-extrabold"
@@ -78,19 +71,16 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
               {subTitle && (
                 <h2 style={{ fontWeight: 300, fontSize: isNarrow && locale === 'fr' ? 33 : 37, color: 'white' }}>{subTitle}</h2>
               )}
-            </motion.div>
+            </div>
           </Link>
         </div>
         <div className={`${!isSmall ? 'col-span-6 order-2' : 'col-span-12 order-1'}`}>
           <Link href={link || ''} passHref>
-            <motion.div
-              initial={link ? { opacity: 0, x: 0 } : { opacity: 0, x: 30, y: -30 }}
-              animate={link ? { opacity: imageLoaded ? 1 : 0 } : { opacity: imageLoaded ? 1 : 0, x: 0, y: 0 }}
-              transition={link ? { ease: 'easeOut', duration: 0.5 } : { ease: 'easeOut', duration: 0.8 }}
+            <div
+              className={`transform-gpu ${imageLoaded ? 'animate-fade-in-up' : 'opacity-0'}`}
               style={{ cursor: link ? 'pointer' : '' }}
-              className="transform-gpu will-change-transform"
             >
-              <div className="animate-float">
+              <div className={imageLoaded ? 'animate-float' : ''}>
                 <Image
                   src={image.src}
                   alt=""
@@ -99,10 +89,10 @@ export default function HeroSection({ title, image, link, subTitle, ctaLabel, lo
                   style={{ width: '100%', height: 'auto' }}
                   onLoad={() => setImageLoaded(true)}
                   priority
-                  unoptimized
+                  sizes="(max-width: 1000px) 100vw, 50vw"
                 />
               </div>
-            </motion.div>
+            </div>
           </Link>
         </div>
       </div>

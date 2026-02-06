@@ -84,9 +84,9 @@ export default function ProjectCarousel({ items }: ProjectCarouselProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className="flex flex-col justify-center"
+      className="flex flex-col h-full"
     >
-      <div className="relative">
+      <div className="relative flex-1 flex flex-col justify-center">
         {canScrollPrev && (
           <button
             onClick={scrollPrev}
