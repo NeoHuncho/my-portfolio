@@ -18,7 +18,7 @@ function Section({ Component, id }: SectionProps) {
   return (
     <div
       id={id}
-      className="flex flex-col relative bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] min-h-screen h-screen scroll-section overflow-hidden"
+      className="flex flex-col relative bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] min-h-screen h-screen scroll-section overflow-hidden content-auto"
       style={{ zIndex: 2 }}
     >
       <div

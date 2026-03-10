@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type IconType } from 'react-icons';
 import { FaComments, FaGithub, FaLinkedin } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
@@ -30,6 +30,23 @@ export default function MobileSocialShortcut() {
   const [isOpen, setIsOpen] = useState(false);
   const { strings } = useLanguage();
 
+  const rafId = useRef<number | null>(null);
+
+  const evaluateVisibility = useCallback(() => {
+    const projectsSection = document.getElementById('projects-section');
+    if (!projectsSection) {
+      return;
+    }
+
+    const threshold = window.innerHeight * 0.1;
+    const projectsTop = projectsSection.getBoundingClientRect().top;
+    const reachedProjects = projectsTop <= threshold;
+    setIsPastInitial(reachedProjects);
+    if (!reachedProjects) {
+      setIsOpen(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isMobile) {
       setIsPastInitial(false);
@@ -42,30 +59,24 @@ export default function MobileSocialShortcut() {
       return;
     }
 
-    const evaluateVisibility = () => {
-      const projectsSection = document.getElementById('projects-section');
-      if (!projectsSection) {
-        return;
-      }
-
-      const threshold = window.innerHeight * 0.1;
-      const projectsTop = projectsSection.getBoundingClientRect().top;
-      const reachedProjects = projectsTop <= threshold;
-      setIsPastInitial(reachedProjects);
-      if (!reachedProjects) {
-        setIsOpen(false);
-      }
+    const handleScroll = () => {
+      if (rafId.current) return;
+      rafId.current = requestAnimationFrame(() => {
+        evaluateVisibility();
+        rafId.current = null;
+      });
     };
 
     evaluateVisibility();
-    scrollContainer.addEventListener('scroll', evaluateVisibility, { passive: true });
-    window.addEventListener('resize', evaluateVisibility);
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      scrollContainer.removeEventListener('scroll', evaluateVisibility);
-      window.removeEventListener('resize', evaluateVisibility);
+      scrollContainer.removeEventListener('scroll', handleScroll);
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
-  }, [isMobile]);
+  }, [isMobile, evaluateVisibility]);
 
   useEffect(() => {
     if (!isMobile || !isPastInitial) {

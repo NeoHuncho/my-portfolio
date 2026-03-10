@@ -13,7 +13,6 @@ const CV_URLS = {
 };
 
 export default function Header() {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isInProjectsSection, setIsInProjectsSection] = useState(false);
   const isSmall = useMediaQuery('(max-width: 850px)');
   const { strings, toggleLocale, locale } = useLanguage();
@@ -42,8 +41,6 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    setIsLoaded(true);
-
     const scrollContainer = document.querySelector('.scroll-container');
     if (scrollContainer) {
       scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
@@ -58,10 +55,6 @@ export default function Header() {
       }
     };
   }, [handleScroll]);
-
-  if (!isLoaded) {
-    return null;
-  }
 
   return (
     <div

@@ -135,7 +135,28 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
   .animate-glow,
-  .animate-glow-fadeout {
+  .animate-glow-fadeout,
+  .animate-fade-in {
     animation: none;
   }
+}
+
+/* Generic fade-in animation (replaces framer-motion) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out both;
+}
+
+/* Content visibility optimization for below-fold sections */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100vh;
 }

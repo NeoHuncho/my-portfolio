@@ -1,7 +1,7 @@
 'use client';
 import TabSelector from '@components/TabSelector';
 import projectTabs, { type ProjectTabConfig } from '@config/projects';
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import ProjectCarousel from './ProjectCarousel';
 
@@ -25,7 +25,9 @@ export default function ProjectsSection() {
     if (tabId !== activeTab) {
       setHasUserSwitched(true);
     }
-    setActiveTab(tabId as ProjectTabConfig['id']);
+    startTransition(() => {
+      setActiveTab(tabId as ProjectTabConfig['id']);
+    });
     if (showGlow) {
       setShowGlow(false);
     }

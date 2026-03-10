@@ -2,9 +2,8 @@
 import profileImage from '@assets/about/profile.webp';
 import TabSelector from '@components/TabSelector';
 import { aboutTabs } from '@config/about';
-import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import AboutPersonal from './AboutPersonal';
@@ -23,7 +22,9 @@ export default function AboutSection() {
     if (tabId !== activeTab) {
       setHasUserSwitched(true);
     }
-    setActiveTab(tabId);
+    startTransition(() => {
+      setActiveTab(tabId);
+    });
     if (showGlow) {
       setShowGlow(false);
     }
@@ -40,11 +41,8 @@ export default function AboutSection() {
       <div className="h-full flex flex-col relative bg-gray-900/30 overflow-y-auto overflow-x-hidden">
         {/* Profile Image at top - shared for both tabs */}
         <div className="shrink-0 flex justify-center pt-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: imageLoaded ? 1 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="relative w-28 h-28"
+          <div
+            className={`relative w-28 h-28 transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           >
             <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl shadow-blue-500/20">
               <Image
@@ -58,7 +56,7 @@ export default function AboutSection() {
                 priority
               />
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Full-width Tabs below image */}
@@ -76,31 +74,9 @@ export default function AboutSection() {
 
         {/* Content - fixed height to prevent tab shifting */}
         <div className="flex-1 min-h-0 px-4">
-          <AnimatePresence mode="wait">
-            {activeTab === 'professional' ? (
-              <motion.div
-                key="professional-mobile"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col items-center gap-4 pb-16"
-              >
-                <AboutProfessional />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="personal-mobile"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col items-center gap-4 pb-16"
-              >
-                <AboutPersonal />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div key={activeTab} className="flex flex-col items-center gap-4 pb-16 animate-fade-in">
+            {activeTab === 'professional' ? <AboutProfessional /> : <AboutPersonal />}
+          </div>
         </div>
       </div>
     );
@@ -111,10 +87,8 @@ export default function AboutSection() {
     <div className="h-full flex flex-row relative bg-gray-900/30 overflow-hidden">
       {/* Left Side - Floating Profile Image (40%) */}
       <div className="w-[40%] flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: imageLoaded ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
+        <div
+          className={`transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
         >
           <div className="animate-float relative w-64 h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96">
             <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl shadow-blue-500/20">
@@ -130,7 +104,7 @@ export default function AboutSection() {
               />
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Right Side - Content (60%) */}
@@ -150,14 +124,14 @@ export default function AboutSection() {
             />
           </div>
 
-          <div className={`w-full shrink-0 max-w-4xl min-h-[50vh]  overflow-y-auto`}>
-            <AnimatePresence mode="wait">
+          <div className="w-full shrink-0 max-w-4xl min-h-[50vh] overflow-y-auto">
+            <div key={activeTab} className="animate-fade-in">
               {activeTab === 'professional' ? (
-                <AboutProfessional key="professional" />
+                <AboutProfessional />
               ) : (
-                <AboutPersonal key="personal" />
+                <AboutPersonal />
               )}
-            </AnimatePresence>
+            </div>
           </div>
           
           <div className="flex-1 min-h-8" />

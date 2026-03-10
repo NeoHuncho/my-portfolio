@@ -1,20 +1,13 @@
 'use client';
 import InfoCard from '@components/InfoCard';
 import { professionalPoints } from '@config/about';
-import { motion } from 'framer-motion';
 import { useLanguage } from '../../hooks/useLanguage';
 
 export default function AboutProfessional() {
   const { locale } = useLanguage();
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="flex flex-col items-center w-full"
-    >
+    <div className="flex flex-col items-center w-full animate-fade-in">
       {/* Points Grid - Centered */}
       <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
         {professionalPoints.map((point, index) => (
@@ -28,6 +21,6 @@ export default function AboutProfessional() {
           />
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }

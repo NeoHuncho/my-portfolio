@@ -14,7 +14,6 @@ type ProjectCardProps = {
 
 function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false);
-  const [hoveredTech, setHoveredTech] = useState<string | null>(null);
   const [needsCarousel, setNeedsCarousel] = useState(true);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -124,7 +123,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
 
   return (
     <div
-      className={`flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden select-none will-change-transform ${hovered && item.link ? 'scale-[1.02]' : ''}`}
+      className={`flex flex-col h-full max-h-[70vh] md:max-h-none rounded-2xl shadow-2xl border border-gray-700 bg-gray-800 overflow-hidden select-none ${hovered && item.link ? 'scale-[1.02]' : ''}`}
       style={{ transition: 'transform 0.2s ease-out' }}
     >
       <a
@@ -208,9 +207,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                     {item.technologies.map((technology, index) => (
                       <div
                         key={index}
-                        className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all shrink-0"
-                        onMouseEnter={() => setHoveredTech(technology.name)}
-                        onMouseLeave={() => setHoveredTech(null)}
+                        className="group/tech relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0"
                       >
                         <div className="relative w-6 h-6">
                           <Image
@@ -223,12 +220,10 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                             draggable={false}
                           />
                         </div>
-                        {hoveredTech === technology.name && (
-                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg z-20 pointer-events-none">
-                            {technology.name}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                          </div>
-                        )}
+                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg z-20 pointer-events-none opacity-0 group-hover/tech:opacity-100 transition-opacity">
+                          {technology.name}
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -249,9 +244,7 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                 {item.technologies.map((technology, index) => (
                   <div
                     key={index}
-                    className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm transition-all"
-                    onMouseEnter={() => setHoveredTech(technology.name)}
-                    onMouseLeave={() => setHoveredTech(null)}
+                    className="group/tech relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm"
                   >
                     <div className="relative w-6 h-6">
                       <Image
@@ -264,12 +257,10 @@ function ProjectCard({ item, isCompactArrows, shouldPreload = false }: ProjectCa
                         draggable={false}
                       />
                     </div>
-                    {hoveredTech === technology.name && (
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg z-20 pointer-events-none">
-                        {technology.name}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                      </div>
-                    )}
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg z-20 pointer-events-none opacity-0 group-hover/tech:opacity-100 transition-opacity">
+                      {technology.name}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                    </div>
                   </div>
                 ))}
               </div>
