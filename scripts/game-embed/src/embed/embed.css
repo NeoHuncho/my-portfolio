@@ -1,0 +1,49 @@
+/* Portfolio embed: nothing that links to Gamehub pages the portfolio does not serve
+   (online tables, the sound lab); the library's brand is a label, not a link. */
+.gamehub-embed :is(.sound-lab-link, .lib-friends) {
+  display: none;
+}
+.gamehub-embed .lib-brand {
+  pointer-events: none;
+}
+
+/* Mora, calmer: each area keeps its name and score, as a frosted pill; the scoring rule
+   stays one tap away (the area's inspect dialog) instead of printed on the board. */
+.gamehub-embed .mora-ground-label small {
+  display: none !important;
+}
+.gamehub-embed .mora-ground-label {
+  background: rgb(250 246 236 / 0.72) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 3px 4px 3px 11px !important;
+  box-shadow:
+    0 6px 16px -10px rgb(40 30 10 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.55) !important;
+}
+.gamehub-embed .mora-ground-label strong {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  letter-spacing: 0.01em;
+}
+body.gamehub-embed .mora-ground-label strong > b {
+  display: inline-flex !important;
+  align-items: baseline;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: rgb(58 74 44 / 0.9) !important;
+  box-shadow: none !important;
+  color: #f6efdc !important;
+  padding: 3px 7px 3px 8px !important;
+  font-size: 12px !important;
+}
+body.gamehub-embed .mora-ground-label strong > b span {
+  color: rgb(246 239 220 / 0.6) !important;
+  font-size: 10px !important;
+  font-weight: 500;
+}

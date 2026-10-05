@@ -1,41 +1,30 @@
-import MobileSocialShortcut from '@components/MobileSocialShortcut';
-import Section from '@components/Section';
-import { useLanguage } from 'hooks/useLanguage';
-import { useSmoothSectionScroll } from 'hooks/useSmoothSectionScroll';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { HeroSection } from 'sections';
+import Footer from '@components/Footer';
+import HeroSection from '@sections/hero/HeroSection';
 
-// Lazy load sections with proper SSR for better initial load
-const ProjectsSection = dynamic(() => import('sections/projects/ProjectsSection'), {
-  loading: () => <div className="h-screen" />,
-});
-const AboutSection = dynamic(() => import('sections/about/AboutSection'), {
-  loading: () => <div className="h-screen" />,
-});
+const ExperienceSection = dynamic(() => import('@sections/experience/ExperienceSection'));
+const BoardSection = dynamic(() => import('@sections/board/BoardSection'));
+const SideProjectsSection = dynamic(() => import('@sections/sideProjects/SideProjectsSection'));
+
+const description =
+  'William Guinaudie, AI Engineer. I build products and the AI workflows around them: agents do the legwork, I make the engineering calls, review the code and ship it.';
 
 export default function Home() {
-  // Enable smooth section scrolling for Chrome
-  useSmoothSectionScroll('.scroll-container');
-  const { strings, locale } = useLanguage();
-
   return (
-    <div style={{ margin: 0 }} className="scroll-container">
+    <>
       <Head>
-        <title>William Guinaudie</title>
-        <meta name="description" content="William Guinaudie Portfolio" />
-        <link rel="icon" href="/favicon.ico" />
+        <title>William Guinaudie · AI Engineer</title>
+        <meta name="description" content={description} />
+        <meta property="og:title" content="William Guinaudie · AI Engineer" />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="website" />
       </Head>
-      <HeroSection
-        title="WILLIAM GUINAUDIE"
-        image={{ src: '/assets/floatingComputer.svg', width: 657, height: 506 }}
-        subTitle={strings.heroSubtitle}
-        ctaLabel={strings.heroScrollLabel}
-        locale={locale}
-      />
-      <Section Component={ProjectsSection} id="projects-section" />
-      <Section Component={AboutSection} id="about-section" />
-      <MobileSocialShortcut />
-    </div>
+      <HeroSection />
+      <ExperienceSection />
+      <BoardSection />
+      <SideProjectsSection />
+      <Footer />
+    </>
   );
 }

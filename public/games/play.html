@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Gamehub</title>
+    <link rel="icon" type="image/svg+xml" href="/games/app/favicon-QINsBke0.svg" />
+    <script>
+      try {
+        var t = localStorage.getItem('gamehub.theme.v1');
+        if (t !== 'light' && t !== 'dark')
+          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+    <script type="module" crossorigin src="/games/app/play-DBfx9pYj.js"></script>
+    <link rel="modulepreload" crossorigin href="/games/app/jsx-runtime-B-hcVAMW.js">
+    <link rel="modulepreload" crossorigin href="/games/app/game-menu-DLBU31pz.js">
+    <link rel="modulepreload" crossorigin href="/games/app/use-fit-tPc75tB8.js">
+    <link rel="modulepreload" crossorigin href="/games/app/pieces-kzVvRsg2.js">
+    <link rel="stylesheet" crossorigin href="/games/app/game-menu-Dnzca_u9.css">
+    <link rel="stylesheet" crossorigin href="/games/app/use-fit-jMZgH0xR.css">
+    <link rel="stylesheet" crossorigin href="/games/app/play-CcMMc1mx.css">
+  </head>
+  <body class="gamehub-embed">
+    <div id="root"></div>
+  </body>
+</html>

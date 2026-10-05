@@ -1,0 +1,153 @@
+diff --git a/components/game/game-navigation.tsx b/components/game/game-navigation.tsx
+index ccd9461..c5b18c1 100644
+--- a/components/game/game-navigation.tsx
++++ b/components/game/game-navigation.tsx
+@@ -9,6 +9,7 @@ import { GameMenu, type GameMenuProps } from './game-menu';
+ export function GameNavigation({
+   name,
+   onBack,
++  backLabel,
+   menu,
+   onOthers,
+   othersLabel = 'Others',
+@@ -25,6 +26,8 @@ export function GameNavigation({
+   /** A small picture of the whole match beside the round (Alto's years). */
+   roundTrack?: ReactNode;
+   onBack: () => void;
++  /** Portfolio embed (scripts/game-embed): names where Back goes instead of the game. */
++  backLabel?: string;
+   /** The shared drop-down menu; its name defaults to the game's. */
+   menu: Omit<GameMenuProps, 'name' | 'triggerClassName'> & { name?: string };
+   /** Omitted where there is nothing private to look at (Know Me, Quiz). */
+@@ -37,10 +40,10 @@ export function GameNavigation({
+       <button
+         className="game-navigation-back"
+         onClick={onBack}
+-        aria-label={`Leave ${name} and go back`}
++        aria-label={backLabel ?? `Leave ${name} and go back`}
+       >
+         <ArrowLeft size={18} />
+-        <span>{name}</span>
++        <span>{backLabel ?? name}</span>
+       </button>
+       {round ? (
+         <GameProgress round label={round}>
+diff --git a/components/game/rota/rota-table.tsx b/components/game/rota/rota-table.tsx
+index a4f4bc2..fb5a6da 100644
+--- a/components/game/rota/rota-table.tsx
++++ b/components/game/rota/rota-table.tsx
+@@ -463,6 +463,7 @@ export function RotaTable({
+   onLeave,
+   onAgain,
+   againLabel = 'Play again',
++  backLabel,
+   volume,
+   onVolume,
+   tableSlot,
+@@ -476,6 +477,8 @@ export function RotaTable({
+   onLeave: () => void;
+   onAgain?: () => void;
+   againLabel?: string;
++  /** Portfolio embed (scripts/game-embed): what the back control says. */
++  backLabel?: string;
+   volume: number;
+   onVolume: (v: number) => void;
+   /** The table admin's Table button, when played at a table. */
+@@ -743,6 +746,7 @@ export function RotaTable({
+         name="Rota"
+         round={over ? 'Final' : `Round ${g.round} of ${g.rounds}`}
+         onBack={onLeave}
++        backLabel={backLabel}
+         onOthers={g.seats.length > 1 ? () => setPanel('others') : undefined}
+         menu={{
+           theme: 'rota',
+diff --git a/components/game/rota/three/traffic.ts b/components/game/rota/three/traffic.ts
+index 95ced70..f949fd4 100644
+--- a/components/game/rota/three/traffic.ts
++++ b/components/game/rota/three/traffic.ts
+@@ -8,6 +8,17 @@ import {
+   type Spec,
+ } from '@/lib/games/rota/traffic-sim';
+ import type { Materials } from './materials';
++// Portfolio embed (scripts/game-embed): the match opens rounds in, its traffic already about.
++import { embedded } from '@/embed/config';
++
++/** Simulated seconds of traffic run before the embed's first network shows
++ *  its vehicles: long enough for street traffic to drive in from the edges
++ *  and trains to leave their tunnels, as they would have while the rounds
++ *  before were played. It runs a few milliseconds a frame (about a second
++ *  in all), out of sight. A match that starts empty (Gamehub's own solo
++ *  table) is left as it is. */
++const EMBED_WARM_UP = 60;
++const EMBED_WARM_UP_MS_PER_FRAME = 6;
+ 
+ /**
+  * The mill town's traffic, drawn: the motion is `TrafficSim`'s (lib), this
+@@ -50,6 +61,9 @@ export class Traffic {
+   private drawn = new Map<number, Drawn>();
+   private sizes = new Map<string, { length: number; width: number }>();
+   private livery: number;
++  private first = true;
++  /** Simulated seconds still to run before the traffic shows (embed). */
++  private warm = 0;
+ 
+   constructor(
+     private models: Map<string, THREE.Object3D>,
+@@ -73,6 +87,8 @@ export class Traffic {
+ 
+   setNetwork(net: Net, stationHalf: (cell: number) => number) {
+     this.sim.setNetwork(net, stationHalf);
++    if (embedded && this.first) this.warm = EMBED_WARM_UP;
++    this.first = false;
+   }
+ 
+   private size(name: string) {
+@@ -159,6 +175,14 @@ export class Traffic {
+   }
+ 
+   tick(dt: number, moving: boolean) {
++    if (this.warm > 0) {
++      const until = performance.now() + EMBED_WARM_UP_MS_PER_FRAME;
++      do {
++        this.sim.tick(0.05, true);
++        this.warm -= 0.05;
++      } while (this.warm > 0 && performance.now() < until);
++      if (this.warm > 0) return;
++    }
+     this.sim.tick(dt, moving);
+     const live = new Set<number>();
+     for (const m of this.sim.movers) {
+diff --git a/components/game/use-board-leave.ts b/components/game/use-board-leave.ts
+index 23c493c..f32f605 100644
+--- a/components/game/use-board-leave.ts
++++ b/components/game/use-board-leave.ts
+@@ -1,5 +1,7 @@
+ 'use client';
+ import { useEffect, useRef } from 'react';
++// Portfolio embed (scripts/game-embed): the iframe must not touch the page's history.
++import { embedded } from '@/embed/config';
+ 
+ let boardGuardSequence = 0;
+ 
+@@ -15,7 +17,7 @@ export function useBoardLeave(
+     request.current = requestLeave;
+   }, [requestLeave]);
+   useEffect(() => {
+-    if (!active) return;
++    if (!active || embedded) return;
+     allowed.current = false;
+     // A history marker is not a security token; work on LAN HTTP too.
+     const marker = `board-${Date.now()}-${++boardGuardSequence}`;
+diff --git a/lib/games/availability.ts b/lib/games/availability.ts
+index 6217ba1..e97f05c 100644
+--- a/lib/games/availability.ts
++++ b/lib/games/availability.ts
+@@ -1,4 +1,8 @@
++// Portfolio embed (scripts/game-embed): only the games it ships, all playable offline.
++import { embedded, embeddedGames } from '@/embed/config';
++
+ /** Unreleased games stay private to the development server and client. */
+ export function isGameAvailable(id: string) {
++  if (embedded) return embeddedGames.includes(id);
+   return id !== 'diner' || process.env.NODE_ENV === 'development';
+ }

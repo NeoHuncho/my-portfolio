@@ -1,36 +1,29 @@
-# William Guinaudie Portfolio
+# William Guinaudie · AI Engineer
 
-Personal portfolio built with Next.js, TypeScript, and Tailwind CSS.
+Personal portfolio. Next.js 16 (Pages Router), React 19, Tailwind CSS 4, TypeScript, pnpm.
 
-## Features
+## What is on the page
 
-- Server-side rendering with Next.js
-- TypeScript for type safety
-- Tailwind CSS for styling
-- Framer Motion for animations
-- Storybook for component development
-- Jest with React Testing Library for testing
-- Strict ESLint and Prettier configuration
+- **Hero**: a 3D physics desk (React Three Fiber + Rapier). Drag and throw objects, click one to
+  read why it is there, drop the ticket on an agent. Falls back to a static desk without WebGL or
+  with reduced motion.
+- **Experience**: an interactive timeline of roles.
+- **How I work**: an interactive board for a fictional company. You accept, ask about or reject
+  agent proposals, run the daily cycle, and review pull requests before release.
+- **Side projects**: a working Pomi demo with a synced watch, and one GameHub Rota match played on a
+  desktop and a phone frame at once, with GameHub's library a tap away (a real build served from
+  `public/games/`).
+- **Past versions**: the `v3` badge in the header opens frozen builds of the 2022 and 2025 versions
+  of this site, served from `public/versions/`.
 
-### Build and dev scripts
+## Scripts
 
-- `dev` – start dev server
-- `build` – bundle application for production
-- `export` – exports static website to `out` folder
-
-### Testing scripts
-
-- `typecheck` – checks TypeScript types
-- `lint` – runs ESLint
-- `lint:fix` – runs ESLint with auto-fix
-- `prettier:check` – checks files with Prettier
-- `prettier:write` – formats all files with Prettier
-- `format` – runs Prettier and ESLint fix
-- `jest` – runs jest tests
-- `jest:watch` – starts jest watch
-- `test` – runs `jest`, `prettier:check`, `lint` and `typecheck` scripts
-
-### Other scripts
-
-- `storybook` – starts storybook dev server
-- `storybook:build` – build production storybook bundle to `storybook-static`
+- `dev`, `build`, `start`: Next.js
+- `analyze`: production build with the bundle analyzer
+- `test`: Prettier check, ESLint, typecheck and Jest
+- `typecheck`, `lint`, `lint:fix`, `prettier:check`, `prettier:write`, `format`, `jest`,
+  `jest:watch`
+- `build:versions`: rebuilds the frozen past versions from git history into `public/versions/` (see
+  `scripts/build-versions.mjs`)
+- `build:games`: rebuilds the GameHub embeds into `public/games/` from a local GameHub checkout (see
+  `scripts/build-games.mjs`)

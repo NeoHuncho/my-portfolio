@@ -1,131 +1,310 @@
-'use client';
-import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FaGithub, FaLinkedin } from 'react-icons/fa';
-import { IoDocumentText } from 'react-icons/io5';
-import { MdEmail } from 'react-icons/md';
-import { useLanguage } from '../hooks/useLanguage';
-import { useMediaQuery } from '../hooks/useMediaQuery';
-import { smoothScrollToElement } from '../utils/smoothScrollToElement';
-const CV_URLS = {
-  en: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_EN_William_Guinaudie.pdf',
-  fr: 'https://vntoja45q3vx3ti5.public.blob.vercel-storage.com/CV_FR_William_Guinaudie.pdf',
-};
+import { memo, useEffect, useRef, useState } from 'react';
+import {
+  FiArrowUpRight,
+  FiChevronDown,
+  FiDownload,
+  FiGithub,
+  FiLinkedin,
+  FiMail,
+  FiMenu,
+  FiSearch,
+  FiX,
+} from 'react-icons/fi';
+import { openCommandPalette } from '@components/CommandPalette';
+import { links, sectionIds } from '@config/links';
+import { siteVersions } from '@config/versions';
+import { useLanguage } from '@hooks/useLanguage';
+import { cx } from '@lib/cx';
 
-export default function Header() {
-  const [isInProjectsSection, setIsInProjectsSection] = useState(false);
-  const isSmall = useMediaQuery('(max-width: 850px)');
-  const { strings, toggleLocale, locale } = useLanguage();
-  const rafId = useRef<number | null>(null);
-  const lastScrollCheck = useRef(0);
+const navItems = [
+  { id: sectionIds.experience, key: 'experience' },
+  { id: sectionIds.board, key: 'board' },
+  { id: sectionIds.sideProjects, key: 'sideProjects' },
+] as const;
 
-  const handleScroll = useCallback(() => {
-    // Throttle scroll checks to every 100ms using requestAnimationFrame
-    const now = Date.now();
-    if (now - lastScrollCheck.current < 100) {
-      return;
-    }
-    lastScrollCheck.current = now;
-
-    if (rafId.current) {
-      cancelAnimationFrame(rafId.current);
-    }
-
-    rafId.current = requestAnimationFrame(() => {
-      const projectsSection = document.getElementById('projects-section');
-      if (projectsSection) {
-        const projectsTop = projectsSection.getBoundingClientRect().top;
-        setIsInProjectsSection(projectsTop <= 200);
-      }
-    });
-  }, []);
+/** The version badge: opens a menu of frozen past builds of this site. */
+function VersionMenu() {
+  const { strings, locale } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const scrollContainer = document.querySelector('.scroll-container');
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    if (!open) {
+      return undefined;
     }
-
-    return () => {
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleScroll);
-      }
-      if (rafId.current) {
-        cancelAnimationFrame(rafId.current);
+    const onPointer = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) {
+        setOpen(false);
       }
     };
-  }, [handleScroll]);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+      }
+    };
+    window.addEventListener('pointerdown', onPointer);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', onPointer);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <div
-      className={`fixed z-10 top-0 left-0 w-full px-6 md:px-[1%] pt-4 pb-2 grid grid-cols-12 items-center pointer-events-none transition-transform duration-200 ${isSmall && isInProjectsSection ? '-translate-y-full' : ''}`}
-    >
-      <div className={`${isSmall ?'col-span-3':'col-span-4'}  transition-opacity duration-300 pointer-events-auto`}>
-        <Link passHref href="/">
-          <h2
-            className={`font-medium text-white cursor-pointer text-2xl ${isSmall ? 'pt-1' : ''}`}
-            style={{ color: 'white' }}
-            onClick={() => smoothScrollToElement('hero')}
-          >
-            W.G
-          </h2>
-        </Link>
-      </div>
-      <div
-        className={`transition-all duration-300 pointer-events-none flex items-center ${isInProjectsSection ? 'col-span-8 justify-end pr-8' : isSmall ? 'col-span-5 ml-2' : 'absolute left-0 w-full justify-center'}`}
+    <div ref={root} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-controls="version-menu"
+        aria-label={strings.nav.versions}
+        className={cx(
+          'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[11px] transition',
+          open
+            ? 'border-accent text-accent'
+            : 'border-line-strong text-muted hover:border-accent hover:text-accent'
+        )}
       >
+        v3
+        <FiChevronDown
+          aria-hidden
+          className={cx('size-3 transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && (
         <div
-          key={isInProjectsSection ? 'projects' : 'hero'}
-          className={`flex gap-4 items-center pointer-events-auto transition-opacity duration-300 ${isInProjectsSection ? 'justify-end' : isSmall ? 'pt-2 justify-start' : 'justify-center'}`}
-          style={{ opacity: 1 }}
+          id="version-menu"
+          className="animate-fade-up absolute left-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line-strong bg-surface p-1.5 shadow-2xl shadow-black/50"
         >
-          <a
-            className="cursor-pointer"
-            href={CV_URLS[locale]}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <IoDocumentText   size={26} color="white" />
-          </a>
-
-          <a
-            className="cursor-pointer"
-            href="https://github.com/NeoHuncho"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FaGithub size={25} color="white" />
-          </a>
-
-          <a
-            className="cursor-pointer"
-            href="https://www.linkedin.com/in/william-g-178156180/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FaLinkedin size={25} color="white" />
-          </a>
-
-          <a className="cursor-pointer" href="mailto:william.guinaudie@gmail.com">
-            <MdEmail size={28} color="white" />
-          </a>
+          <p className="px-2.5 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+            {strings.nav.versionsTitle}
+          </p>
+          <ul>
+            {siteVersions.map((version) => {
+              const content = (
+                <>
+                  <span className="w-11 font-mono text-xs text-ink">{version.label}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm text-ink">{version.title[locale]}</span>
+                    <span className="block font-mono text-[10px] text-faint">
+                      {version.year} · {version.stack}
+                    </span>
+                  </span>
+                </>
+              );
+              return (
+                <li key={version.label}>
+                  {version.path ? (
+                    <a
+                      href={version.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition hover:bg-surface-3"
+                    >
+                      {content}
+                      <FiArrowUpRight aria-hidden className="text-faint" />
+                    </a>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-lg bg-surface-2 px-2.5 py-2">
+                      {content}
+                      <span className="font-mono text-[10px] text-accent">
+                        {strings.nav.current}
+                      </span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </div>
-      </div>
-      {!isInProjectsSection && (
-        <button
-          type="button"
-          aria-label={strings.language.ariaLabel}
-          title={strings.language.toggleLabel}
-          onClick={toggleLocale}
-          className={`pointer-events-auto absolute right-6 top-4 transition-colors aspect-square flex items-center justify-center ${
-            isSmall
-              ? 'text-white bg-white/10 hover:bg-white/20 rounded-full p-2 border border-white/30'
-              : 'text-white bg-white/90 hover:bg-white rounded-full w-8 h-8 border border-white shadow-sm'
-          }`}
-        >
-          <span className="text-xl leading-none lg:-mt-0.5 ">{strings.language.flagEmoji}</span>
-        </button>
       )}
     </div>
   );
 }
+
+function Header() {
+  const { strings, locale, toggleLocale } = useLanguage();
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setScrolled(window.scrollY > 24));
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return undefined;
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
+  const socials = [
+    { href: links.github, label: 'GitHub', Icon: FiGithub },
+    { href: links.linkedin, label: 'LinkedIn', Icon: FiLinkedin },
+    { href: links.email, label: 'Email', Icon: FiMail },
+  ];
+
+  return (
+    <header
+      className={cx(
+        'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
+        scrolled || menuOpen
+          ? 'border-b border-line bg-bg/80 backdrop-blur-xl'
+          : 'border-b border-transparent'
+      )}
+    >
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
+        <a href={`#${sectionIds.playground}`} className="flex items-center gap-2 font-mono text-sm">
+          <span className="grid size-7 place-items-center rounded-md bg-ink font-semibold text-bg">
+            W
+          </span>
+          <span className="hidden font-medium tracking-tight sm:inline">William Guinaudie</span>
+        </a>
+        <VersionMenu />
+
+        <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 lg:flex">
+          {navItems.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:bg-surface-2 hover:text-ink"
+            >
+              {strings.nav[item.key]}
+            </a>
+          ))}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-label={strings.palette.placeholder}
+            aria-haspopup="dialog"
+            aria-keyshortcuts="/ Meta+K Control+K"
+            className="group grid size-9 place-items-center rounded-md text-muted transition hover:bg-surface-2 hover:text-ink lg:mr-1 lg:flex lg:h-8 lg:w-auto lg:gap-2 lg:border lg:border-line lg:bg-surface/60 lg:pl-2.5 lg:pr-1.5 lg:hover:border-line-strong"
+          >
+            <FiSearch aria-hidden className="size-4 lg:size-3.5" />
+            <span className="hidden text-sm lg:inline">{strings.palette.trigger}</span>
+            <kbd className="ml-3 hidden h-5 min-w-5 place-items-center rounded border border-line-strong bg-surface-2 px-1 font-mono text-[10px] leading-none text-faint transition group-hover:text-muted lg:grid">
+              /
+            </kbd>
+          </button>
+          <a
+            href={links.cv[locale]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted transition hover:bg-surface-2 hover:text-ink sm:flex"
+          >
+            <FiDownload aria-hidden className="size-3.5" />
+            {strings.nav.cv}
+          </a>
+          {socials.map(({ href, label, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target={href.startsWith('mailto') ? undefined : '_blank'}
+              rel="noopener noreferrer"
+              aria-label={label}
+              className="hidden size-9 place-items-center rounded-md text-muted transition hover:bg-surface-2 hover:text-ink sm:grid"
+            >
+              <Icon aria-hidden className="size-4" />
+            </a>
+          ))}
+          <button
+            type="button"
+            onClick={toggleLocale}
+            aria-label={strings.language.toggleLabel}
+            className="ml-1 rounded-md border border-line-strong px-2.5 py-1 font-mono text-xs text-muted transition hover:border-ink hover:text-ink"
+          >
+            {locale === 'en' ? 'EN · fr' : 'FR · en'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            aria-label={menuOpen ? strings.nav.close : strings.nav.menu}
+            className="grid size-9 place-items-center rounded-md text-ink lg:hidden"
+          >
+            {menuOpen ? (
+              <FiX aria-hidden className="size-5" />
+            ) : (
+              <FiMenu aria-hidden className="size-5" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {menuOpen && (
+        <div id="mobile-menu" className="border-t border-line px-4 pb-5 pt-2 lg:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              openCommandPalette();
+            }}
+            aria-haspopup="dialog"
+            className="mb-1 mt-2 flex w-full items-center gap-2.5 rounded-lg border border-line-strong bg-surface/60 px-3 py-2.5 text-left text-sm text-muted transition hover:text-ink"
+          >
+            <FiSearch aria-hidden className="size-4" />
+            {strings.palette.placeholder}
+          </button>
+          <nav aria-label="Sections" className="flex flex-col">
+            {navItems.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={() => setMenuOpen(false)}
+                className="border-b border-line py-3 text-base text-ink"
+              >
+                {strings.nav[item.key]}
+              </a>
+            ))}
+          </nav>
+          <div className="mt-4 flex items-center gap-2">
+            <a
+              href={links.cv[locale]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-md border border-line-strong px-3 py-2 text-sm"
+            >
+              <FiDownload aria-hidden className="size-3.5" />
+              {strings.nav.cv}
+            </a>
+            {socials.map(({ href, label, Icon }) => (
+              <a
+                key={label}
+                href={href}
+                target={href.startsWith('mailto') ? undefined : '_blank'}
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="grid size-10 place-items-center rounded-md border border-line-strong"
+              >
+                <Icon aria-hidden className="size-4" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+export default memo(Header);

@@ -75,6 +75,9 @@ export default [
       },
     },
     rules: {
+      // TypeScript already reports undefined identifiers
+      'no-undef': 'off',
+
       // TypeScript strict rules
       ...typescriptPlugin.configs.recommended.rules,
       ...typescriptPlugin.configs.strict.rules,
@@ -207,6 +210,19 @@ export default [
     },
   },
 
+  // React Three Fiber elements take three.js props, not DOM attributes
+  {
+    files: [
+      'sections/hero/playground/**/*.{ts,tsx}',
+      'sections/hero/phone/{exhibits,Showcase}.tsx',
+    ],
+    rules: {
+      'react/no-unknown-property': 'off',
+      // three.js and Rapier objects are mutable by design
+      'react-hooks/immutability': 'off',
+    },
+  },
+
   // Config files override (JS files)
   {
     files: ['**/*.{js,mjs,cjs}'],
@@ -228,6 +244,9 @@ export default [
       'storybook-static/',
       '*.d.ts',
       'public/',
+      'scripts/version-patches/',
+      'scripts/game-embed/',
+      'next-env.d.ts',
     ],
   },
 ];

@@ -1,101 +1,287 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
-import { FaArrowDown } from 'react-icons/fa';
-import type { Locale } from '../../config/translations';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { smoothScrollToElement } from '../../utils/smoothScrollToElement';
+import { FiArrowDown, FiDownload, FiSmartphone } from 'react-icons/fi';
+import { useInView } from 'react-intersection-observer';
+import { links, sectionIds } from '@config/links';
+import { useLanguage } from '@hooks/useLanguage';
+import { useMediaQuery } from '@hooks/useMediaQuery';
+import { usePrefersReducedMotion } from '@hooks/usePrefersReducedMotion';
+import { cx } from '@lib/cx';
+import DeskCallout from './DeskCallout';
+import PhoneHero from './phone/PhoneHero';
+import { type InfoId } from './playground/items';
+import { type Anchor } from './playground/Playground';
+import PlaygroundFallback from './PlaygroundFallback';
+import { useDeviceTilt } from './useDeviceTilt';
 
-type HeroSectionProps = {
-  title: string;
-  image: {
-    src: string;
-    width: number;
-    height: number;
-  };
-  link?: string;
-  subTitle?: string;
-  ctaLabel?: string;
-  locale?: Locale;
-};
+const loadPlayground = () => import('./playground/Playground');
+const Playground = dynamic(loadPlayground, { ssr: false });
 
-export default function HeroSection({ title, image, link, subTitle, ctaLabel, locale }: HeroSectionProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const isSmall = useMediaQuery('(max-width: 1000px)');
-  const isNarrow = useMediaQuery('(max-width: 410px)');
+function supportsWebGL(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
+  } catch (_error) {
+    return false;
+  }
+}
+
+/**
+ * Starts downloading the 3D bundle right away, but mounts it only once the
+ * browser is idle so it never competes with first paint.
+ */
+function useIdleMount(enabled: boolean): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!enabled) {
+      return undefined;
+    }
+    loadPlayground().catch(() => undefined);
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(() => setReady(true), { timeout: 800 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = setTimeout(() => setReady(true), 200);
+    return () => clearTimeout(id);
+  }, [enabled]);
+  return ready;
+}
+
+export default function HeroSection() {
+  const { strings, locale } = useLanguage();
+  const reducedMotion = usePrefersReducedMotion();
+  const coarse = useMediaQuery('(pointer: coarse)');
+  const wide = useMediaQuery('(min-width: 1024px)');
+  const roomy = useMediaQuery('(min-width: 640px)');
+  const { ref, inView } = useInView({ initialInView: true });
+
+  const [webgl, setWebgl] = useState<boolean | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [selection, setSelection] = useState<{ info: InfoId; uid: string } | null>(null);
+  const [shipped, setShipped] = useState<string | null>(null);
+  // Off on every visit: the robot only drives after the pointer once asked to.
+  const [robotFollow, setRobotFollow] = useState(false);
+  const toggleRobotFollow = useCallback(() => setRobotFollow((on) => !on), []);
+
+  useEffect(() => {
+    setWebgl(supportsWebGL());
+  }, []);
+
+  // Phones get their own hero below the text (PhoneHero), never the 3D desk.
+  const canRender = webgl === true && !reducedMotion && roomy;
+  const mount = useIdleMount(canRender);
+  const tilt = useDeviceTilt(coarse && canRender);
+  const onReady = useCallback(() => setLoaded(true), []);
+  const onShipped = useCallback((code: string) => setShipped(code), []);
+  const onSelect = useCallback(
+    (info: InfoId, uid: string) =>
+      setSelection((current) => (current?.uid === uid ? current : { info, uid })),
+    []
+  );
+  const closeInfo = useCallback(() => setSelection(null), []);
+  const deskRef = useRef<HTMLDivElement>(null);
+  const introRef = useRef<HTMLDivElement>(null);
+  const anchorSink = useRef<((anchor: Anchor | null) => void) | null>(null);
+  const onAnchor = useCallback((anchor: Anchor | null) => anchorSink.current?.(anchor), []);
+
+  // Escape, or a click anywhere off the desk, puts the story away.
+  const open = selection !== null;
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelection(null);
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Node && deskRef.current?.contains(event.target))) {
+        setSelection(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!shipped) {
+      return undefined;
+    }
+    const id = setTimeout(() => setShipped(null), 4000);
+    return () => clearTimeout(id);
+  }, [shipped]);
+
+  const selected = selection ? strings.hero.objects[selection.info] : null;
+  const showFallback = roomy && (webgl === false || reducedMotion);
 
   return (
-    <div
-      id="hero"
-      className="flex flex-col relative min-h-screen h-screen justify-center bg-[radial-gradient(50%_98.88%_at_50%_50%,#16045e_18.23%,#0e021e_100%)] scroll-section overflow-x-hidden"
-      style={{ zIndex: link ? 2 : 1 }}
+    <section
+      id={sectionIds.playground}
+      ref={ref}
+      className="relative flex flex-col overflow-hidden bg-dots max-sm:pb-8 sm:min-h-[100svh] lg:block lg:h-[100svh] lg:min-h-[640px]"
     >
-      {!link && (
-        <button
-          onClick={() => smoothScrollToElement('projects-section')}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10 cursor-pointer hover:opacity-80 transition-opacity"
-          aria-label={ctaLabel ?? 'Scroll to projects'}
-        >
-          <div
-            className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4 shadow-lg animate-bounce-slow"
-          >
-            <FaArrowDown size={24} color="white" />
-          </div>
-        </button>
-      )}
-      <div
-        className={`w-full items-center grid grid-cols-12 px-4 md:px-8 ${isSmall ? '-mt-[30%]' : '-mt-24'}`}
-      >
-        <div className={`flex ${!isSmall ? 'col-span-6 order-1' : 'col-span-12 order-3'}`}>
-          <Link href={link || ''} passHref>
-            <div
-              className={imageLoaded ? 'animate-fade-in-left' : ''}
-              style={{ 
-                cursor: link ? 'pointer' : '', 
-                animationDelay: imageLoaded ? '100ms' : '0ms',
-                opacity: imageLoaded ? undefined : 0
-              }}
-            >
-              <h1
-                className="font-extrabold"
-                style={{ fontSize: !isSmall ? 90 : 50, color: 'whitesmoke' }}
+      <div className="relative z-10 px-4 pt-20 sm:px-6 sm:pt-24 lg:pointer-events-none lg:absolute lg:inset-0 lg:flex lg:items-center lg:pt-0">
+        <div className="mx-auto w-full max-w-7xl">
+          <div ref={introRef} className="max-w-xl animate-fade-up">
+            <p className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.18em] text-muted">
+              {/* Phones have no desk with my portrait on it: it sits by my name instead. */}
+              <Image
+                src="/assets/about/profile.webp"
+                alt=""
+                width={28}
+                height={28}
+                priority
+                className="size-7 rounded-full object-cover ring-1 ring-line-strong sm:hidden"
+              />
+              {strings.hero.eyebrow}
+            </p>
+            <h1 className="mt-2 text-[2.75rem] font-semibold leading-none tracking-tight sm:mt-3 sm:text-6xl lg:text-7xl">
+              {strings.hero.role}
+              <span className="text-accent">.</span>
+            </h1>
+            <p className="mt-4 text-pretty text-base text-muted sm:mt-5 sm:text-xl">
+              {strings.hero.tagline}
+              <span className="max-sm:hidden"> {strings.hero.taglineMore}</span>
+            </p>
+            <div className="mt-5 flex gap-2.5 sm:mt-8 sm:flex-wrap sm:gap-3 lg:pointer-events-auto">
+              <a
+                href={`#${sectionIds.experience}`}
+                className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-bg transition hover:bg-white sm:px-5"
               >
-                {title}
-              </h1>
-              <span
-                className={`bg-[#196dbd] block mt-[1vh] h-[0.26vh] rounded-[5px] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`}
-              />
-              <span
-                className={`bg-[#196dbd] block rounded-[5px] h-[0.26vh] mt-[2vh] mb-[2vh] ml-[7vw] ${isSmall ? 'w-[30vw]' : 'w-[15vw]'}`}
-              />
-              {subTitle && (
-                <h2 style={{ fontWeight: 300, fontSize: isNarrow && locale === 'fr' ? 33 : 37, color: 'white' }}>{subTitle}</h2>
-              )}
+                {strings.hero.primaryCta}
+                <FiArrowDown aria-hidden />
+              </a>
+              <a
+                href={links.cv[locale]}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={strings.hero.secondaryCta}
+                className="inline-flex items-center gap-2 rounded-full border border-line-strong px-4 py-2.5 text-sm transition hover:border-ink sm:px-5"
+              >
+                <FiDownload aria-hidden />
+                {/* Phones keep both buttons on one row. */}
+                <span className="sm:hidden">{strings.nav.cv}</span>
+                <span className="max-sm:hidden">{strings.hero.secondaryCta}</span>
+              </a>
             </div>
-          </Link>
-        </div>
-        <div className={`${!isSmall ? 'col-span-6 order-2' : 'col-span-12 order-1'}`}>
-          <Link href={link || ''} passHref>
-            <div
-              className={`transform-gpu ${imageLoaded ? 'animate-fade-in-up' : 'opacity-0'}`}
-              style={{ cursor: link ? 'pointer' : '' }}
-            >
-              <div className={imageLoaded ? 'animate-float' : ''}>
-                <Image
-                  src={image.src}
-                  alt=""
-                  width={image.width}
-                  height={image.height}
-                  style={{ width: '100%', height: 'auto' }}
-                  onLoad={() => setImageLoaded(true)}
-                  priority
-                  sizes="(max-width: 1000px) 100vw, 50vw"
-                />
-              </div>
-            </div>
-          </Link>
+          </div>
+          <PhoneHero />
         </div>
       </div>
-    </div>
+
+      {/* The desk: full-bleed behind the text on desktop, below it on tablets, none on phones. */}
+      <div
+        ref={deskRef}
+        className="relative min-h-[55svh] flex-1 max-sm:hidden lg:absolute lg:inset-0"
+      >
+        {showFallback && <PlaygroundFallback note={strings.hero.fallbackNote} />}
+        {canRender && mount && (
+          <div
+            className={cx(
+              'absolute inset-0 transition-opacity duration-700',
+              loaded ? 'opacity-100' : 'opacity-0'
+            )}
+          >
+            <Playground
+              active={inView}
+              coarse={coarse}
+              compact={!wide}
+              biasRight={wide}
+              onShipped={onShipped}
+              onSelect={onSelect}
+              onMiss={closeInfo}
+              robotFollow={robotFollow}
+              selected={selection?.uid ?? null}
+              onAnchor={onAnchor}
+              motion={tilt.motion}
+              onReady={onReady}
+            />
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-bg via-bg/50 to-transparent lg:block lg:w-[55%]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg to-transparent" />
+        {canRender && selection && selected && (
+          <DeskCallout
+            selectionKey={selection.uid}
+            title={selected.title}
+            body={selected.body}
+            closeLabel={strings.hero.closeInfo}
+            onClose={closeInfo}
+            // Only with a mouse: on touch screens there is no pointer to follow.
+            toggle={
+              selection.info === 'robot' && !coarse
+                ? {
+                    label: robotFollow ? strings.hero.robotStop : strings.hero.robotFollow,
+                    pressed: robotFollow,
+                    onToggle: toggleRobotFollow,
+                  }
+                : undefined
+            }
+            link={
+              selection.info === 'night'
+                ? { label: strings.hero.nightShiftLink, href: `#${sectionIds.board}` }
+                : undefined
+            }
+            docked={false}
+            // Clear of the fixed header on wide screens, where the desk runs under it.
+            topInset={wide ? 76 : 12}
+            bottomInset={56}
+            // The desk runs under the text on wide screens: the card keeps off it.
+            avoidRef={wide ? introRef : undefined}
+            anchorSinkRef={anchorSink}
+          />
+        )}
+        {canRender && (
+          // Over the bottom of the desk, so showing it never resizes the scene; on phones over its
+          // top, which is on the first screen.
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-4 pb-4 max-sm:bottom-auto max-sm:top-0 max-sm:pb-0 max-sm:pt-3 sm:px-6 sm:pb-6">
+            <div className="mx-auto flex max-w-7xl flex-col-reverse items-end gap-3 max-sm:flex-row max-sm:items-center lg:flex-row lg:justify-between">
+              {tilt.supported && (
+                // Phones: the desk follows the phone's tilt, and a shake tosses everything.
+                <button
+                  type="button"
+                  aria-pressed={tilt.on}
+                  onClick={tilt.toggle}
+                  className={cx(
+                    'pointer-events-auto mr-auto inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] backdrop-blur-md transition active:scale-95',
+                    tilt.on
+                      ? 'border-accent/60 bg-accent/15 text-ink'
+                      : 'border-line-strong bg-bg/60 text-muted'
+                  )}
+                >
+                  <FiSmartphone
+                    aria-hidden
+                    className={cx(
+                      'size-3.5',
+                      tilt.on ? 'animate-wobble text-accent' : 'rotate-[-12deg]'
+                    )}
+                  />
+                  {tilt.on ? strings.hero.tiltOn : strings.hero.tiltOff}
+                </button>
+              )}
+              <p
+                aria-live="polite"
+                className={cx(
+                  'max-w-md font-mono text-[11px] leading-relaxed text-ok sm:text-xs',
+                  !shipped && 'sr-only'
+                )}
+              >
+                {shipped ? strings.hero.shipped(shipped) : ''}
+              </p>
+              {/* Read out whatever the visual callout shows. */}
+              <p aria-live="polite" className="sr-only">
+                {selected ? `${selected.title}. ${selected.body}` : ''}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

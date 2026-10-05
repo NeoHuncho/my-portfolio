@@ -1,162 +1,156 @@
 @import 'tailwindcss';
 
-@layer base {
-  a {
-    text-decoration: none;
-  }
+@theme {
+  --color-bg: #0b0b0d;
+  --color-surface: #131316;
+  --color-surface-2: #1a1a1f;
+  --color-surface-3: #23232a;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.16);
+  --color-ink: #ededeb;
+  --color-muted: #9b9ba3;
+  --color-faint: #66666e;
+  --color-accent: #ff6b35;
+  --color-accent-soft: rgb(255 107 53 / 0.14);
+  --color-ok: #4ade9f;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pulse-dot: pulse-dot 1.6s ease-in-out infinite;
+  --animate-wobble: wobble 2.4s ease-in-out infinite;
+  --animate-shift: shift-progress 7s linear forwards;
 }
 
-/* Scroll container with smooth mandatory snapping */
-.scroll-container {
+:root {
+  --track-feature: #5b9cff;
+  --track-bug: #ff5d5d;
+  --track-security: #a78bfa;
+  --track-performance: #4ade9f;
+  --track-dependencies: #94a3b8;
+  --track-docs: #e2c08d;
+
+  color-scheme: dark;
+}
+
+html {
   scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
-  overflow-y: scroll;
-  height: 100vh;
-}
-
-/* Each section snaps and stops */
-.scroll-section {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+  scroll-padding-top: 4.5rem;
+  background: var(--color-bg);
+  overscroll-behavior-y: none;
 }
 
 body {
-  font-family: 'Tahoma', sans-serif;
-  background: radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%);
-  color: white;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Simplified glow animation - single box-shadow pulse instead of rotating shadows */
-@keyframes glow {
-  0%,
-  100% {
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
-  }
+::selection {
+  background: var(--color-accent);
+  color: #0b0b0d;
 }
 
-@keyframes glow-fadeout {
-  from {
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
-  }
-  to {
-    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
-  }
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-.animate-glow {
-  animation: glow 3s ease-in-out infinite;
-  will-change: box-shadow;
+/* Dotted workbench grid used behind sections */
+.bg-dots {
+  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
-.animate-glow-fadeout {
-  animation: glow-fadeout 0.8s ease-out forwards;
-}
-
-/* Smooth floating animation using CSS for better performance */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px) translateZ(0);
-  }
-  50% {
-    transform: translateY(-10px) translateZ(0);
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-  will-change: transform;
-}
-
-/* Fade in animations for hero section */
-@keyframes fadeInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(20px, -20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes bounceSlow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(8px);
-  }
-}
-
-.animate-fade-in-left {
-  animation: fadeInLeft 0.6s ease-out both;
-  opacity: 0;
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.7s ease-out both;
-  opacity: 0;
-}
-
-.animate-bounce-slow {
-  animation: bounceSlow 2s ease-in-out infinite;
-}
-
-/* GPU acceleration for smooth transforms */
-.transform-gpu {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-.will-change-transform {
-  will-change: transform;
-}
-
-/* Reduce motion for users who prefer it */
-@media (prefers-reduced-motion: reduce) {
-  .animate-float,
-  .animate-glow,
-  .animate-glow-fadeout,
-  .animate-fade-in {
-    animation: none;
-  }
-}
-
-/* Generic fade-in animation (replaces framer-motion) */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out both;
-}
-
-/* Content visibility optimization for below-fold sections */
 .content-auto {
   content-visibility: auto;
-  contain-intrinsic-size: auto 100vh;
+  contain-intrinsic-size: auto 900px;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The phone hero's shift tabs: how long until the next shift takes the stage. */
+@keyframes shift-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* The tilt toggle's phone, rocking side to side while the desk follows it. */
+@keyframes wobble {
+  0%,
+  100% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(14deg);
+  }
+}
+
+@keyframes ticket-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-ticket-in {
+  animation: ticket-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

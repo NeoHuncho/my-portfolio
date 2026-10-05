@@ -1,42 +1,33 @@
-import Header from '@components/Header';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { type AppProps } from 'next/app';
 import Head from 'next/head';
-import { LanguageProvider } from '../contexts/LanguageContext';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
+import CommandPalette from '@components/CommandPalette';
+import Header from '@components/Header';
+import { LanguageProvider } from '@contexts/LanguageContext';
 import '../styles/globals.css';
 
-export default function App(props: AppProps) {
-  const { Component, pageProps } = props;
-
+export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>Portfolio</title>
-        <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
-        <link rel="shortcut icon" href="/favicon.ico" />
-        <link rel="dns-prefetch" href="https://github.com" />
-        <link rel="dns-prefetch" href="https://linkedin.com" />
-        <link rel="preconnect" href="https://vitals.vercel-insights.com" />
-        <link rel="preconnect" href="https://vntoja45q3vx3ti5.public.blob.vercel-storage.com" />
-        {/* Preload critical fonts if any */}
+        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover" />
+        <meta name="theme-color" content="#0b0b0d" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <div
-        className="min-h-screen flex flex-col overflow-hidden"
-        style={{
-          background: 'radial-gradient(50% 98.88% at 50% 50%, #16045e 18.23%, #0e021e 100%)',
-        }}
-      >
+      <div className={`${GeistSans.variable} ${GeistMono.variable} min-h-screen font-sans`}>
         <LanguageProvider>
           <Header />
-          <main className="flex-1">
+          <main>
             <Component {...pageProps} />
           </main>
+          <CommandPalette />
         </LanguageProvider>
-        <Analytics />
-        <SpeedInsights />
       </div>
+      <Analytics />
+      <SpeedInsights />
     </>
   );
 }
