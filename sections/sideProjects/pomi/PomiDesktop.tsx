@@ -10,7 +10,7 @@ import {
   FiWifi,
 } from 'react-icons/fi';
 import { cx } from '@lib/cx';
-import { ACCENTS, formatClock, SESSION_TOTAL, type Copy, type Locale } from './data';
+import { ACCENTS, formatClock, SESSION_TOTAL, visibleTasks, type Copy, type Locale } from './data';
 import { DONE_COLOR } from './parts';
 import { type DemoAction, type DemoState, intentionsFor } from './usePomiDemo';
 
@@ -115,7 +115,7 @@ function MenuBar({ state, copy, progress }: { state: DemoState; copy: Copy; prog
 function AppWindow({ state, dispatch, copy, locale, progress }: Props & { progress: number }) {
   const { timer } = state;
   const running = timer.status === 'running';
-  const tasks = state.tasks.slice(0, MAX_TASKS);
+  const tasks = visibleTasks(state.tasks, MAX_TASKS);
   const selected = state.selected[timer.type];
   const skipLabel =
     timer.type === 'work'
@@ -205,7 +205,7 @@ function AppWindow({ state, dispatch, copy, locale, progress }: Props & { progre
         <div
           role="group"
           aria-label={copy.intentions}
-          className="relative mt-1.5 flex h-[15px] items-center justify-center gap-[3px]"
+          className="relative mt-1.5 flex h-[15px] items-center justify-center gap-[2px]"
         >
           {intentionsFor(timer.type).map((intention) => {
             const isSelected = intention.slug === selected;
@@ -220,9 +220,9 @@ function AppWindow({ state, dispatch, copy, locale, progress }: Props & { progre
                   dispatch({ type: 'select', source: 'desktop', slug: intention.slug })
                 }
                 className={cx(
-                  'flex h-[15px] items-center justify-center gap-[3px] rounded-full border text-[7.5px] leading-none',
+                  'flex h-[15px] shrink-0 items-center justify-center gap-[2px] rounded-full border text-[7px] leading-none',
                   isSelected
-                    ? 'border-[color-mix(in_srgb,var(--p-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--p-accent)_16%,transparent)] pl-[4px] pr-[5px]'
+                    ? 'border-[color-mix(in_srgb,var(--p-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--p-accent)_16%,transparent)] pl-[3px] pr-[4px]'
                     : 'w-[15px] border-transparent bg-white/[0.05] hover:bg-white/10',
                   FOCUS
                 )}

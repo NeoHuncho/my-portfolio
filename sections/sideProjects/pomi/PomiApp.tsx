@@ -5,13 +5,22 @@ import {
   FiMic,
   FiPause,
   FiPlay,
+  FiPlus,
   FiRotateCcw,
   FiSkipForward,
   FiSquare,
   FiX,
 } from 'react-icons/fi';
 import { cx } from '@lib/cx';
-import { ACCENTS, PHRASES, SESSION_TOTAL, formatClock, type Copy, type Locale } from './data';
+import {
+  ACCENTS,
+  PHRASES,
+  SESSION_TOTAL,
+  formatClock,
+  visibleTasks,
+  type Copy,
+  type Locale,
+} from './data';
 import { DONE_COLOR, MIC_COLOR, TaskMeta, Waveform } from './parts';
 import { type DemoAction, type DemoState, heardText, intentionsFor } from './usePomiDemo';
 
@@ -19,7 +28,7 @@ export const PHONE_WIDTH = 280;
 export const PHONE_HEIGHT = 568;
 
 /** The list always fits the screen: no inner scroll area to trap the page wheel. */
-const MAX_TASKS = 4;
+const MAX_TASKS = 5;
 
 const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--p-accent)]';
@@ -113,11 +122,12 @@ function SessionDots({ state, copy }: { state: DemoState; copy: Copy }) {
   );
 }
 
-function TimerRing({ state, dispatch, copy }: Omit<Props, 'locale'>) {
+/** The timer as a compact card: a small ring round the main control, the time, then reset and skip. */
+function TimerCard({ state, dispatch, copy, locale }: Props) {
   const { timer } = state;
   const running = timer.status === 'running';
-  const size = 164;
-  const stroke = 6;
+  const size = 58;
+  const stroke = 4;
   const radius = size / 2 - stroke;
   const circumference = 2 * Math.PI * radius;
   const progress = Math.min(1, Math.max(0, timer.remaining / timer.duration));
@@ -127,77 +137,79 @@ function TimerRing({ state, dispatch, copy }: Omit<Props, 'locale'>) {
       : copy.skipTo.work;
 
   return (
-    <div className="relative flex h-[164px] shrink-0 items-center justify-center">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg
-          viewBox={`0 0 ${size} ${size}`}
-          aria-hidden="true"
-          className="absolute inset-0 -rotate-90"
-        >
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="rgb(255 255 255 / 0.07)"
-            strokeWidth={stroke}
-          />
-          {[stroke * 2.6, stroke].map((width) => (
+    <div className="relative mx-3 mt-1 shrink-0 rounded-[22px] border border-white/[0.07] bg-white/[0.035] p-2.5">
+      <div className="flex items-center gap-3">
+        <div className="relative shrink-0" style={{ width: size, height: size }}>
+          <svg
+            viewBox={`0 0 ${size} ${size}`}
+            aria-hidden="true"
+            className="absolute inset-0 -rotate-90"
+          >
             <circle
-              key={width}
               cx={size / 2}
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke="var(--p-accent)"
-              strokeWidth={width}
-              strokeLinecap="round"
-              strokeDasharray={`${circumference * progress} ${circumference}`}
-              opacity={width === stroke ? 1 : Number(running) * 0.16}
-              className="pomi-motion transition-[stroke,opacity] duration-500"
+              stroke="rgb(255 255 255 / 0.08)"
+              strokeWidth={stroke}
             />
-          ))}
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--p-accent)] transition-colors">
+            {[stroke * 2.4, stroke].map((width) => (
+              <circle
+                key={width}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke="var(--p-accent)"
+                strokeWidth={width}
+                strokeLinecap="round"
+                strokeDasharray={`${circumference * progress} ${circumference}`}
+                opacity={width === stroke ? 1 : Number(running) * 0.18}
+                className="pomi-motion transition-[stroke,opacity] duration-500"
+              />
+            ))}
+          </svg>
+          <RoundButton
+            label={running ? copy.pause : copy.start}
+            onClick={() => dispatch({ type: 'toggle', source: 'app' })}
+            className="absolute inset-[11px] text-[15px] text-bg hover:brightness-110"
+            style={{ background: 'var(--p-accent)' }}
+          >
+            <span key={timer.status} className="pomi-fade-scale flex">
+              {running ? (
+                <FiPause aria-hidden="true" />
+              ) : (
+                <FiPlay aria-hidden="true" className="ml-0.5" />
+              )}
+            </span>
+          </RoundButton>
+        </div>
+        <div className="min-w-0 flex-1">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--p-accent)] transition-colors">
             {copy.types[timer.type]}
           </span>
-          <span className="mt-0.5 text-[40px] font-semibold leading-none tracking-tight tabular-nums text-ink">
+          <span className="mt-0.5 block text-[26px] font-semibold leading-none tracking-tight tabular-nums text-ink">
             {formatClock(timer.remaining)}
           </span>
-          {/* Media-player row: reset and skip flank the main control, inside the ring. */}
-          <div className="mt-3 flex items-center gap-2.5">
-            <RoundButton
-              label={copy.reset}
-              onClick={() => dispatch({ type: 'reset', source: 'app' })}
-              className="size-7 text-[12px] text-muted hover:bg-white/10 hover:text-ink"
-            >
-              <FiRotateCcw aria-hidden="true" />
-            </RoundButton>
-            <RoundButton
-              label={running ? copy.pause : copy.start}
-              onClick={() => dispatch({ type: 'toggle', source: 'app' })}
-              className="size-10 text-[16px] text-bg hover:brightness-110"
-              style={{ background: 'var(--p-accent)' }}
-            >
-              <span key={timer.status} className="pomi-fade-scale flex">
-                {running ? (
-                  <FiPause aria-hidden="true" />
-                ) : (
-                  <FiPlay aria-hidden="true" className="ml-0.5" />
-                )}
-              </span>
-            </RoundButton>
-            <RoundButton
-              label={skipLabel}
-              onClick={() => dispatch({ type: 'skip', source: 'app' })}
-              className="size-7 text-[12px] text-muted hover:bg-white/10 hover:text-ink"
-            >
-              <FiSkipForward aria-hidden="true" />
-            </RoundButton>
-          </div>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          <RoundButton
+            label={copy.reset}
+            onClick={() => dispatch({ type: 'reset', source: 'app' })}
+            className="size-7 bg-white/[0.05] text-[12px] text-muted hover:bg-white/10 hover:text-ink"
+          >
+            <FiRotateCcw aria-hidden="true" />
+          </RoundButton>
+          <RoundButton
+            label={skipLabel}
+            onClick={() => dispatch({ type: 'skip', source: 'app' })}
+            className="size-7 bg-white/[0.05] text-[12px] text-muted hover:bg-white/10 hover:text-ink"
+          >
+            <FiSkipForward aria-hidden="true" />
+          </RoundButton>
         </div>
       </div>
+      <IntentionRow state={state} dispatch={dispatch} copy={copy} locale={locale} />
     </div>
   );
 }
@@ -206,10 +218,11 @@ function IntentionRow({ state, dispatch, copy, locale }: Props) {
   const { type } = state.timer;
   const selected = state.selected[type];
   return (
+    // Five intentions and the picked one's name share the card's width: nothing may shrink.
     <div
       role="group"
       aria-label={copy.intentions}
-      className="mt-2.5 flex h-8 shrink-0 items-center justify-center gap-1.5 px-4"
+      className="mt-2.5 flex h-7 items-center gap-[3px]"
     >
       {intentionsFor(type).map((intention) => {
         const isSelected = intention.slug === selected;
@@ -222,16 +235,19 @@ function IntentionRow({ state, dispatch, copy, locale }: Props) {
             title={intention.name[locale]}
             onClick={() => dispatch({ type: 'select', source: 'app', slug: intention.slug })}
             className={cx(
-              'pomi-motion flex h-8 items-center justify-center gap-1.5 rounded-full border text-[14px] leading-none transition-all duration-200',
+              'pomi-motion flex h-[26px] shrink-0 items-center justify-center gap-1 rounded-full border text-[12.5px] leading-none transition-all duration-200',
               isSelected
-                ? 'pomi-picked border-[color-mix(in_srgb,var(--p-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--p-accent)_16%,transparent)] pl-2 pr-2.5'
-                : 'w-8 border-transparent bg-white/[0.05] hover:bg-white/10',
+                ? 'pomi-picked border-[color-mix(in_srgb,var(--p-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--p-accent)_16%,transparent)] pl-1.5 pr-2'
+                : 'w-[26px] border-transparent bg-white/[0.05] hover:bg-white/10',
               FOCUS
             )}
           >
             <span aria-hidden="true">{intention.emoji}</span>
             {isSelected && (
-              <span aria-hidden="true" className="text-[11px] font-medium text-ink">
+              <span
+                aria-hidden="true"
+                className="whitespace-nowrap text-[10px] font-medium text-ink"
+              >
                 {intention.name[locale]}
               </span>
             )}
@@ -244,27 +260,37 @@ function IntentionRow({ state, dispatch, copy, locale }: Props) {
 
 function TaskList({ state, dispatch, copy, locale }: Props) {
   const done = state.tasks.filter((task) => task.done).length;
-  const tasks = state.tasks.slice(0, MAX_TASKS);
+  const tasks = visibleTasks(state.tasks, MAX_TASKS);
   const hidden = state.tasks.length - tasks.length;
   return (
-    <div className="mt-3 px-4">
+    <div className="mt-3 px-3">
       <div className="flex items-baseline justify-between px-1">
-        <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-          {copy.today}
-        </h4>
-        <span className="text-[10.5px] tabular-nums text-faint">
+        <h4 className="text-[14px] font-semibold tracking-tight text-ink">{copy.today}</h4>
+        <span className="text-[10.5px] tabular-nums text-muted">
           {copy.doneCount(done, state.tasks.length)}
           {hidden > 0 && ` · ${copy.more(hidden)}`}
         </span>
       </div>
-      <ul className="mt-1">
+      <div
+        aria-hidden="true"
+        className="mx-1 mt-2 h-1 overflow-hidden rounded-full bg-white/[0.06]"
+      >
+        <span
+          className="pomi-motion block h-full rounded-full transition-[width] duration-500"
+          style={{
+            width: `${(done / Math.max(1, state.tasks.length)) * 100}%`,
+            background: DONE_COLOR,
+          }}
+        />
+      </div>
+      <ul className="mt-1.5 divide-y divide-white/[0.05]">
         {tasks.map((task) => {
           const title = task.title[locale];
           return (
             <li
               key={task.id}
               className={cx(
-                'flex items-center gap-2.5 rounded-xl px-1 py-[3px]',
+                'flex items-center gap-3 rounded-xl px-1 py-[5px]',
                 task.id === state.fresh && 'pomi-fresh'
               )}
             >
@@ -274,7 +300,7 @@ function TaskList({ state, dispatch, copy, locale }: Props) {
                 aria-pressed={task.done}
                 onClick={() => dispatch({ type: 'toggleTask', source: 'app', id: task.id })}
                 className={cx(
-                  'flex size-5 shrink-0 items-center justify-center rounded-full border-[1.5px] text-[11px] transition-colors',
+                  'flex size-[22px] shrink-0 items-center justify-center rounded-full border-[1.5px] text-[12px] transition-colors',
                   task.done
                     ? 'pomi-pop text-bg'
                     : 'border-white/25 text-transparent hover:border-[var(--p-accent)]',
@@ -287,7 +313,7 @@ function TaskList({ state, dispatch, copy, locale }: Props) {
               <div className="min-w-0 flex-1">
                 <p
                   className={cx(
-                    'truncate text-[12.5px] font-medium leading-4 transition-colors',
+                    'truncate text-[13.5px] font-medium leading-[18px] transition-colors',
                     task.done ? 'text-faint line-through' : 'text-ink'
                   )}
                 >
@@ -298,7 +324,7 @@ function TaskList({ state, dispatch, copy, locale }: Props) {
                   copy={copy}
                   locale={locale}
                   className={cx(
-                    'mt-[2px] h-[14px] flex-nowrap overflow-hidden text-[9.5px] leading-[14px] text-muted',
+                    'mt-1 h-4 flex-nowrap overflow-hidden text-[10px] leading-4 text-muted',
                     task.done && 'opacity-50'
                   )}
                 />
@@ -311,64 +337,59 @@ function TaskList({ state, dispatch, copy, locale }: Props) {
   );
 }
 
-function MicButton({ state, dispatch, copy }: Omit<Props, 'locale'>) {
+/**
+ * Voice capture as a quick-add bar along the bottom, the way a composer sits
+ * under a chat: the whole bar starts listening, the mic at its end shows
+ * what it is doing.
+ */
+function Composer({ state, dispatch, copy }: Omit<Props, 'locale'>) {
   const { phase } = state.capture;
   const listening = phase === 'listening';
   let icon = <FiMic aria-hidden="true" />;
   if (listening) {
-    icon = <FiSquare aria-hidden="true" className="fill-current text-[16px]" />;
+    icon = <FiSquare aria-hidden="true" className="fill-current text-[12px]" />;
   } else if (phase === 'parsing') {
     icon = (
       <span
         aria-hidden="true"
-        className="pomi-spin size-5 rounded-full border-2 border-bg/30 border-t-bg"
+        className="pomi-spin size-4 rounded-full border-2 border-bg/30 border-t-bg"
       />
     );
   } else if (phase === 'done') {
     icon = <FiCheck aria-hidden="true" strokeWidth={3} />;
   }
+  const color = phase === 'done' ? DONE_COLOR : MIC_COLOR;
   return (
-    <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col items-center pb-2.5">
-      <div className="relative">
-        {listening && (
-          <>
-            <span aria-hidden="true" className="pomi-ripple absolute inset-0 rounded-full" />
-            <span
-              aria-hidden="true"
-              className="pomi-ripple absolute inset-0 rounded-full [animation-delay:600ms]"
-            />
-          </>
-        )}
-        {phase === 'idle' && (
-          <span aria-hidden="true" className="pomi-halo absolute -inset-1.5 rounded-full" />
-        )}
-        <button
-          type="button"
-          aria-label={listening ? copy.micStop : copy.mic}
-          title={listening ? copy.micStop : copy.mic}
-          aria-pressed={listening}
-          disabled={phase === 'parsing'}
-          onClick={() => dispatch({ type: 'mic', source: 'app' })}
-          className="pomi-motion relative flex size-[52px] items-center justify-center rounded-full text-[22px] text-bg transition-[transform,background-color,box-shadow] duration-300 hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-          style={{
-            background: phase === 'done' ? DONE_COLOR : MIC_COLOR,
-            boxShadow: `0 10px 28px -8px ${phase === 'done' ? DONE_COLOR : MIC_COLOR}`,
-          }}
+    <div className="absolute inset-x-0 bottom-0 z-20 px-3 pb-3">
+      <button
+        type="button"
+        aria-label={listening ? copy.micStop : copy.mic}
+        title={listening ? copy.micStop : copy.mic}
+        aria-pressed={listening}
+        disabled={phase === 'parsing'}
+        onClick={() => dispatch({ type: 'mic', source: 'app' })}
+        className="pomi-motion group flex h-11 w-full items-center gap-2 rounded-full border border-white/10 bg-[#1a1b21] pl-3.5 pr-1 text-left shadow-[0_10px_24px_-12px_rgb(0_0_0/0.9)] transition-colors duration-200 hover:border-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      >
+        <FiPlus aria-hidden="true" className="shrink-0 text-[15px] text-muted" />
+        <span aria-hidden="true" className="flex-1 truncate text-[12px] text-muted">
+          {listening ? copy.micStop : copy.micHint}
+        </span>
+        <span
+          aria-hidden="true"
+          className="pomi-motion relative flex size-9 shrink-0 items-center justify-center rounded-full text-[16px] text-bg transition-[background-color,transform] duration-300 group-hover:scale-105 group-active:scale-95"
+          style={{ background: color }}
         >
-          <span key={phase} className="pomi-fade-scale flex">
+          {listening && (
+            <>
+              <span className="pomi-ripple absolute inset-0 rounded-full" />
+              <span className="pomi-ripple absolute inset-0 rounded-full [animation-delay:600ms]" />
+            </>
+          )}
+          <span key={phase} className="pomi-fade-scale relative flex">
             {icon}
           </span>
-        </button>
-      </div>
-      <span
-        aria-hidden="true"
-        className={cx(
-          'mt-1.5 h-3 text-[10px] text-muted transition-opacity duration-200',
-          phase === 'idle' ? 'opacity-100' : 'opacity-0'
-        )}
-      >
-        {copy.micHint}
-      </span>
+        </span>
+      </button>
     </div>
   );
 }
@@ -398,7 +419,7 @@ function CaptureSheet({ state, dispatch, copy, locale }: Props) {
       <div
         inert={!open}
         className={cx(
-          'pomi-motion absolute inset-x-0 bottom-0 z-10 flex h-[318px] flex-col rounded-t-[28px] border-t border-white/10 bg-[#17181d] px-5 pb-[92px] pt-4 shadow-[0_-20px_40px_-10px_rgb(0_0_0/0.6)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
+          'pomi-motion absolute inset-x-0 bottom-0 z-10 flex h-[300px] flex-col rounded-t-[28px] border-t border-white/10 bg-[#17181d] px-5 pb-[70px] pt-4 shadow-[0_-20px_40px_-10px_rgb(0_0_0/0.6)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
           open ? 'translate-y-0' : 'translate-y-full'
         )}
       >
@@ -498,7 +519,7 @@ function CaptureSheet({ state, dispatch, copy, locale }: Props) {
   );
 }
 
-/** Pomi on a phone: big timer, intentions, today's tasks and voice capture. */
+/** Pomi on a phone: a compact timer, today's tasks taking most of the screen, and voice capture. */
 export default function PomiApp({ state, dispatch, copy, locale }: Props) {
   const accent = ACCENTS[state.timer.type];
   return (
@@ -518,7 +539,7 @@ export default function PomiApp({ state, dispatch, copy, locale }: Props) {
       <div className="relative flex h-full flex-col overflow-hidden rounded-[38px] bg-[#0e0f13] text-ink">
         <div
           aria-hidden="true"
-          className="pomi-motion pointer-events-none absolute inset-x-0 top-0 h-72 transition-[background] duration-700"
+          className="pomi-motion pointer-events-none absolute inset-x-0 top-0 h-56 transition-[background] duration-700"
           style={{
             background: `radial-gradient(70% 60% at 50% 25%, color-mix(in srgb, ${accent} 14%, transparent), transparent 70%)`,
           }}
@@ -537,15 +558,14 @@ export default function PomiApp({ state, dispatch, copy, locale }: Props) {
           </span>
           <SessionDots state={state} copy={copy} />
         </header>
-        <TimerRing state={state} dispatch={dispatch} copy={copy} />
-        <IntentionRow state={state} dispatch={dispatch} copy={copy} locale={locale} />
+        <TimerCard state={state} dispatch={dispatch} copy={copy} locale={locale} />
         <TaskList state={state} dispatch={dispatch} copy={copy} locale={locale} />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0e0f13] via-[#0e0f13]/90 to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0e0f13] via-[#0e0f13]/90 to-transparent"
         />
         <CaptureSheet state={state} dispatch={dispatch} copy={copy} locale={locale} />
-        <MicButton state={state} dispatch={dispatch} copy={copy} />
+        <Composer state={state} dispatch={dispatch} copy={copy} />
       </div>
     </section>
   );

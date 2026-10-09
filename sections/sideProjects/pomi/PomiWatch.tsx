@@ -8,6 +8,7 @@ import {
   findIntention,
   formatClock,
   formatDue,
+  visibleTasks,
   type Copy,
   type Locale,
 } from './data';
@@ -288,7 +289,7 @@ function SubScreen({
 
 /** Up to three tasks: the round screen never needs to scroll. */
 function TasksScreen({ state, dispatch, copy, locale, onBack }: Props & { onBack: () => void }) {
-  const tasks = state.tasks.slice(0, 3);
+  const tasks = visibleTasks(state.tasks, 3);
   return (
     <SubScreen title={copy.today} backLabel={copy.back} onBack={onBack}>
       <ul style={at(32, 72, DP - 64, 122)} className="flex flex-col gap-1">

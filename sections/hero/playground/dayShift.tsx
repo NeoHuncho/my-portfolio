@@ -4,7 +4,14 @@ import { useFrame } from '@react-three/fiber';
 import { CuboidCollider } from '@react-three/rapier';
 import { CanvasTexture, SRGBColorSpace } from 'three';
 import { type TicketItem } from './items';
-import { monoFamily, sansFamily, useLabelTexture, wrapText } from './labelTexture';
+import { textureScale, useQuality } from '../quality';
+import {
+  monoFamily,
+  sansFamily,
+  useLabelTexture,
+  useResourceDisposal,
+  wrapText,
+} from './labelTexture';
 
 /** The laptop's base: width, thickness, depth. Its lid stands up from the back edge. */
 export const DAY_SHIFT_SIZE: [number, number, number] = [1.76, 0.06, 0.92];
@@ -673,26 +680,29 @@ export function DayShiftMesh({ item }: { item: TicketItem }) {
   const [w, h, d] = DAY_SHIFT_SIZE;
   const [lw, lh, lt] = LID;
   const deck = useDeckTexture();
+  // Repainted several times a second, so it grows less than the still labels do.
+  const scale = Math.min(1.5, textureScale(useQuality()));
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = TW;
-    canvas.height = TH;
+    canvas.width = Math.round(TW * scale);
+    canvas.height = Math.round(TH * scale);
     const result = new CanvasTexture(canvas);
     result.colorSpace = SRGBColorSpace;
     result.anisotropy = 8;
     return result;
-  }, []);
-  useEffect(() => () => texture.dispose(), [texture]);
+  }, [scale]);
+  useResourceDisposal(texture);
 
   const day = useRef({ start: -1, painted: -Infinity, done: false });
   // A new plan starts a new day; shipping one stamps the screen at once.
   useEffect(() => {
     day.current = { start: -1, painted: -Infinity, done: false };
   }, [item.code]);
+  // Shipped, or a sharper canvas: paint the screen afresh.
   useEffect(() => {
     day.current.painted = -Infinity;
     day.current.done = false;
-  }, [item.merged]);
+  }, [item.merged, texture]);
 
   useFrame(() => {
     const now = performance.now();
@@ -707,6 +717,7 @@ export function DayShiftMesh({ item }: { item: TicketItem }) {
     if (now - state.painted >= REPAINT_MS && (moving || !state.done)) {
       const ctx = (texture.image as HTMLCanvasElement).getContext('2d');
       if (ctx) {
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
         drawScreen(ctx, t, item);
         texture.needsUpdate = true;
         state.painted = now;

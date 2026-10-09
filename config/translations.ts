@@ -2,8 +2,11 @@ export type Locale = 'en' | 'fr';
 
 type ObjectInfo = { title: string; body: string };
 
-type ShiftId = 'ticket' | 'agents' | 'night';
-type ShelfId = 'flags' | 'mountain' | 'sport' | 'robot' | 'server' | 'oss';
+/** How I work, the hero's three pieces, from day to night. */
+type TrioId = 'ticket' | 'agents' | 'night';
+/** The rest of me, added to the desk from its tray; phones show all but the last two. */
+type ExtraId = 'portrait' | 'flags' | 'mountain' | 'sport' | 'robot' | 'keys' | 'server' | 'oss';
+type ShelfId = Exclude<ExtraId, 'portrait' | 'keys'>;
 
 export type TranslationStrings = {
   nav: {
@@ -39,19 +42,28 @@ export type TranslationStrings = {
     /** Phones: step through the desk's stories from the docked card. */
     previous: string;
     next: string;
-    fallbackNote: string;
-    /** Phones: the desk's objects on a turntable (how I work) and on a shelf (the rest of me). */
-    phone: {
-      shifts: string;
-      tabs: Record<ShiftId, string>;
-      shelf: string;
+    /** How I work: the three pieces the desk opens on, labelled, and the phone's turntable. */
+    trio: {
+      /** Names the three together, for screen readers. */
+      label: string;
+      steps: Record<TrioId, string>;
+      /** What each comes down to, on its label. */
+      headline: Record<TrioId, string>;
+      /** Phones: short stories, in place of the desk's longer ones. */
+      caption: Record<TrioId, string>;
       /** The turntable's hint, and its label for screen readers. */
       turnHint: string;
-      /** What each step of how I work comes down to, above its story. */
-      headline: Record<ShiftId, string>;
-      /** Short stories for the stage and the shelf, in place of the desk's longer ones. */
-      caption: Record<ShiftId | ShelfId, string>;
-      widget: Record<ShelfId, ObjectInfo>;
+    };
+    /** The rest of me: the desk's tray of things to add, the phone's shelf. */
+    more: {
+      title: string;
+      addAll: string;
+      /** Takes everything added back off the desk. */
+      tidy: string;
+      /** Each piece's name and one line, on its chip. */
+      items: Record<ExtraId, ObjectInfo>;
+      /** Phones: short stories, under the shelf. */
+      caption: Record<ShelfId, string>;
     };
     objects: Record<
       | 'ticket'
@@ -102,7 +114,8 @@ export type TranslationStrings = {
     genericReply: string;
     practices: {
       title: string;
-      items: ObjectInfo[];
+      /** `{link}` in a body stands for the next of its links, in order. */
+      items: Array<ObjectInfo & { links?: Array<{ label: string; href: string }> }>;
     };
     card: {
       problem: string;
@@ -177,6 +190,8 @@ export type TranslationStrings = {
     eyebrow: string;
     title: string;
     present: string;
+    /** Every role so far was full time. */
+    fullTime: string;
     built: string;
     ai: string;
     stack: string;
@@ -252,9 +267,8 @@ export const translations: Record<Locale, TranslationStrings> = {
     hero: {
       eyebrow: 'William Guinaudie',
       role: 'AI Engineer',
-      tagline:
-        'I build products with AI agents, and the workflows that make those agents reliable.',
-      taglineMore: 'Agents do the legwork; I make the engineering calls and own what ships.',
+      tagline: 'I build products with AI agents, and the workflows that keep them reliable.',
+      taglineMore: 'They take on the legwork. I make the calls and stand behind what ships.',
       primaryCta: 'See my experience',
       secondaryCta: 'Download CV',
       shipped: (code) => `✓ ${code} merged, on my approval`,
@@ -266,25 +280,39 @@ export const translations: Record<Locale, TranslationStrings> = {
       tiltOn: 'Tilt on',
       previous: 'Previous',
       next: 'Next',
-      fallbackNote:
-        'My desk: my day shift, AI agents and their night shift, a Raspberry Pi, a walking desk, my two languages and a Swiss mountain.',
-      phone: {
-        shifts: 'How I work',
-        tabs: { ticket: 'Day shift', agents: 'Agents', night: 'Night shift' },
-        shelf: 'About me',
-        turnHint: 'Drag to turn it',
+      trio: {
+        label: 'How I work with AI agents',
+        steps: { ticket: 'Day shift', agents: 'Claude Code + Codex', night: 'Night shift' },
         headline: {
           ticket: 'I make the calls',
           agents: 'Agents do the legwork',
           night: 'Agents explore overnight',
         },
+        turnHint: 'Swipe to turn it',
         caption: {
           ticket:
-            'By day, I make the architecture decisions with the team, explore the code and read the plans, with agents where they help.',
+            'By day, I make the architecture decisions with the team. Agents extend my own thinking: we dig through the code together, and I edit their plans until they hold up.',
           agents:
-            'Claude Code and Codex plan and implement, side by side: I pick the model that suits each task and review the code.',
+            'I run a modded Claude Code as my main driver, with the Codex CLI wired in to make full use of both subscriptions. Each model takes the work it does best and checks the other’s.',
           night:
             'Overnight, agents triage feedback and errors, and explorers hunt for security issues and performance wins. In the morning, I decide.',
+        },
+      },
+      more: {
+        title: 'More about me',
+        addAll: 'Add everything',
+        tidy: 'Tidy up',
+        items: {
+          portrait: { title: 'That’s me', body: 'Hi, I’m William' },
+          flags: { title: 'EN · FR', body: 'Both native' },
+          mountain: { title: 'Switzerland', body: 'Work permit ✓' },
+          sport: { title: 'Walk and talk', body: 'Dictating at 4.5 km/h' },
+          robot: { title: 'Automation', body: 'At home too' },
+          keys: { title: 'Shortcuts', body: 'Press / to search' },
+          server: { title: 'Homelab', body: 'Self-hosted' },
+          oss: { title: 'Open source', body: 'Use, fix, publish' },
+        },
+        caption: {
           flags:
             'Dual British and French citizen, native in both languages: I work as well in English as in French.',
           mountain:
@@ -297,19 +325,11 @@ export const translations: Record<Locale, TranslationStrings> = {
             'I love hardware. I self-host what I can on my homelab, and everything I build can be self-hosted too.',
           oss: 'I use open source every day, contribute upstream when I can and publish my own projects.',
         },
-        widget: {
-          flags: { title: 'EN · FR', body: 'Both native' },
-          mountain: { title: 'Switzerland', body: 'Work permit ✓' },
-          sport: { title: 'Walk and talk', body: 'Dictating at 4.5 km/h' },
-          robot: { title: 'Automation', body: 'At home too' },
-          server: { title: 'Homelab', body: 'Self-hosted' },
-          oss: { title: 'Open source', body: 'Use, fix, publish' },
-        },
       },
       objects: {
         ticket: {
           title: 'Day shift',
-          body: 'By day, I make the architecture decisions with the team, so the code serves the business. I explore the codebase and read the plans, with agents where they help.',
+          body: 'By day, I make the architecture decisions with the team, so the code serves the business. Agents extend my own thinking: we dig through the codebase together, and I edit their plans until they hold up.',
         },
         keys: {
           title: 'Keyboard shortcuts',
@@ -317,7 +337,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         agents: {
           title: 'Claude Code and Codex',
-          body: 'I use Claude Code and Codex side by side every day. Each model has its strengths, so I play to them task by task instead of betting on a single vendor.',
+          body: 'I run a modded Claude Code as my main driver, with the Codex CLI wired in to make full use of both subscriptions: each model takes the work it does best and checks the other’s.',
         },
         oss: {
           title: 'Open source',
@@ -395,6 +415,17 @@ export const translations: Record<Locale, TranslationStrings> = {
         title: 'What makes unattended agent runs worth trusting',
         items: [
           {
+            title: 'Ownership',
+            body: '{link} makes me reason through each plan before it is built, Geoffrey Litt’s {link} quizzes me on what was built. A pull request can be too big to read line by line, never too big to understand.',
+            links: [
+              { label: 'VibeWise', href: 'https://github.com/nykooi1/vibe-wise' },
+              {
+                label: 'explain-diff',
+                href: 'https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524',
+              },
+            ],
+          },
+          {
             title: 'Evaluation',
             body: 'My accepts, rejections and review comments go back into the agent instructions and the repo memory, so the next run repeats fewer mistakes.',
           },
@@ -403,12 +434,14 @@ export const translations: Record<Locale, TranslationStrings> = {
             body: 'Every plan comes with effort, confidence and evidence. When the agent is unsure about a plan, it asks a question before anything is built.',
           },
           {
-            title: 'Ownership',
-            body: 'One skill makes me reason through each plan before it is built, another quizzes me on what was built. A pull request can be too big to read line by line, never too big to understand.',
-          },
-          {
             title: 'Observability',
-            body: 'Every agent run is traced: steps, tool calls, cost and time. A wrong result can be followed back to the step that caused it.',
+            body: 'Every agent run is traced: steps, tool calls, cost and time. A wrong result can be followed back to the step that caused it, and Matt Pocock’s {link} takes me back through past runs to find what to improve.',
+            links: [
+              {
+                label: 'retro skill',
+                href: 'https://github.com/mattpocock/skills/tree/main/skills/engineering/retro',
+              },
+            ],
           },
         ],
       },
@@ -489,6 +522,7 @@ export const translations: Record<Locale, TranslationStrings> = {
       eyebrow: '02 · Experience',
       title: 'Six years of shipping products, front to back.',
       present: 'Now',
+      fullTime: 'Full time',
       built: 'What I built',
       ai: 'How I used AI',
       stack: 'Stack',
@@ -569,9 +603,9 @@ export const translations: Record<Locale, TranslationStrings> = {
       eyebrow: 'William Guinaudie',
       role: 'AI Engineer',
       tagline:
-        'Je construis des produits avec des agents IA, et les workflows qui rendent ces agents fiables.',
+        'Je construis des produits avec des agents IA, et les workflows qui les rendent fiables.',
       taglineMore:
-        'Les agents font le gros du travail ; moi je prends les décisions techniques et je réponds de ce qui est livré.',
+        'Ils abattent le gros du travail. Moi, je tranche et j’assume ce qui part en production.',
       primaryCta: 'Voir mon expérience',
       secondaryCta: 'Télécharger le CV',
       shipped: (code) => `✓ ${code} mergé, sur mon feu vert`,
@@ -583,12 +617,9 @@ export const translations: Record<Locale, TranslationStrings> = {
       tiltOn: 'Inclinaison active',
       previous: 'Précédent',
       next: 'Suivant',
-      fallbackNote:
-        'Mon bureau : mes journées, des agents IA et leur équipe de nuit, un Raspberry Pi, un bureau debout avec tapis de marche, mes deux langues et une montagne suisse.',
-      phone: {
-        shifts: 'Ma façon de travailler',
-        tabs: { ticket: 'Jour', agents: 'Agents', night: 'Nuit' },
-        shelf: 'À propos de moi',
+      trio: {
+        label: 'Comment je travaille avec les agents IA',
+        steps: { ticket: 'Équipe de jour', agents: 'Claude Code + Codex', night: 'Équipe de nuit' },
         turnHint: 'Fais-le tourner',
         headline: {
           ticket: 'Je prends les décisions',
@@ -597,11 +628,28 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         caption: {
           ticket:
-            'Le jour, je prends les décisions d’architecture avec l’équipe, j’explore le code et je lis les plans, avec des agents là où ils aident.',
+            'Le jour, je prends les décisions d’architecture avec l’équipe. Les agents prolongent ma propre réflexion : on explore le code ensemble, et je retravaille leurs plans jusqu’à ce qu’ils tiennent la route.',
           agents:
-            'Claude Code et Codex planifient et implémentent, côte à côte : je choisis le modèle selon la tâche et je relis le code.',
+            'J’utilise une version moddée de Claude Code comme outil principal, avec la CLI Codex intégrée pour exploiter pleinement mes deux abonnements. Chaque modèle prend ce qu’il fait le mieux et vérifie le travail de l’autre.',
           night:
             'La nuit, des agents trient retours et erreurs, et des explorateurs traquent failles de sécurité et gains de performance. Le matin, je décide.',
+        },
+      },
+      more: {
+        title: 'Plus sur moi',
+        addAll: 'Tout ajouter',
+        tidy: 'Ranger',
+        items: {
+          portrait: { title: 'C’est moi', body: 'Salut, moi c’est William' },
+          flags: { title: 'EN · FR', body: 'Deux langues maternelles' },
+          mountain: { title: 'Suisse', body: 'Permis de travail ✓' },
+          sport: { title: 'Marcher et parler', body: 'Je dicte à 4,5 km/h' },
+          robot: { title: 'Automatisation', body: 'À la maison aussi' },
+          keys: { title: 'Raccourcis', body: 'Appuie sur / pour chercher' },
+          server: { title: 'Homelab', body: 'Auto-hébergé' },
+          oss: { title: 'Open source', body: 'Utiliser, corriger, publier' },
+        },
+        caption: {
           flags:
             'Double nationalité britannique et française, deux langues maternelles : je travaille aussi bien en anglais qu’en français.',
           mountain:
@@ -614,19 +662,11 @@ export const translations: Record<Locale, TranslationStrings> = {
             'Passionné de hardware, j’auto-héberge ce que je peux sur mon homelab, et tout ce que je construis peut l’être aussi.',
           oss: 'J’utilise l’open source tous les jours, je contribue quand je peux et je publie mes propres projets.',
         },
-        widget: {
-          flags: { title: 'EN · FR', body: 'Deux langues maternelles' },
-          mountain: { title: 'Suisse', body: 'Permis de travail ✓' },
-          sport: { title: 'Marcher et parler', body: 'Je dicte à 4,5 km/h' },
-          robot: { title: 'Automatisation', body: 'À la maison aussi' },
-          server: { title: 'Homelab', body: 'Auto-hébergé' },
-          oss: { title: 'Open source', body: 'Utiliser, corriger, publier' },
-        },
       },
       objects: {
         ticket: {
           title: 'L’équipe de jour',
-          body: 'Le jour, je prends les décisions d’architecture avec l’équipe, pour que le code serve le métier. J’explore la codebase et je lis les plans, avec des agents là où ils aident.',
+          body: 'Le jour, je prends les décisions d’architecture avec l’équipe, pour que le code serve le métier. Les agents prolongent ma propre réflexion : on explore la codebase ensemble, et je retravaille leurs plans jusqu’à ce qu’ils tiennent la route.',
         },
         keys: {
           title: 'Raccourcis clavier',
@@ -634,7 +674,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         agents: {
           title: 'Claude Code et Codex',
-          body: 'J’utilise Claude Code et Codex côte à côte au quotidien. Chaque modèle a ses points forts : je choisis selon la tâche plutôt que de tout miser sur un seul fournisseur.',
+          body: 'J’utilise une version moddée de Claude Code comme outil principal, avec la CLI Codex intégrée pour exploiter pleinement mes deux abonnements : chaque modèle prend ce qu’il fait le mieux et vérifie le travail de l’autre.',
         },
         oss: {
           title: 'Open source',
@@ -713,6 +753,17 @@ export const translations: Record<Locale, TranslationStrings> = {
         title: 'Ce qui rend les runs d’agents autonomes dignes de confiance',
         items: [
           {
+            title: 'Maîtrise',
+            body: '{link} m’oblige à raisonner moi-même sur chaque plan avant qu’il soit construit, le {link} de Geoffrey Litt me questionne sur ce qui a été construit. Une pull request peut être trop grosse pour être lue ligne à ligne, jamais trop pour être comprise.',
+            links: [
+              { label: 'VibeWise', href: 'https://github.com/nykooi1/vibe-wise' },
+              {
+                label: 'explain-diff',
+                href: 'https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524',
+              },
+            ],
+          },
+          {
             title: 'Évaluation',
             body: 'Mes acceptations, mes rejets et mes commentaires de relecture repartent dans les instructions des agents et la mémoire du repo, pour que le run suivant répète moins d’erreurs.',
           },
@@ -721,12 +772,14 @@ export const translations: Record<Locale, TranslationStrings> = {
             body: 'Chaque plan arrive avec un effort, un niveau de confiance et des preuves. Quand l’agent doute d’un plan, il pose une question avant que quoi que ce soit ne se construise.',
           },
           {
-            title: 'Maîtrise',
-            body: 'Un skill m’oblige à raisonner moi-même sur chaque plan avant qu’il soit construit, un autre me questionne sur ce qui a été construit. Une pull request peut être trop grosse pour être lue ligne à ligne, jamais trop pour être comprise.',
-          },
-          {
             title: 'Observabilité',
-            body: 'Chaque run d’agent est tracé : étapes, appels d’outils, coût et durée. Un résultat faux se remonte jusqu’à l’étape qui l’a causé.',
+            body: 'Chaque run d’agent est tracé : étapes, appels d’outils, coût et durée. Un résultat faux se remonte jusqu’à l’étape qui l’a causé, et le {link} de Matt Pocock me fait repasser sur les runs passés pour trouver quoi améliorer.',
+            links: [
+              {
+                label: 'skill retro',
+                href: 'https://github.com/mattpocock/skills/tree/main/skills/engineering/retro',
+              },
+            ],
           },
         ],
       },
@@ -808,6 +861,7 @@ export const translations: Record<Locale, TranslationStrings> = {
       eyebrow: '02 · Expérience',
       title: 'Six ans à livrer des produits, du front au back.',
       present: 'Actuel',
+      fullTime: 'Temps plein',
       built: "Ce que j'ai construit",
       ai: "Comment j'ai utilisé l'IA",
       stack: 'Stack',

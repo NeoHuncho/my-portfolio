@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 -14 92 92">
+  <style>.face{fill:#ededeb}@media (prefers-color-scheme:light){.face{fill:#0b0b0d}}</style>
+  <path fill="#c2461c" d="M20 16L22 16L31 31L39 16L50 9L54 20L33 58ZM59 16L67 31L78 16L80 18L67 58L57 18Z"/>
+  <path fill="#ff6b35" d="M31 31L39 16L50 9L38.43 41ZM67 31L78 16L72.09 37.5Z"/>
+  <path class="face" d="M4 4L22 16L33 56L33 60L19 54ZM33 60L33 56L50 9L59 16L67 56L67 60L50 36ZM78 16L96 4L81 54L67 60L67 56Z"/>
+</svg>

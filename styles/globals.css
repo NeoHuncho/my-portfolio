@@ -12,6 +12,7 @@
   --color-faint: #66666e;
   --color-accent: #ff6b35;
   --color-accent-soft: rgb(255 107 53 / 0.14);
+  --color-accent-deep: #c2461c;
   --color-ok: #4ade9f;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -84,6 +85,7 @@ body {
   display: none;
 }
 
+/* Ends on no transform at all: one left in place would pin the phone hero's fixed canvas to the text. */
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -91,7 +93,7 @@ body {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 

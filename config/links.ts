@@ -17,3 +17,6 @@ export const sectionIds = {
   experience: 'experience',
   sideProjects: 'side-projects',
 } as const;
+
+/** My name by my portrait in the hero: the header keeps its own name hidden while this one shows. */
+export const heroNameId = 'hero-name';

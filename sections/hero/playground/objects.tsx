@@ -30,6 +30,7 @@ import {
   Raycaster,
   RepeatWrapping,
   Shape,
+  ShaderMaterial,
   SRGBColorSpace,
   TorusGeometry,
   Vector2,
@@ -40,7 +41,13 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { CLAUDE_PATH, CODEX_PATH } from '../brandMarks';
 import { useDeskScreen } from './deskScreen';
 import { type KeycapItem, type PropItem, ticketPool } from './items';
-import { monoFamily, roundRect, sansFamily, useLabelTexture } from './labelTexture';
+import {
+  monoFamily,
+  roundRect,
+  sansFamily,
+  useLabelTexture,
+  useResourceDisposal,
+} from './labelTexture';
 
 const PAPER = '#f4f2ed';
 const ACCENT = '#ff6b35';
@@ -63,7 +70,7 @@ function useLogoGeometry(
   thickness: number,
   gradient?: [string, string]
 ) {
-  return useMemo(() => {
+  const geometry = useMemo(() => {
     const data = new SVGLoader().parse(svg);
     const shapes = data.paths.flatMap((path) => path.toShapes());
     const scale = size / 24;
@@ -95,6 +102,8 @@ function useLogoGeometry(
     }
     return geometry;
   }, [svg, size, thickness, gradient]);
+  useResourceDisposal(geometry);
+  return geometry;
 }
 
 /**
@@ -174,7 +183,7 @@ const SWEEP_GRIP = 0.2;
 
 /** A low puck with rounded edges, its underside on y = 0. */
 function useDockGeometry(radius: number, height: number) {
-  return useMemo(() => {
+  const geometry = useMemo(() => {
     const bevel = 0.045;
     const points: Vector2[] = [new Vector2(0, 0), new Vector2(radius - bevel, 0)];
     for (let i = 0; i <= 6; i += 1) {
@@ -190,11 +199,13 @@ function useDockGeometry(radius: number, height: number) {
     points.push(new Vector2(0, height));
     return new LatheGeometry(points, 72);
   }, [radius, height]);
+  useResourceDisposal(geometry);
+  return geometry;
 }
 
 /** A thin ring lying flat, shading from Claude's orange on one side to Codex's violet on the other. */
 function useBlendRingGeometry(radius: number, tube: number) {
-  return useMemo(() => {
+  const geometry = useMemo(() => {
     const geometry = new TorusGeometry(radius, tube, 8, 160);
     geometry.rotateX(Math.PI / 2);
     const positions = geometry.getAttribute('position');
@@ -208,6 +219,8 @@ function useBlendRingGeometry(radius: number, tube: number) {
     geometry.setAttribute('color', new BufferAttribute(colors, 3));
     return geometry;
   }, [radius, tube]);
+  useResourceDisposal(geometry);
+  return geometry;
 }
 
 /** Soft light pooled on the dock under the marks, in both their colours. */
@@ -864,11 +877,13 @@ function noise3(x: number, y: number, z: number) {
  * following the triangles.
  */
 function useMountainGeometry(radius: number, height: number, seed: number): BufferGeometry {
-  return useMemo(() => {
-    let geometry: BufferGeometry = new ConeGeometry(radius, height, 96, 36);
-    geometry.deleteAttribute('normal');
-    geometry.deleteAttribute('uv');
-    geometry = mergeVertices(geometry);
+  const geometry = useMemo(() => {
+    const source = new ConeGeometry(radius, height, 96, 36);
+    source.deleteAttribute('normal');
+    source.deleteAttribute('uv');
+    const geometry = mergeVertices(source);
+    // Merging copies the buffers, so the temporary cone is no longer needed.
+    source.dispose();
     const positions = geometry.getAttribute('position');
     // Per vertex: height up the peak (0 to 1), how deep in a gully, and the peak's seed.
     const snowData = new Float32Array(positions.count * 3);
@@ -917,6 +932,8 @@ function useMountainGeometry(radius: number, height: number, seed: number): Buff
     geometry.setAttribute('snowData', new BufferAttribute(snowData, 3));
     return geometry;
   }, [radius, height, seed]);
+  useResourceDisposal(geometry);
+  return geometry;
 }
 
 // The summit leans a little and the base is ridged; a few points are enough to rest on.
@@ -1008,7 +1025,7 @@ function useMountainMaterial() {
     };
     return result;
   }, []);
-  useEffect(() => () => material.dispose(), [material]);
+  useResourceDisposal(material);
   return material;
 }
 
@@ -1169,7 +1186,7 @@ function WavingFlag({
     geometry.computeVertexNormals();
   });
 
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  useResourceDisposal(geometry);
 
   return (
     <mesh geometry={geometry} castShadow>
@@ -1197,84 +1214,90 @@ function FlagPole({ length }: { length: number }) {
   );
 }
 
-/** Each speech bubble, without its tail, and how thick it is. */
-const BUBBLE: [number, number, number] = [0.94, 0.18, 0.6];
-const BUBBLE_CORNER = 0.17;
+/** Each speech bubble's face, without its tail, and how thick it is. */
+const BUBBLE: [number, number, number] = [0.7, 0.46, 0.09];
+const BUBBLE_CORNER = 0.12;
 /** How far the tail reaches below the bubble. */
-const BUBBLE_TAIL = 0.24;
+const BUBBLE_TAIL = 0.15;
 /** The white rim round the printed flag, as a share of the face's height. */
 const BUBBLE_RIM = 0.075;
+const HOLO = '#9fd8ff';
+const FLAG_BLUE = new Color('#2f6bff');
+const FLAG_RED = new Color('#ff4b55');
+const EMITTER = '#1c1d23';
+const EMITTER_LENS = '#0b0c11';
 
 /** A speech bubble's outline on the x/y plane: a rounded box, its tail at the bottom on `tail`'s side. */
-function bubbleShape(w: number, d: number, tail: 1 | -1) {
+function bubbleShape(w: number, h: number, tail: 1 | -1) {
   const r = BUBBLE_CORNER;
   // The tail's base along the bottom edge, inner end then outer, and its tip, leaning outwards.
-  const inner = tail * (w / 2 - 0.46);
-  const outer = tail * (w / 2 - 0.2);
-  const tip = tail * (w / 2 - 0.08);
+  const inner = tail * (w / 2 - 0.3);
+  const outer = tail * (w / 2 - 0.13);
+  const tip = tail * (w / 2 - 0.05);
   const shape = new Shape();
-  shape.moveTo(-w / 2 + r, -d / 2);
+  shape.moveTo(-w / 2 + r, -h / 2);
   const [first, second] = tail < 0 ? [outer, inner] : [inner, outer];
-  shape.lineTo(first, -d / 2);
+  shape.lineTo(first, -h / 2);
   if (tail < 0) {
-    shape.quadraticCurveTo(first - 0.02, -d / 2 - BUBBLE_TAIL * 0.5, tip, -d / 2 - BUBBLE_TAIL);
-    shape.quadraticCurveTo(second - 0.06, -d / 2 - BUBBLE_TAIL * 0.35, second, -d / 2);
+    shape.quadraticCurveTo(first - 0.01, -h / 2 - BUBBLE_TAIL * 0.5, tip, -h / 2 - BUBBLE_TAIL);
+    shape.quadraticCurveTo(second - 0.04, -h / 2 - BUBBLE_TAIL * 0.35, second, -h / 2);
   } else {
-    shape.quadraticCurveTo(first + 0.06, -d / 2 - BUBBLE_TAIL * 0.35, tip, -d / 2 - BUBBLE_TAIL);
-    shape.quadraticCurveTo(second + 0.02, -d / 2 - BUBBLE_TAIL * 0.5, second, -d / 2);
+    shape.quadraticCurveTo(first + 0.04, -h / 2 - BUBBLE_TAIL * 0.35, tip, -h / 2 - BUBBLE_TAIL);
+    shape.quadraticCurveTo(second + 0.01, -h / 2 - BUBBLE_TAIL * 0.5, second, -h / 2);
   }
-  shape.lineTo(w / 2 - r, -d / 2);
-  shape.absarc(w / 2 - r, -d / 2 + r, r, -Math.PI / 2, 0, false);
-  shape.lineTo(w / 2, d / 2 - r);
-  shape.absarc(w / 2 - r, d / 2 - r, r, 0, Math.PI / 2, false);
-  shape.lineTo(-w / 2 + r, d / 2);
-  shape.absarc(-w / 2 + r, d / 2 - r, r, Math.PI / 2, Math.PI, false);
-  shape.lineTo(-w / 2, -d / 2 + r);
-  shape.absarc(-w / 2 + r, -d / 2 + r, r, Math.PI, (Math.PI * 3) / 2, false);
+  shape.lineTo(w / 2 - r, -h / 2);
+  shape.absarc(w / 2 - r, -h / 2 + r, r, -Math.PI / 2, 0, false);
+  shape.lineTo(w / 2, h / 2 - r);
+  shape.absarc(w / 2 - r, h / 2 - r, r, 0, Math.PI / 2, false);
+  shape.lineTo(-w / 2 + r, h / 2);
+  shape.absarc(-w / 2 + r, h / 2 - r, r, Math.PI / 2, Math.PI, false);
+  shape.lineTo(-w / 2, -h / 2 + r);
+  shape.absarc(-w / 2 + r, -h / 2 + r, r, Math.PI, (Math.PI * 3) / 2, false);
   return shape;
 }
 
 /**
- * A chunky speech bubble lying flat, its underside on y = 0. The face is
- * mapped straight down from above, so the flag prints on top and the sides
+ * A chunky speech bubble standing up, facing +z, centred on its face. The
+ * face is mapped straight on, so the flag prints on the front and the sides
  * pick up the white rim round it.
  */
 function useBubbleGeometry(tail: 1 | -1) {
-  return useMemo(() => {
-    const [w, h, d] = BUBBLE;
-    const bevel = 0.035;
-    const geometry = new ExtrudeGeometry(bubbleShape(w, d, tail), {
-      depth: h - bevel * 2,
+  const geometry = useMemo(() => {
+    const [w, h, depth] = BUBBLE;
+    const bevel = 0.02;
+    const geometry = new ExtrudeGeometry(bubbleShape(w, h, tail), {
+      depth: depth - bevel * 2,
       bevelEnabled: true,
       bevelThickness: bevel,
       bevelSize: bevel,
       bevelSegments: 3,
       curveSegments: 12,
     });
-    geometry.rotateX(-Math.PI / 2);
-    geometry.translate(0, bevel, 0);
+    geometry.translate(0, 0, -depth / 2 + bevel);
     const positions = geometry.getAttribute('position');
     const uv = geometry.getAttribute('uv');
     for (let i = 0; i < positions.count; i += 1) {
-      uv.setXY(i, positions.getX(i) / w + 0.5, 0.5 - positions.getZ(i) / d);
+      uv.setXY(i, positions.getX(i) / w + 0.5, positions.getY(i) / h + 0.5);
     }
     geometry.computeVertexNormals();
     return geometry;
   }, [tail]);
+  useResourceDisposal(geometry);
+  return geometry;
 }
 
 /** The flag inside a white rim, with the bubble's rounded corners. */
 function useBubbleTexture(draw: FlagDraw, name: string) {
-  const [w, , d] = BUBBLE;
+  const [w, h] = BUBBLE;
   return useLabelTexture(
     512,
-    Math.round((512 * d) / w),
+    Math.round((512 * h) / w),
     (ctx, cw, ch) => {
       ctx.fillStyle = PAPER;
       ctx.fillRect(0, 0, cw, ch);
       const rim = ch * BUBBLE_RIM;
       ctx.save();
-      roundRect(ctx, rim, rim, cw - rim * 2, ch - rim * 2, (BUBBLE_CORNER / d) * ch - rim);
+      roundRect(ctx, rim, rim, cw - rim * 2, ch - rim * 2, (BUBBLE_CORNER / h) * ch - rim);
       ctx.clip();
       ctx.translate(rim, rim);
       draw(ctx, cw - rim * 2, ch - rim * 2);
@@ -1284,41 +1307,335 @@ function useBubbleTexture(draw: FlagDraw, name: string) {
   );
 }
 
-function SpeechBubble({ draw, name, tail }: { draw: FlagDraw; name: string; tail: 1 | -1 }) {
+/**
+ * A light sweeping over a face, `width` by `height` with rounded corners, and
+ * faint scan lines on it: glass, or a hologram. `strength` scales it all.
+ */
+function useSweepMaterial(width: number, height: number, corner: number, every: number) {
+  const material = useMemo(
+    () =>
+      new ShaderMaterial({
+        uniforms: {
+          time: { value: 0 },
+          strength: { value: 1 },
+          size: { value: new Vector2(width, height) },
+          corner: { value: corner },
+          every: { value: every },
+          color: { value: new Color(HOLO) },
+        },
+        vertexShader: /* glsl */ `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          uniform float time;
+          uniform float strength;
+          uniform vec2 size;
+          uniform float corner;
+          uniform float every;
+          uniform vec3 color;
+          varying vec2 vUv;
+          void main() {
+            vec2 p = (vUv - 0.5) * size;
+            vec2 q = abs(p) - size * 0.5 + corner;
+            float inside = 1.0 - smoothstep(-0.004, 0.004, length(max(q, 0.0)) - corner);
+            // A diagonal band crossing the face, then a rest before the next.
+            float sweep = fract(time / every) * 2.2 - 0.6;
+            float along = (vUv.x + vUv.y) * 0.5;
+            float band = exp(-pow((along - sweep) / 0.07, 2.0));
+            float lines = 0.5 + 0.5 * sin((vUv.y * size.y * 90.0) - time * 3.0);
+            float alpha = (band * 0.55 + lines * 0.05) * inside * strength;
+            if (alpha < 0.003) discard;
+            gl_FragColor = vec4(color, alpha);
+            #include <colorspace_fragment>
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+    [width, height, corner, every]
+  );
+  useResourceDisposal(material);
+  return material;
+}
+
+function SpeechBubble({
+  draw,
+  name,
+  tail,
+  glow,
+  sweep,
+}: {
+  draw: FlagDraw;
+  name: string;
+  tail: 1 | -1;
+  glow: RefObject<MeshStandardMaterial | null>;
+  sweep: ShaderMaterial;
+}) {
   const geometry = useBubbleGeometry(tail);
   const texture = useBubbleTexture(draw, name);
+  const [w, h, depth] = BUBBLE;
   return (
-    <mesh geometry={geometry} castShadow receiveShadow>
-      <meshStandardMaterial map={texture} roughness={0.4} />
-    </mesh>
+    <>
+      <mesh geometry={geometry} castShadow>
+        <meshStandardMaterial
+          ref={glow}
+          map={texture}
+          emissiveMap={texture}
+          emissive="#ffffff"
+          emissiveIntensity={0.2}
+          roughness={0.3}
+        />
+      </mesh>
+      <mesh position={[0, 0, depth / 2 + 0.003]} material={sweep} raycast={() => null}>
+        <planeGeometry args={[w, h]} />
+      </mesh>
+    </>
   );
 }
 
+/** The emitter's puck, a rounded disc standing on y = 0. */
+function useEmitterGeometry(radius: number, height: number) {
+  const geometry = useMemo(() => {
+    const r = radius;
+    const profile = [
+      new Vector2(0, 0),
+      new Vector2(r * 0.9, 0),
+      new Vector2(r * 0.98, height * 0.15),
+      new Vector2(r, height * 0.5),
+      new Vector2(r * 0.97, height * 0.85),
+      new Vector2(r * 0.9, height),
+      new Vector2(0, height),
+    ];
+    return new LatheGeometry(profile, 48);
+  }, [radius, height]);
+  useResourceDisposal(geometry);
+  return geometry;
+}
+
+/** The light the emitter throws up, brightest at its foot, scan lines rising through it. */
+function useBeamMaterial() {
+  const material = useMemo(
+    () =>
+      new ShaderMaterial({
+        uniforms: { time: { value: 0 }, color: { value: new Color(HOLO) } },
+        vertexShader: /* glsl */ `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          uniform float time;
+          uniform vec3 color;
+          varying vec2 vUv;
+          void main() {
+            float rise = pow(1.0 - vUv.y, 1.4);
+            float lines = 0.6 + 0.4 * sin(vUv.y * 40.0 - time * 4.0);
+            float alpha = rise * lines * 0.24;
+            gl_FragColor = vec4(color, alpha);
+            #include <colorspace_fragment>
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: DoubleSide,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+    []
+  );
+  useResourceDisposal(material);
+  return material;
+}
+
+/** A ring of light round the emitter's lens, in the two flags' blue, white and red, turning slowly. */
+function useRingMaterial() {
+  const material = useMemo(
+    () =>
+      new ShaderMaterial({
+        uniforms: {
+          time: { value: 0 },
+          blue: { value: FLAG_BLUE },
+          red: { value: FLAG_RED },
+        },
+        vertexShader: /* glsl */ `
+          varying vec3 vLocal;
+          void main() {
+            vLocal = position;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          uniform float time;
+          uniform vec3 blue;
+          uniform vec3 red;
+          varying vec3 vLocal;
+          void main() {
+            float turn = fract(atan(vLocal.y, vLocal.x) / 6.2832 + time * 0.08);
+            // Blue, white, red, as both flags share them, with soft joins.
+            vec3 tint = mix(blue, vec3(1.0), smoothstep(0.28, 0.36, turn));
+            tint = mix(tint, red, smoothstep(0.62, 0.7, turn));
+            tint = mix(tint, blue, smoothstep(0.94, 1.0, turn));
+            gl_FragColor = vec4(tint * 1.3, 1.0);
+            #include <colorspace_fragment>
+          }
+        `,
+        toneMapped: false,
+      }),
+    []
+  );
+  useResourceDisposal(material);
+  return material;
+}
+
+/** How long each language speaks before the other answers. */
+const TURN_S = 1.9;
+/** Where each bubble hovers, over the emitter's foot, before it speaks up. */
+const BUBBLE_AT: Array<[number, number, number]> = [
+  [-0.36, 0.74, 0],
+  [0.36, 0.9, 0.06],
+];
+/** Sparks circling the beam, blue and red in turn. */
+const SPARKS = 6;
+
 /**
- * British and French: two speech bubbles in a conversation, one in each
- * language, the French one resting across the edge of the British one.
+ * British and French: a little hologram emitter on the desk, two speech
+ * bubbles hovering over it, one in each language. They take turns to speak,
+ * the one talking rising and lighting up while the other waits.
  */
 function BilingualBubbles() {
   const base = -0.2;
-  const [, h] = BUBBLE;
+  const radius = 0.56;
+  const puck = 0.14;
+  const emitter = useEmitterGeometry(radius, puck);
+  const beam = useBeamMaterial();
+  const ring = useRingMaterial();
+  const sweepUk = useSweepMaterial(BUBBLE[0], BUBBLE[1], BUBBLE_CORNER, 3.8);
+  const sweepFr = useSweepMaterial(BUBBLE[0], BUBBLE[1], BUBBLE_CORNER, 3.8);
+  const uk = useRef<Group>(null);
+  const fr = useRef<Group>(null);
+  const ukGlow = useRef<MeshStandardMaterial>(null);
+  const frGlow = useRef<MeshStandardMaterial>(null);
+  const sparks = useRef<Group>(null);
+  const talk = useRef([1, 0]);
+
+  useFrame(({ clock }, delta) => {
+    const t = clock.elapsedTime;
+    beam.uniforms.time.value = t;
+    ring.uniforms.time.value = t;
+    sweepUk.uniforms.time.value = t;
+    // The French one's light comes round half a sweep later.
+    sweepFr.uniforms.time.value = t + 1.9;
+    const speaker = Math.floor(t / TURN_S) % 2;
+    const ease = 1 - Math.exp(-Math.min(delta, 0.1) * 7);
+    const sides = [
+      { group: uk.current, glow: ukGlow.current, sweep: sweepUk },
+      { group: fr.current, glow: frGlow.current, sweep: sweepFr },
+    ];
+    sides.forEach(({ group, glow, sweep }, i) => {
+      const [x, y, z] = BUBBLE_AT[i];
+      talk.current[i] += ((speaker === i ? 1 : 0) - talk.current[i]) * ease;
+      const k = talk.current[i];
+      if (group) {
+        const bob = Math.sin(t * 1.7 + i * Math.PI) * 0.02;
+        group.position.set(x, base + y + bob + k * 0.06, z + k * 0.04);
+        group.scale.setScalar(0.9 + 0.12 * k);
+        group.rotation.z = Math.sin(t * 1.1 + i * 2) * 0.03 + (i === 0 ? 0.04 : -0.04);
+      }
+      if (glow) {
+        glow.emissiveIntensity = 0.12 + 0.38 * k;
+      }
+      sweep.uniforms.strength.value = 0.35 + 0.65 * k;
+    });
+    if (sparks.current) {
+      sparks.current.rotation.y = t * 0.9;
+      sparks.current.children.forEach((spark, i) => {
+        spark.position.y = base + puck + 0.12 + ((t * 0.25 + i / SPARKS) % 1) * 0.55;
+        spark.scale.setScalar(1 - ((t * 0.25 + i / SPARKS) % 1) * 0.7);
+      });
+    }
+  });
+
   return (
     <>
-      <CuboidCollider args={[0.84, 0.17, 0.46]} position={[0, base + 0.17, 0.02]} />
-      <group position={[-0.37, base, -0.1]} rotation={[0, 0.06, 0]}>
-        <SpeechBubble draw={drawUnionJack} name="uk" tail={-1} />
+      <CylinderCollider args={[puck / 2, radius]} position={[0, base + puck / 2, 0]} />
+      {/* Light, so the bubbles up top never tip the emitter over */}
+      <CuboidCollider args={[0.66, 0.3, 0.11]} position={[0, base + 0.88, 0.02]} density={0.05} />
+      <mesh geometry={emitter} position={[0, base, 0]} castShadow receiveShadow>
+        <meshStandardMaterial color={EMITTER} roughness={0.35} metalness={0.4} />
+      </mesh>
+      <mesh position={[0, base + puck + 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[radius * 0.68, 40]} />
+        <meshStandardMaterial color={EMITTER_LENS} roughness={0.15} metalness={0.6} />
+      </mesh>
+      <mesh
+        position={[0, base + puck + 0.004, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        material={ring}
+        raycast={() => null}
+      >
+        <ringGeometry args={[radius * 0.7, radius * 0.8, 64]} />
+      </mesh>
+      <mesh
+        position={[0, base + puck + 0.33, 0]}
+        material={beam}
+        renderOrder={1}
+        raycast={() => null}
+      >
+        <cylinderGeometry args={[0.52, radius * 0.66, 0.66, 32, 1, true]} />
+      </mesh>
+      <group ref={sparks}>
+        {Array.from({ length: SPARKS }, (_, i) => {
+          const angle = (i / SPARKS) * Math.PI * 2;
+          return (
+            <mesh
+              key={i}
+              position={[Math.cos(angle) * 0.46, 0, Math.sin(angle) * 0.46]}
+              raycast={() => null}
+            >
+              <sphereGeometry args={[0.018, 8, 6]} />
+              <meshBasicMaterial color={i % 2 ? FLAG_RED : FLAG_BLUE} toneMapped={false} />
+            </mesh>
+          );
+        })}
       </group>
-      {/* Its left edge up on the other bubble, its right edge down on the desk */}
-      <group position={[0.38, base + h * 0.5, 0.15]} rotation={[0.02, -0.08, -0.2]}>
-        <SpeechBubble draw={drawTricolore} name="fr" tail={1} />
+      {/* Leaning back a little towards the camera, turned in towards each other */}
+      {/* At rest where they hover, so whatever measures the emitter sees them there */}
+      <group
+        ref={uk}
+        position={[BUBBLE_AT[0][0], base + BUBBLE_AT[0][1], BUBBLE_AT[0][2]]}
+        rotation={[-0.32, 0.16, 0]}
+      >
+        <SpeechBubble draw={drawUnionJack} name="uk" tail={1} glow={ukGlow} sweep={sweepUk} />
+      </group>
+      <group
+        ref={fr}
+        position={[BUBBLE_AT[1][0], base + BUBBLE_AT[1][1], BUBBLE_AT[1][2]]}
+        rotation={[-0.32, -0.16, 0]}
+      >
+        <SpeechBubble draw={drawTricolore} name="fr" tail={-1} glow={frGlow} sweep={sweepFr} />
       </group>
     </>
   );
 }
 
 const PORTRAIT_SRC = '/assets/about/profile.webp';
-/** Same proportions as the photo (490 × 509). */
-const PRINT: [number, number, number] = [1.18, 0.07, 1.226];
-/** The darkest blue at the photo's edges, so the block's sides carry it on. */
+/** The frame's shell, about the photo's proportions (490 × 509), and the screen inside it. */
+const FRAME: [number, number, number] = [1.12, 1.16, 0.09];
+const SCREEN: [number, number] = [0.98, 1.018];
+/** How far the frame leans back on its stand. */
+const FRAME_LEAN = 0.24;
+const FRAME_SHELL = '#f1efea';
+const FRAME_BEZEL = '#0b0c11';
+const FRAME_STAND = '#2c2d34';
+/** The darkest blue at the photo's edges, behind it while it loads. */
 const PRINT_EDGE = '#0d0a2c';
 
 function usePortraitImage() {
@@ -1335,15 +1652,19 @@ function usePortraitImage() {
   return image;
 }
 
-/** Me: the photo printed edge to edge on a thin block, nothing around it. */
+/**
+ * Me: a little smart frame on the desk, the photo lit like a screen behind
+ * glass, a light crossing it now and then, and a status light breathing on
+ * its stand.
+ */
 function Portrait() {
   const photo = usePortraitImage();
   const texture = useLabelTexture(
     490,
     509,
     (ctx, w, h) => {
-      // Rounded like the block's edges; the corners stay transparent.
-      roundRect(ctx, 0, 0, w, h, 18);
+      // Rounded like the screen's corners; the corners stay transparent.
+      roundRect(ctx, 0, 0, w, h, 22);
       ctx.save();
       ctx.clip();
       ctx.fillStyle = PRINT_EDGE;
@@ -1355,19 +1676,82 @@ function Portrait() {
     },
     `portrait-${photo ? 'photo' : 'blank'}`
   );
+  const [w, h, d] = FRAME;
+  const [sw, sh] = SCREEN;
+  const shell = useRoundedPanel(w, h, 0.09, d);
+  const bezel = useRoundedPanel(sw + 0.04, sh + 0.04, 0.05, 0.01);
+  const sweep = useSweepMaterial(sw, sh, 0.04, 5.5);
+  const led = useRef<MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    sweep.uniforms.time.value = t;
+    sweep.uniforms.strength.value = 0.5;
+    if (led.current) {
+      led.current.emissiveIntensity = 0.6 + 0.6 * (0.5 + 0.5 * Math.sin(t * 2.2));
+    }
+  });
 
-  const [w, h, d] = PRINT;
+  const base = -0.25;
+  const stand: [number, number, number] = [0.92, 0.08, 0.4];
+  // The frame stands in the stand's slot, leaning back round its bottom edge.
+  const foot = base + stand[1] - 0.01;
+  const up = Math.cos(FRAME_LEAN) * (h / 2);
+  const back = -Math.sin(FRAME_LEAN) * (h / 2);
   return (
     <>
-      {/* A little thicker than the block, like the tickets, so things rest on it calmly */}
-      <CuboidCollider args={[w / 2, 0.05, d / 2]} />
-      <RoundedBox args={[w, h, d]} radius={0.03} smoothness={2} castShadow receiveShadow>
-        <meshStandardMaterial color={PRINT_EDGE} roughness={0.35} />
+      <CuboidCollider
+        args={[stand[0] / 2, stand[1] / 2, stand[2] / 2]}
+        position={[0, base + stand[1] / 2, 0]}
+        density={2}
+      />
+      <CuboidCollider
+        args={[w / 2, h / 2, d / 2]}
+        position={[0, foot + up, back]}
+        rotation={[-FRAME_LEAN, 0, 0]}
+        density={0.3}
+      />
+      <RoundedBox
+        args={stand}
+        radius={0.03}
+        smoothness={2}
+        position={[0, base + stand[1] / 2, 0]}
+        castShadow
+        receiveShadow
+      >
+        <meshStandardMaterial color={FRAME_STAND} roughness={0.4} metalness={0.3} />
       </RoundedBox>
-      <mesh position={[0, h / 2 + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[w - 0.03, d - 0.03]} />
-        <meshStandardMaterial map={texture} alphaTest={0.5} roughness={0.4} />
+      <mesh position={[0.34, base + stand[1] / 2, stand[2] / 2 + 0.002]}>
+        <circleGeometry args={[0.016, 16]} />
+        <meshStandardMaterial
+          ref={led}
+          color="#3fcf8e"
+          emissive="#3fcf8e"
+          emissiveIntensity={1}
+          toneMapped={false}
+        />
       </mesh>
+      <group position={[0, foot + up, back]} rotation={[-FRAME_LEAN, 0, 0]}>
+        <mesh geometry={shell} castShadow receiveShadow>
+          <meshStandardMaterial color={FRAME_SHELL} roughness={0.45} />
+        </mesh>
+        <mesh geometry={bezel} position={[0, 0, d / 2]}>
+          <meshStandardMaterial color={FRAME_BEZEL} roughness={0.2} metalness={0.4} />
+        </mesh>
+        <mesh position={[0, 0, d / 2 + 0.007]}>
+          <planeGeometry args={[sw, sh]} />
+          <meshStandardMaterial
+            map={texture}
+            emissiveMap={texture}
+            emissive="#ffffff"
+            emissiveIntensity={0.45}
+            alphaTest={0.5}
+            roughness={0.25}
+          />
+        </mesh>
+        <mesh position={[0, 0, d / 2 + 0.01]} material={sweep} raycast={() => null}>
+          <planeGeometry args={[sw, sh]} />
+        </mesh>
+      </group>
     </>
   );
 }
@@ -1382,7 +1766,7 @@ const ROBOT_HEAD_Y = 0.92;
 
 /** A flat panel with rounded corners, facing +z, centred on the origin. */
 function useRoundedPanel(width: number, height: number, radius: number, depth: number) {
-  return useMemo(() => {
+  const geometry = useMemo(() => {
     const x = width / 2 - radius;
     const y = height / 2 - radius;
     const shape = new Shape();
@@ -1403,6 +1787,8 @@ function useRoundedPanel(width: number, height: number, radius: number, depth: n
     geometry.computeVertexNormals();
     return geometry;
   }, [width, height, radius, depth]);
+  useResourceDisposal(geometry);
+  return geometry;
 }
 
 /**
@@ -1737,7 +2123,7 @@ function useLineScreen() {
     result.anisotropy = 4;
     return result;
   }, []);
-  useEffect(() => () => texture.dispose(), [texture]);
+  useResourceDisposal(texture);
   const shown = useRef('');
   const paint = (t: number) => {
     // Eleven at night to six in the morning, over one loop.

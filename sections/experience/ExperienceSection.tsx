@@ -1,6 +1,13 @@
 import { type KeyboardEvent, useRef, useState } from 'react';
 import Image from 'next/image';
-import { FiArrowDown, FiArrowUpRight, FiChevronDown, FiCpu, FiMapPin } from 'react-icons/fi';
+import {
+  FiArrowDown,
+  FiArrowUpRight,
+  FiChevronDown,
+  FiClock,
+  FiCpu,
+  FiMapPin,
+} from 'react-icons/fi';
 import SectionHeading from '@components/SectionHeading';
 import SwipeRow from '@components/SwipeRow';
 import TechBadge from '@components/TechBadge';
@@ -204,9 +211,18 @@ export default function ExperienceSection() {
                   )}
                   aria-hidden
                 />
-                <span className="flex items-center justify-between gap-2">
-                  <span className="truncate font-mono text-[10px] text-faint sm:text-[11px]">
-                    {period(experience, t.present, locale)}
+                <span className="flex items-start justify-between gap-2">
+                  {/* Every role so far was full time: beside the dates, or under them on phones. */}
+                  <span className="min-w-0 font-mono text-[10px] text-faint sm:text-[11px]">
+                    <span className="block truncate sm:inline">
+                      {period(experience, t.present, locale)}
+                    </span>
+                    <span className="block truncate text-muted sm:inline">
+                      <span className="max-sm:hidden" aria-hidden>
+                        {' · '}
+                      </span>
+                      {t.fullTime}
+                    </span>
                   </span>
                   {!experience.to && (
                     <span className="inline-flex shrink-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-accent">
@@ -263,6 +279,11 @@ export default function ExperienceSection() {
             <p className="mt-1 text-sm text-ink sm:text-base">{selected.role[locale]}</p>
             <p className="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-xs text-faint">
               <span>{period(selected, t.present, locale)}</span>
+              <span aria-hidden>·</span>
+              <span className="inline-flex items-center gap-1 text-muted">
+                <FiClock aria-hidden />
+                {t.fullTime}
+              </span>
               <span aria-hidden>·</span>
               <span className="inline-flex items-center gap-1 text-muted">
                 <FiMapPin aria-hidden />

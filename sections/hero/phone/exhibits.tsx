@@ -1,4 +1,4 @@
-import { type ReactNode, type RefObject, useLayoutEffect, useMemo, useRef } from 'react';
+import { type ReactNode, type RefObject, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { PerspectiveCamera } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import {
@@ -11,10 +11,10 @@ import {
   type PerspectiveCamera as Camera,
   SRGBColorSpace,
 } from 'three';
-import { type ExhibitId, type Turn } from './exhibitIds';
+import { type ExhibitId, SHIFTS, type TrioTurn, type Turn } from './exhibitIds';
 import { DayShiftMesh } from '../playground/dayShift';
-import { makeTicket, type PropItem } from '../playground/items';
-import { AgentMesh, PropMesh } from '../playground/objects';
+import { buildExtra, type KeycapItem, makeTicket, type PropItem } from '../playground/items';
+import { AgentMesh, KeycapMesh, PropMesh } from '../playground/objects';
 
 /** These have a front worth seeing (a screen), so they sway round it instead of turning all the way. */
 const FRONT_FACING = new Set<ExhibitId>(['ticket', 'night']);
@@ -23,8 +23,10 @@ const SPIN = 0.45;
 const SWAY = 0.6;
 /** A tap spins a shelf piece round about once. */
 const TAP_SPIN = 12;
+const TAU = Math.PI * 2;
 
 const ticket = makeTicket(0, 'showcase-ticket');
+const slash = buildExtra('keys') as KeycapItem;
 
 function Exhibit({ id }: { id: ExhibitId }) {
   if (id === 'ticket') {
@@ -32,6 +34,9 @@ function Exhibit({ id }: { id: ExhibitId }) {
   }
   if (id === 'agents') {
     return <AgentMesh />;
+  }
+  if (id === 'keys') {
+    return <KeycapMesh item={slash} />;
   }
   return <PropMesh item={{ uid: `showcase-${id}`, kind: 'prop', info: id as PropItem['info'] }} />;
 }
@@ -124,7 +129,7 @@ function Fit({
 
 /** A round soft-edged glow, as a texture: light pooled on a plinth, or a shadow under what stands on it. */
 function useRadialTexture(stops: Array<[number, string]>) {
-  return useMemo(() => {
+  const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 128;
     canvas.height = 128;
@@ -141,6 +146,9 @@ function useRadialTexture(stops: Array<[number, string]>) {
     // The stops are constants at each call site.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // A material let go of keeps its map: the texture goes with whatever made it.
+  useEffect(() => () => texture.dispose(), [texture]);
+  return texture;
 }
 
 /** A round plinth: a dark drum with a lit rim, a pool of light on top and a shadow where things stand. */
@@ -279,6 +287,10 @@ export function StageScene({
       return;
     }
     const dt = Math.min(delta, 0.05);
+    // Two draws in the same instant: nothing to move, and nothing to divide by.
+    if (dt <= 0) {
+      return;
+    }
     const s = state.current;
     const input = turn?.current;
     if (input?.flick) {
@@ -372,6 +384,265 @@ export function HolderScene({
         <Fit radius={1.15} height={1.5}>
           <Exhibit id={id} />
         </Fit>
+      </group>
+    </>
+  );
+}
+
+/** A tray piece's turn when left alone, in radians a second. */
+const THUMB_SPIN = 0.6;
+/**
+ * Pointed at, it springs round to face the viewer: this stiff, critically
+ * damped, so it slows into place without swinging past.
+ */
+const FACE_STIFFNESS = 22;
+/** Then it bobs gently where it stands: this high, this often (radians a second). */
+const BOB_HEIGHT = 0.05;
+const BOB_RATE = 3.2;
+
+/**
+ * One piece in the desk's tray, small: just the piece turning over a soft
+ * shadow, framed with room round it so nothing is cut off. Pointed at, it
+ * turns on round to face the viewer, the way it was already going, stops
+ * there and bobs gently; let go, it picks up its turn again. Once on the
+ * desk, it faces the viewer and stands still.
+ */
+export function ThumbScene({
+  id,
+  hovered,
+  added,
+  phase = 0,
+  still,
+}: {
+  id: ExhibitId;
+  hovered?: boolean;
+  /** Already on the desk. */
+  added?: boolean;
+  phase?: number;
+  /** Frozen where it starts, for its still. */
+  still?: boolean;
+}) {
+  const spinner = useRef<Group>(null);
+  const state = useRef({
+    angle: phase,
+    vel: THUMB_SPIN,
+    grow: 0,
+    bob: 0,
+    goal: null as number | null,
+  });
+  const shadow = useRadialTexture([
+    [0, 'rgb(0 0 0 / 0.55)'],
+    [0.6, 'rgb(0 0 0 / 0.2)'],
+    [1, 'rgb(0 0 0 / 0)'],
+  ]);
+  useFrame((_, delta) => {
+    if (!spinner.current || still) {
+      return;
+    }
+    const dt = Math.min(delta, 0.05);
+    const s = state.current;
+    const facing = hovered || added;
+    // On the desk already, it stands still: no growing, no bob.
+    s.grow += ((hovered && !added ? 1 : 0) - s.grow) * (1 - Math.exp(-dt * 8));
+    if (facing) {
+      // The nearest front ahead of where its turn would carry it, so it never doubles back far.
+      s.goal ??= Math.round((s.angle + s.vel * 0.45) / TAU) * TAU;
+      const pull = (s.goal - s.angle) * FACE_STIFFNESS - s.vel * 2 * Math.sqrt(FACE_STIFFNESS);
+      s.vel += pull * dt;
+      s.angle += s.vel * dt;
+    } else {
+      s.goal = null;
+      s.vel += (THUMB_SPIN - s.vel) * (1 - Math.exp(-dt * 2.5));
+      s.angle += s.vel * dt;
+    }
+    // The bob comes in as it settles to the front, and goes as it lets go.
+    const settled = s.goal === null ? 0 : Math.max(0, 1 - Math.abs(s.goal - s.angle) * 3);
+    s.bob += dt * BOB_RATE;
+    spinner.current.rotation.y = s.angle;
+    spinner.current.position.y = Math.sin(s.bob) * BOB_HEIGHT * s.grow * settled;
+    spinner.current.scale.setScalar(1 + s.grow * 0.08);
+  });
+  return (
+    <>
+      <ViewCamera position={[0, 1.9, 5.3]} target={0.62} />
+      <Lights />
+      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[1.05, 32]} />
+        <meshBasicMaterial map={shadow} transparent depthWrite={false} toneMapped={false} />
+      </mesh>
+      <group ref={spinner} rotation={[0, phase, 0]}>
+        <Fit radius={1.08} height={1.45}>
+          <Exhibit id={id} />
+        </Fit>
+      </group>
+    </>
+  );
+}
+
+/** How far from the middle of the turntable each piece of how I work stands, and the turn between them. */
+const TRIO_RADIUS = 1.4;
+const TRIO_STEP = (Math.PI * 2) / SHIFTS.length;
+/** How hard the turntable springs to the piece it settles on, and how much it is damped. */
+const SETTLE_STIFFNESS = 28;
+const SETTLE_DAMPING = 0.95;
+/** Let go, it turns at most this fast (radians a second), and a flick reaches at most this much further. */
+const MAX_SPIN = 4;
+const FLICK_REACH = TRIO_STEP * 0.55;
+/**
+ * How much each piece turns with the table as it goes round: a little, so it
+ * still feels round. Smooth all the way round, so a piece passing behind
+ * never snaps from one side to the other: the two behind turn about half a
+ * radian with it, the one in front not at all.
+ */
+const FOLLOW = 0.53;
+/** A tapped piece jumps this high and turns round once, over this long. */
+const HOP_HEIGHT = 0.42;
+const HOP_SECONDS = 0.7;
+
+/**
+ * How I work, on one turntable: my day shift, my agents and their night
+ * shift a third of a turn apart, the one in front facing the camera and the
+ * other two behind it on either side. A sideways drag turns it, and on
+ * letting go it settles on the piece nearest the front, or the next one along
+ * after a flick. A tap makes the piece in front jump and spin.
+ */
+export function TrioScene({
+  step,
+  turn,
+  onStep,
+  still,
+}: {
+  /** The piece in front, from day to night. */
+  step: number;
+  turn?: RefObject<TrioTurn>;
+  /** A drag settled on a piece. */
+  onStep?: (step: number) => void;
+  still?: boolean;
+}) {
+  const table = useRef<Group>(null);
+  const stands = useRef<Array<Group | null>>([]);
+  const pieces = useRef<Array<Group | null>>([]);
+  const state = useRef({
+    angle: -step * TRIO_STEP,
+    vel: 0,
+    goal: -step * TRIO_STEP,
+    held: false,
+    taps: 0,
+    hopAt: -Infinity,
+    hopOf: step,
+    time: 0,
+    /** The piece in front when the swipe began. */
+    from: step,
+  });
+
+  // Picked from the steps underneath: turn the short way round to it.
+  useLayoutEffect(() => {
+    const s = state.current;
+    const wanted = -step * TRIO_STEP;
+    s.goal = wanted + Math.round((s.angle - wanted) / (Math.PI * 2)) * Math.PI * 2;
+  }, [step]);
+
+  useFrame((_, delta) => {
+    if (!table.current || still) {
+      return;
+    }
+    const dt = Math.min(delta, 0.05);
+    // Two draws in the same instant: nothing to move, and nothing to divide by.
+    if (dt <= 0) {
+      return;
+    }
+    const s = state.current;
+    s.time += dt;
+    const input = turn?.current;
+    // Whatever the finger moved since the last frame, even if it has let go since.
+    const moved = input?.drag ?? 0;
+    if (input) {
+      input.drag = 0;
+    }
+    if (input?.held || moved !== 0) {
+      if (!s.held) {
+        s.from = Math.round(-s.angle / TRIO_STEP);
+      }
+      s.held = true;
+      s.angle += moved;
+      s.vel += (moved / dt - s.vel) * 0.5;
+    }
+    if (!input?.held) {
+      if (s.held) {
+        // Let go: settle on the piece it is heading for, a flick carrying it one further,
+        // but never more than one piece on from where the swipe began, and calmly.
+        s.held = false;
+        s.vel = Math.max(-MAX_SPIN, Math.min(MAX_SPIN, s.vel));
+        const flick = Math.max(-FLICK_REACH, Math.min(FLICK_REACH, s.vel * 0.12));
+        const nearest = Math.round(-(s.angle + flick) / TRIO_STEP);
+        const turns = Math.max(s.from - 1, Math.min(s.from + 1, nearest));
+        s.goal = -turns * TRIO_STEP;
+        onStep?.(((turns % SHIFTS.length) + SHIFTS.length) % SHIFTS.length);
+      }
+      const spring =
+        (s.goal - s.angle) * SETTLE_STIFFNESS -
+        s.vel * 2 * Math.sqrt(SETTLE_STIFFNESS) * SETTLE_DAMPING;
+      s.vel += spring * dt;
+      s.angle += s.vel * dt;
+    }
+    if (input && input.taps !== s.taps) {
+      s.taps = input.taps;
+      s.hopAt = s.time;
+      // Whichever piece is in front right now, even halfway through a turn.
+      const front = Math.round(-s.angle / TRIO_STEP);
+      s.hopOf = ((front % SHIFTS.length) + SHIFTS.length) % SHIFTS.length;
+    }
+    // Left alone, it sways a little, so it reads as something to turn.
+    const angle = s.angle + (s.held ? 0 : Math.sin(s.time * 0.7) * 0.06);
+    table.current.rotation.y = angle;
+    // Each piece keeps its front to the viewer as it goes round, turning only a little with the table.
+    stands.current.forEach((stand, i) => {
+      if (stand) {
+        stand.rotation.y = -angle + Math.sin(i * TRIO_STEP + angle) * FOLLOW;
+      }
+    });
+    pieces.current.forEach((piece, i) => {
+      if (!piece) {
+        return;
+      }
+      const t = (s.time - s.hopAt) / HOP_SECONDS;
+      const hopping = i === s.hopOf && t >= 0 && t < 1;
+      piece.position.y = hopping ? Math.sin(Math.PI * t) * HOP_HEIGHT : 0;
+      piece.rotation.y = hopping ? (1 - (1 - t) ** 3) * Math.PI * 2 : 0;
+    });
+  });
+
+  return (
+    <>
+      <ViewCamera position={[0, 1.75, 6.3]} target={0.3} />
+      <Lights />
+      <Plinth radius={2.2} height={0.2} glow={0.85} />
+      <group ref={table} rotation={[0, -step * TRIO_STEP, 0]}>
+        <Notches radius={2.06} count={60} />
+        {SHIFTS.map((id, i) => {
+          const at = i * TRIO_STEP;
+          return (
+            <group
+              key={id}
+              ref={(stand) => {
+                stands.current[i] = stand;
+              }}
+              position={[Math.sin(at) * TRIO_RADIUS, 0, Math.cos(at) * TRIO_RADIUS]}
+              rotation={[0, Math.sin(at - step * TRIO_STEP) * FOLLOW + step * TRIO_STEP, 0]}
+            >
+              <group
+                ref={(piece) => {
+                  pieces.current[i] = piece;
+                }}
+              >
+                {/* The agents' dock lies flat: a little wider, so it holds its own beside the others. */}
+                <Fit radius={id === 'agents' ? 1.12 : 1} height={1.4} upright={id === 'agents'}>
+                  <Exhibit id={id} />
+                </Fit>
+              </group>
+            </group>
+          );
+        })}
       </group>
     </>
   );

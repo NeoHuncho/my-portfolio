@@ -1,6 +1,13 @@
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { Fragment, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { type IconType } from 'react-icons';
-import { FiActivity, FiBarChart2, FiChevronDown, FiTarget, FiUserCheck } from 'react-icons/fi';
+import {
+  FiActivity,
+  FiArrowUpRight,
+  FiBarChart2,
+  FiChevronDown,
+  FiTarget,
+  FiUserCheck,
+} from 'react-icons/fi';
 import SectionHeading from '@components/SectionHeading';
 import SwipeRow from '@components/SwipeRow';
 import { type Ticket, trackMeta, trackOrder } from '@config/board';
@@ -23,7 +30,7 @@ const ticketsById: Record<string, Ticket> = Object.fromEntries(
   boardTickets.map((ticket) => [ticket.id, ticket])
 );
 
-const practiceIcons: IconType[] = [FiBarChart2, FiTarget, FiUserCheck, FiActivity];
+const practiceIcons: IconType[] = [FiUserCheck, FiBarChart2, FiTarget, FiActivity];
 
 /** What sits behind the board: how scheduled agent runs stay worth trusting. */
 function AgentPractices() {
@@ -46,7 +53,31 @@ function AgentPractices() {
                 <Icon className="text-accent" aria-hidden />
                 {item.title}
               </span>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{item.body}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+                {item.links
+                  ? item.body.split('{link}').map((part, at) => {
+                      const link = at > 0 ? item.links?.[at - 1] : undefined;
+                      return (
+                        // Parts are positional and never reordered.
+                        // eslint-disable-next-line react/no-array-index-key
+                        <Fragment key={at}>
+                          {link && (
+                            <a
+                              href={link.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 font-medium text-ink underline decoration-line-strong underline-offset-2 transition hover:text-accent hover:decoration-accent"
+                            >
+                              {link.label}
+                              <FiArrowUpRight aria-hidden className="size-3" />
+                            </a>
+                          )}
+                          {part}
+                        </Fragment>
+                      );
+                    })
+                  : item.body}
+              </p>
             </div>
           );
         })}

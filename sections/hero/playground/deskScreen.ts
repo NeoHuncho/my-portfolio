@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { CanvasTexture, SRGBColorSpace } from 'three';
-import { monoFamily, sansFamily } from './labelTexture';
+import { monoFamily, sansFamily, useResourceDisposal } from './labelTexture';
+import { textureScale, useQuality } from '../quality';
 
 const W = 384;
 const H = 216;
@@ -357,16 +358,22 @@ function drawScreen(ctx: Ctx, now: number) {
 
 /** The monitor on the standing desk: a tiling desktop whose workspaces switch on their own. */
 export function useDeskScreen() {
+  // Drawn at its base size, onto a canvas made sharper on devices that can take it.
+  const scale = textureScale(useQuality());
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = H;
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
     const result = new CanvasTexture(canvas);
     result.colorSpace = SRGBColorSpace;
     result.anisotropy = 4;
     return result;
-  }, []);
+  }, [scale]);
   const painted = useRef(-Infinity);
+  // A sharper canvas starts blank: paint it on the next frame.
+  useEffect(() => {
+    painted.current = -Infinity;
+  }, [texture]);
   const started = useRef<number | null>(null);
 
   // Its own clock, not the scene's: the scene's clock restarts from zero each time the hero
@@ -381,12 +388,13 @@ export function useDeskScreen() {
     const ctx = (texture.image as HTMLCanvasElement).getContext('2d');
     if (ctx) {
       started.current ??= now;
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
       // Workspace after workspace, wrapping round for as long as the page is open.
       drawScreen(ctx, now - started.current);
       texture.needsUpdate = true;
     }
   });
 
-  useEffect(() => () => texture.dispose(), [texture]);
+  useResourceDisposal(texture);
   return texture;
 }

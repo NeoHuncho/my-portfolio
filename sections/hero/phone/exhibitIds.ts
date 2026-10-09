@@ -5,11 +5,32 @@ export const SHELF = ['flags', 'mountain', 'sport', 'robot', 'server', 'oss'] as
 
 export type ShiftId = (typeof SHIFTS)[number];
 export type ShelfId = (typeof SHELF)[number];
-export type ExhibitId = ShiftId | ShelfId;
+/** Also on the desk's tray, which has room for them: my portrait and the search key. */
+export type ExhibitId = ShiftId | ShelfId | 'portrait' | 'keys';
 
 /** Still renders of each exhibit on its plinth: what shows until the 3D is ready, or instead of it. */
-export const stillOf = (id: ExhibitId, place: 'stage' | 'shelf') =>
+export const stillOf = (id: ExhibitId | 'trio', place: 'stage' | 'shelf' | 'tray') =>
   `/assets/showcase/${place}-${id}.webp`;
+
+/** The desk tray's pieces, in its order: each starts its turn from its own angle, as its still shows it. */
+const TRAY_ORDER: ExhibitId[] = [
+  'portrait',
+  'flags',
+  'mountain',
+  'sport',
+  'robot',
+  'keys',
+  'server',
+  'oss',
+];
+export const thumbPhase = (id: ExhibitId) => Math.max(0, TRAY_ORDER.indexOf(id)) * 0.9;
 
 /** The stage's turntable: how far a drag has turned it since the last frame, whether it is held, and any spin to add. */
 export type Turn = { drag: number; held: boolean; flick: number };
+
+/**
+ * The phone's turntable of how I work: how far a drag has turned it since
+ * the last frame, whether it is held, and how many taps it has had, each
+ * answered with a hop.
+ */
+export type TrioTurn = { drag: number; held: boolean; taps: number };

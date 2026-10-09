@@ -3,6 +3,7 @@ import { useThree } from '@react-three/fiber';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
 import { CanvasTexture, SRGBColorSpace } from 'three';
+import { textureScale, useQuality } from '../quality';
 
 export const sansFamily = GeistSans.style.fontFamily;
 export const monoFamily = GeistMono.style.fontFamily;
@@ -21,6 +22,11 @@ function waitForFonts(): Promise<unknown> {
   return fontsReady;
 }
 
+/** Disposes a component's own GPU resource when it is replaced or the component unmounts. */
+export function useResourceDisposal(resource: { dispose: () => void }) {
+  useEffect(() => () => resource.dispose(), [resource]);
+}
+
 /**
  * Draws a label onto a canvas texture, once the site fonts are loaded so the
  * 3D labels use the same typefaces as the page.
@@ -28,16 +34,18 @@ function waitForFonts(): Promise<unknown> {
 export function useLabelTexture(width: number, height: number, draw: Draw, key: string) {
   // The scene renders on demand, so a repainted label has to ask for a frame.
   const invalidate = useThree((state) => state.invalidate);
+  // Drawn at its base size, onto a canvas made sharper on devices that can take it.
+  const scale = textureScale(useQuality());
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const result = new CanvasTexture(canvas);
     result.colorSpace = SRGBColorSpace;
     result.anisotropy = 4;
     return result;
     // The texture is recreated only when its size changes.
-  }, [width, height]);
+  }, [width, height, scale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +55,7 @@ export function useLabelTexture(width: number, height: number, draw: Draw, key: 
       if (!ctx || cancelled) {
         return;
       }
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
       ctx.clearRect(0, 0, width, height);
       draw(ctx, width, height);
       texture.needsUpdate = true;
@@ -61,7 +70,7 @@ export function useLabelTexture(width: number, height: number, draw: Draw, key: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [texture, key]);
 
-  useEffect(() => () => texture.dispose(), [texture]);
+  useResourceDisposal(texture);
 
   return texture;
 }

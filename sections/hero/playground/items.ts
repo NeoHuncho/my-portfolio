@@ -72,26 +72,42 @@ const slashKey: KeycapItem = {
   label: '/',
 };
 
-/** In order of importance, as they drop: me and my languages, the night shift, then the rest. */
-const propIds = [
+/** How I work, the desk's opening scene, in reading order: my day, my agents, their night. */
+export const TRIO = ['ticket', 'agents', 'night'] as const;
+export type TrioId = (typeof TRIO)[number];
+
+/** The rest of me, added round them from the tray on request, most important first. */
+export const EXTRAS = [
   'portrait',
-  'robot',
   'flags',
-  'night',
   'mountain',
   'sport',
-  'oss',
+  'robot',
+  'keys',
   'server',
+  'oss',
 ] as const;
+export type ExtraId = (typeof EXTRAS)[number];
 
-export function buildInitialItems(compact: boolean): PlaygroundItem[] {
-  // Touch screens have no keyboard to press it with.
-  const keys = compact ? [] : [slashKey];
-  const props: PropItem[] = propIds.map((info) => ({ uid: `prop-${info}`, kind: 'prop', info }));
+/** Each object's body on the desk: one of each. */
+export function uidOf(info: InfoId): string {
+  if (info === 'ticket') {
+    return 'ticket-0';
+  }
+  if (info === 'agents') {
+    return 'agents';
+  }
+  return info === 'keys' ? slashKey.uid : `prop-${info}`;
+}
+
+export function buildTrio(): PlaygroundItem[] {
   return [
-    { uid: 'agents', kind: 'agent', info: 'agents' },
-    makeTicket(0, 'ticket-0'),
-    ...keys,
-    ...props,
+    makeTicket(0, uidOf('ticket')),
+    { uid: uidOf('agents'), kind: 'agent', info: 'agents' },
+    { uid: uidOf('night'), kind: 'prop', info: 'night' },
   ];
+}
+
+export function buildExtra(id: ExtraId): PlaygroundItem {
+  return id === 'keys' ? slashKey : { uid: uidOf(id), kind: 'prop', info: id };
 }

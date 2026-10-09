@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 
-/** Time the page keeps to itself after `load`, while the hero's desk mounts. */
-const GRACE_MS = 1500;
+/** Scrolled this share of a screen down, the visitor has left the hero's desk behind. */
+const PAST_HERO = 0.75;
 
 type Connection = { saveData?: boolean; effectiveType?: string };
 
 /**
- * Starts heavy embeds early without delaying the page: once it has loaded, after a short
- * grace and when the browser is idle, so they are ready by the time the visitor scrolls to
- * them. With Save-Data or a 2G connection they wait until the visitor is a screen away.
+ * Starts heavy embeds early without slowing the hero: once the visitor has scrolled past it,
+ * when the browser is idle, so they are ready by the time the visitor reaches them. The games
+ * are same-origin iframes, which run on the page's own main thread: started while the desk is
+ * in play, they made it stutter for its first few seconds. With Save-Data or a 2G connection
+ * they wait until the visitor is a screen away.
  */
 export function useEarlyLoad() {
   const { ref, inView: near } = useInView({ triggerOnce: true, rootMargin: '100% 0px' });
@@ -20,24 +22,26 @@ export function useEarlyLoad() {
     if (connection?.saveData || /2g$/.test(connection?.effectiveType ?? '')) {
       return undefined;
     }
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let idleId: number | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const start = () => {
-      timer = setTimeout(() => {
-        if ('requestIdleCallback' in window) {
-          idleId = window.requestIdleCallback(() => setIdle(true), { timeout: 3000 });
-        } else {
-          setIdle(true);
-        }
-      }, GRACE_MS);
+      if ('requestIdleCallback' in window) {
+        idleId = window.requestIdleCallback(() => setIdle(true), { timeout: 3000 });
+      } else {
+        timer = setTimeout(() => setIdle(true), 200);
+      }
     };
-    if (document.readyState === 'complete') {
-      start();
-    } else {
-      window.addEventListener('load', start, { once: true });
-    }
+    const onScroll = () => {
+      if (window.scrollY > window.innerHeight * PAST_HERO) {
+        window.removeEventListener('scroll', onScroll);
+        start();
+      }
+    };
+    // Also when the page opens already scrolled down, from a link or a reload.
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
-      window.removeEventListener('load', start);
+      window.removeEventListener('scroll', onScroll);
       clearTimeout(timer);
       if (idleId !== undefined) {
         window.cancelIdleCallback(idleId);

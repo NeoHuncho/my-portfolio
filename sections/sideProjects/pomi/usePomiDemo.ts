@@ -146,7 +146,7 @@ function captureStep(state: DemoState, all: boolean): DemoState {
       ...commit(
         state,
         capture.source,
-        { tasks: [task, ...state.tasks], fresh: task.id, capture: { ...capture, phase: 'done' } },
+        { tasks: [...state.tasks, task], fresh: task.id, capture: { ...capture, phase: 'done' } },
         { kind: 'added', type: state.timer.type, next: state.timer.type, title: task.title }
       ),
       nextId: state.nextId + 1,

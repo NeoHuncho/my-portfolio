@@ -47,6 +47,7 @@ export const INTENTIONS: Record<TimerType, Intention[]> = {
     { slug: 'side', emoji: '🛠️', name: { en: 'Side projects', fr: 'Projets perso' } },
     { slug: 'learning', emoji: '📚', name: { en: 'Learning', fr: 'Apprendre' } },
     { slug: 'personal', emoji: '🏡', name: { en: 'Personal', fr: 'Perso' } },
+    { slug: 'admin', emoji: '🗂️', name: { en: 'Admin', fr: 'Admin' } },
   ],
   break: [
     { slug: 'coffee', emoji: '☕', name: { en: 'Coffee', fr: 'Café' } },
@@ -167,7 +168,7 @@ const en = {
   close: 'Close',
   mic: 'Capture a task by voice',
   micStop: 'Stop listening',
-  micHint: 'Tap and say a task',
+  micHint: 'Tap to add a task',
   listening: 'Listening…',
   listeningWatch: 'Listening on the watch…',
   parsing: 'Turning it into a task…',
@@ -213,7 +214,7 @@ const fr: typeof en = {
   close: 'Fermer',
   mic: 'Dicter une tâche',
   micStop: 'Arrêter l’écoute',
-  micHint: 'Touche et dicte une tâche',
+  micHint: 'Touche pour ajouter une tâche',
   listening: 'J’écoute…',
   listeningWatch: 'Écoute sur la montre…',
   parsing: 'Je la transforme en tâche…',
@@ -245,6 +246,14 @@ export function formatClock(ms: number): string {
 
 export function formatDue(due: Due | null, copy: Copy): string | null {
   return due ? `${copy.days[String(due.day)]} ${due.time}` : null;
+}
+
+/**
+ * The tasks a list of `max` rows shows: new tasks join the end, so once the
+ * list overflows the newest one keeps the last row.
+ */
+export function visibleTasks(tasks: Task[], max: number): Task[] {
+  return tasks.length <= max ? tasks : [...tasks.slice(0, max - 1), tasks[tasks.length - 1]];
 }
 
 export function wordsOf(text: string): string[] {

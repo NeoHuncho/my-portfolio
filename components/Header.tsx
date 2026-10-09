@@ -11,7 +11,8 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { openCommandPalette } from '@components/CommandPalette';
-import { links, sectionIds } from '@config/links';
+import LogoMark from '@components/LogoMark';
+import { heroNameId, links, sectionIds } from '@config/links';
 import { siteVersions } from '@config/versions';
 import { useLanguage } from '@hooks/useLanguage';
 import { cx } from '@lib/cx';
@@ -127,6 +128,28 @@ function Header() {
   const { strings, locale, toggleLocale } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The hero says my name by my portrait: the header takes it over once that has scrolled
+  // away, and keeps it from then on.
+  const [nameShown, setNameShown] = useState(false);
+
+  useEffect(() => {
+    const name = document.getElementById(heroNameId);
+    if (!name) {
+      setNameShown(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          setNameShown(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '-56px 0px 0px 0px' }
+    );
+    observer.observe(name);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let frame = 0;
@@ -171,11 +194,22 @@ function Header() {
       )}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
-        <a href={`#${sectionIds.playground}`} className="flex items-center gap-2 font-mono text-sm">
-          <span className="grid size-7 place-items-center rounded-md bg-ink font-semibold text-bg">
-            W
+        <a
+          href={`#${sectionIds.playground}`}
+          aria-label="William Guinaudie"
+          className="flex items-center text-[15px] font-medium tracking-tight"
+        >
+          <LogoMark className="h-4.5 w-auto" />
+          <span
+            aria-hidden={!nameShown}
+            className={cx(
+              // Folds away to nothing, so the version badge sits by the mark while the hero shows my name.
+              'hidden overflow-hidden whitespace-nowrap transition-all duration-300 ease-out sm:inline-block',
+              nameShown ? 'ml-2.5 max-w-48 opacity-100' : 'ml-0 max-w-0 opacity-0'
+            )}
+          >
+            William Guinaudie
           </span>
-          <span className="hidden font-medium tracking-tight sm:inline">William Guinaudie</span>
         </a>
         <VersionMenu />
 

@@ -24,6 +24,8 @@ const HEADER = 64;
 type DeskCalloutProps = {
   /** Changes with the object, to replay the entrance. */
   selectionKey: string;
+  /** How long the card waits before fading in, in ms: an object rising onto the desk arrives first. */
+  delay?: number;
   title: string;
   body: string;
   closeLabel: string;
@@ -82,6 +84,7 @@ function around({ x, y, r }: { x: number; y: number; r: number }): Rect {
  */
 export default function DeskCallout({
   selectionKey,
+  delay = 0,
   title,
   body,
   closeLabel,
@@ -116,13 +119,33 @@ export default function DeskCallout({
       cardRef.current.style.visibility = 'hidden';
     }
     leaderRef.current?.setAttribute('visibility', 'hidden');
-    panelRef.current?.animate(
+    const entrance = panelRef.current?.animate(
       [
         { opacity: 0, transform: 'translateY(6px) scale(0.98)' },
         { opacity: 1, transform: 'none' },
       ],
-      { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+      {
+        duration: delay ? 420 : 260,
+        delay,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'backwards',
+      }
     );
+    // The line to the object comes in with the card, not ahead of it.
+    const line = delay
+      ? leaderRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration: 420,
+          delay,
+          fill: 'backwards',
+        })
+      : undefined;
+    // A newer object's entrance must not be overtaken by an older, delayed one.
+    return () => {
+      entrance?.cancel();
+      line?.cancel();
+    };
+    // Only a new object replays it; a delay that changes later does not.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectionKey]);
 
   useEffect(() => {
