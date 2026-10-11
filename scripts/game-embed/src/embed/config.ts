@@ -1,7 +1,8 @@
 // Portfolio embed: what the page was opened with, read once from its URL.
 // Copied into the Gamehub worktree by scripts/build-games.mjs (not part of Gamehub itself).
 //
-//   play.html                        Gamehub's own library (its home screen)
+//   play.html?match=<n>              Gamehub's own library (its home screen): the portfolio's
+//                                    frames open on it
 //   play.html?game=rota&match=<n>    a Rota match already under way, shared live with every
 //                                    other frame opened with the same match number
 //

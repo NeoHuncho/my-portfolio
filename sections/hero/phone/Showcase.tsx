@@ -10,7 +10,6 @@ import {
   useState,
 } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Physics } from '@react-three/rapier';
 import { cx } from '@lib/cx';
 import { Cell, CellLayer, CellRegistry, type CellScenes } from './Cells';
 import {
@@ -140,7 +139,10 @@ function Layer({
 }) {
   const quality = useQuality();
   const { dpr: maxDpr, fps } = SETTINGS[use][quality];
-  const dpr = useBudgetDpr(quality, maxDpr);
+  // Sized by its own box, not the window's: a phone's window grows and shrinks as its address
+  // bar hides and shows on scroll, and every change of ratio clears the canvas for a frame.
+  const box = useRef<HTMLDivElement>(null);
+  const dpr = useBudgetDpr(quality, maxDpr, box);
   const registry = useMemo<CellScenes>(() => new Map(), []);
   const [compiled, setCompiled] = useState(false);
   const [ready, setReady] = useState(false);
@@ -158,6 +160,7 @@ function Layer({
   }, [ready]);
   return (
     <div
+      ref={box}
       className={cx(
         'pointer-events-none absolute inset-0 transition-opacity duration-500',
         ready ? 'opacity-100' : 'opacity-0'
@@ -172,8 +175,8 @@ function Layer({
       >
         <CellRegistry.Provider value={registry}>
           <Suspense fallback={null}>
-            {/* The desk's objects carry their colliders; paused, nothing moves them. */}
-            <Physics paused>{children}</Physics>
+            {/* The desk's objects, standing still: no physics, so their colliders are left out. */}
+            {children}
             <WarmUp cells={cells} onCompiled={() => setCompiled(true)} onReady={onWarm} />
             {active && moving && <Moving fps={fps} />}
           </Suspense>
@@ -189,8 +192,7 @@ function Layer({
  * them at once would hold one frame up for the lot.
  */
 function OneAFrame({ children }: { children: ReactNode[] }) {
-  // None in the first frame: making the canvas is enough for one. Mounted inside the physics,
-  // it only starts counting once the physics is ready, so its pieces never pile up behind it.
+  // None in the first frame: making the canvas is enough for one.
   const [shown, setShown] = useState(0);
   const total = children.length;
   useEffect(() => {

@@ -1,14 +1,6 @@
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import {
-  CoefficientCombineRule,
-  ConvexHullCollider,
-  CuboidCollider,
-  CylinderCollider,
-  type RapierCollider,
-  useRapier,
-} from '@react-three/rapier';
-import {
   AdditiveBlending,
   Box3,
   BoxGeometry,
@@ -56,7 +48,16 @@ import {
   useResourceDisposal,
   wrapText,
 } from './labelTexture';
+import {
+  ConvexHullCollider,
+  CuboidCollider,
+  CylinderCollider,
+  FRICTION_MIN,
+  type PhysicsKit,
+  usePhysicsKit,
+} from './physics';
 import { textureScale, useDetailQuality } from '../quality';
+import type { RapierCollider } from '@react-three/rapier';
 
 const PAPER = '#f4f2ed';
 const ACCENT = '#ff6b35';
@@ -269,19 +270,7 @@ export function AgentMesh({ shippedAt }: { shippedAt?: RefObject<number> }) {
   const codexRef = useRef<Group>(null);
   const rimRef = useRef<Mesh>(null);
   const glowRef = useRef<MeshBasicMaterial>(null);
-  const claudeCollider = useRef<RapierCollider>(null);
-  const codexCollider = useRef<RapierCollider>(null);
-  const { world, rapier } = useRapier();
-  const reach = useMemo(
-    () => ({
-      // Where the marks fly, a little inside the dock's rim and above its top.
-      zone: new rapier.Cylinder(0.36, 0.95),
-      centre: new Vector3(),
-      turn: new Quaternion(),
-      pose: new Quaternion(),
-    }),
-    [rapier]
-  );
+  const kit = usePhysicsKit();
   // Side by side to start with, the way they first land.
   const orbit = useRef(0.2);
 
@@ -291,54 +280,6 @@ export function AgentMesh({ shippedAt }: { shippedAt?: RefObject<number> }) {
     const flare = since >= 0 ? Math.exp(-since * 1.6) : 0;
     orbit.current += Math.min(delta, 0.1) * ((Math.PI * 2) / ORBIT_SECONDS) * (1 + 7 * flare);
     const a = orbit.current;
-    // The marks' colliders follow them only while something could meet them: while the dock
-    // moves, or something is in among the marks. Moving them wakes the dock, and a dock that
-    // never sleeps keeps the whole scene drawing.
-    const body = claudeCollider.current?.parent();
-    let live = false;
-    if (body) {
-      const r = body.rotation();
-      reach.turn.set(r.x, r.y, r.z, r.w);
-      const at = body.translation();
-      reach.centre
-        .set(0, DOCK_BASE + DOCK_HEIGHT + 0.36, 0)
-        .applyQuaternion(reach.turn)
-        .add(at);
-      const { x: vx, y: vy, z: vz } = body.linvel();
-      const { x: wx, y: wy, z: wz } = body.angvel();
-      live = !body.isSleeping() && Math.hypot(vx, vy, vz, wx, wy, wz) > 0.05;
-      // Whatever is in among them is swept gently off the dock, so it clears and can sleep again.
-      world.intersectionsWithShape(
-        reach.centre,
-        r,
-        reach.zone,
-        (collider) => {
-          live = true;
-          const other = collider.parent();
-          if (other?.isDynamic()) {
-            const p = other.translation();
-            const v = other.linvel();
-            const away = Math.atan2(p.z - at.z, p.x - at.x);
-            other.setLinvel(
-              {
-                x: v.x + (Math.cos(away) * SWEEP_SPEED - v.x) * SWEEP_GRIP,
-                y: v.y,
-                z: v.z + (Math.sin(away) * SWEEP_SPEED - v.z) * SWEEP_GRIP,
-              },
-              true
-            );
-          }
-          return true;
-        },
-        rapier.QueryFilterFlags.EXCLUDE_FIXED,
-        undefined,
-        undefined,
-        body
-      );
-      if (live && body.isSleeping()) {
-        body.wakeUp();
-      }
-    }
     [claudeRef.current, codexRef.current].forEach((mark, i) => {
       if (!mark) {
         return;
@@ -350,11 +291,6 @@ export function AgentMesh({ shippedAt }: { shippedAt?: RefObject<number> }) {
       mark.position.set(x, DOCK_BASE + DOCK_HEIGHT + 0.36 + Math.sin(t * 1.7 + i * 2.1) * 0.035, z);
       // Each turns a little towards the other and leans in: turned first, so the mark stays upright.
       mark.rotation.set(MARK_TILT, -x * 0.5, x * 0.25, 'YXZ');
-      const collider = (i === 0 ? claudeCollider : codexCollider).current;
-      if (live && collider) {
-        collider.setTranslationWrtParent(mark.position);
-        collider.setRotationWrtParent(reach.pose.setFromEuler(mark.rotation));
-      }
     });
     if (rimRef.current) {
       rimRef.current.rotation.y = -a * 0.5;
@@ -362,32 +298,19 @@ export function AgentMesh({ shippedAt }: { shippedAt?: RefObject<number> }) {
     if (glowRef.current) {
       glowRef.current.opacity = 0.55 + 0.12 * Math.sin(t * 1.3) + 0.4 * flare;
     }
-  });
+    // Ahead of the frame's other work (a negative priority never takes over drawing): the
+    // slabs (AgentReach) then follow the marks where they are this frame, not where they were.
+  }, -1);
 
   const top = DOCK_BASE + DOCK_HEIGHT;
   return (
     <>
-      {/* A plain cylinder for the dock, and one slab per mark that follows it round (above),
-          nearly weightless, so moving them never shifts the dock's balance */}
+      {/* A plain cylinder for the dock, and one slab per mark that follows it round (AgentReach) */}
       <CylinderCollider
         args={[DOCK_HEIGHT / 2, AGENT_DOCK_RADIUS]}
         position={[0, DOCK_BASE + DOCK_HEIGHT / 2, 0]}
       />
-      {/* Slippery, so whatever lands on them slides off and is swept away instead of riding round */}
-      <CuboidCollider
-        ref={claudeCollider}
-        args={CLAUDE_SLAB}
-        density={0.01}
-        friction={0}
-        frictionCombineRule={CoefficientCombineRule.Min}
-      />
-      <CuboidCollider
-        ref={codexCollider}
-        args={CODEX_SLAB}
-        density={0.01}
-        friction={0}
-        frictionCombineRule={CoefficientCombineRule.Min}
-      />
+      {kit && <AgentReach kit={kit} marks={[claudeRef, codexRef]} />}
       <mesh geometry={dock} position={[0, DOCK_BASE, 0]} castShadow receiveShadow>
         <meshStandardMaterial color="#2a2b33" roughness={0.32} metalness={0.45} />
       </mesh>
@@ -418,6 +341,101 @@ export function AgentMesh({ shippedAt }: { shippedAt?: RefObject<number> }) {
           <meshStandardMaterial vertexColors roughness={0.32} metalness={0.05} />
         </mesh>
       </group>
+    </>
+  );
+}
+
+/**
+ * On the desk, a slab for each mark that follows it round, nearly weightless,
+ * so moving them never shifts the dock's balance; slippery, so whatever lands
+ * on them slides off and is swept away instead of riding round. They follow
+ * the marks only while something could meet them: while the dock moves, or
+ * something is in among the marks. Moving them wakes the dock, and a dock
+ * that never sleeps keeps the whole scene drawing.
+ */
+function AgentReach({ kit, marks }: { kit: PhysicsKit; marks: Array<RefObject<Group | null>> }) {
+  const colliders = [useRef<RapierCollider>(null), useRef<RapierCollider>(null)];
+  const { world, rapier } = kit.useRapier();
+  const reach = useMemo(
+    () => ({
+      // Where the marks fly, a little inside the dock's rim and above its top.
+      zone: new rapier.Cylinder(0.36, 0.95),
+      centre: new Vector3(),
+      turn: new Quaternion(),
+      pose: new Quaternion(),
+    }),
+    [rapier]
+  );
+  useFrame(() => {
+    const body = colliders[0].current?.parent();
+    if (!body) {
+      return;
+    }
+    const r = body.rotation();
+    reach.turn.set(r.x, r.y, r.z, r.w);
+    const at = body.translation();
+    reach.centre
+      .set(0, DOCK_BASE + DOCK_HEIGHT + 0.36, 0)
+      .applyQuaternion(reach.turn)
+      .add(at);
+    const { x: vx, y: vy, z: vz } = body.linvel();
+    const { x: wx, y: wy, z: wz } = body.angvel();
+    let live = !body.isSleeping() && Math.hypot(vx, vy, vz, wx, wy, wz) > 0.05;
+    // Whatever is in among them is swept gently off the dock, so it clears and can sleep again.
+    world.intersectionsWithShape(
+      reach.centre,
+      r,
+      reach.zone,
+      (collider) => {
+        live = true;
+        const other = collider.parent();
+        if (other?.isDynamic()) {
+          const p = other.translation();
+          const v = other.linvel();
+          const away = Math.atan2(p.z - at.z, p.x - at.x);
+          other.setLinvel(
+            {
+              x: v.x + (Math.cos(away) * SWEEP_SPEED - v.x) * SWEEP_GRIP,
+              y: v.y,
+              z: v.z + (Math.sin(away) * SWEEP_SPEED - v.z) * SWEEP_GRIP,
+            },
+            true
+          );
+        }
+        return true;
+      },
+      rapier.QueryFilterFlags.EXCLUDE_FIXED,
+      undefined,
+      undefined,
+      body
+    );
+    if (!live) {
+      return;
+    }
+    if (body.isSleeping()) {
+      body.wakeUp();
+    }
+    colliders.forEach((collider, i) => {
+      const mark = marks[i].current;
+      if (mark && collider.current) {
+        collider.current.setTranslationWrtParent(mark.position);
+        collider.current.setRotationWrtParent(reach.pose.setFromEuler(mark.rotation));
+      }
+    });
+  });
+  return (
+    <>
+      {[CLAUDE_SLAB, CODEX_SLAB].map((slab, i) => (
+        <kit.CuboidCollider
+          // eslint-disable-next-line react/no-array-index-key
+          key={i}
+          ref={colliders[i]}
+          args={slab}
+          density={0.01}
+          friction={0}
+          frictionCombineRule={FRICTION_MIN}
+        />
+      ))}
     </>
   );
 }
@@ -712,7 +730,7 @@ function Treadmill() {
         args={[0.43, 0.075, 0.9]}
         position={[0, 0.075, 0.15]}
         friction={0}
-        frictionCombineRule={CoefficientCombineRule.Min}
+        frictionCombineRule={FRICTION_MIN}
       />
       <RoundedBox
         args={[0.86, 0.13, 1.8]}

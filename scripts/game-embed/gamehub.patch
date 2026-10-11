@@ -244,36 +244,6 @@ index ccd9461..c5b18c1 100644
        </button>
        {round ? (
          <GameProgress round label={round}>
-diff --git a/components/game/library-showcase.tsx b/components/game/library-showcase.tsx
-index 37664db..b2c09c6 100644
---- a/components/game/library-showcase.tsx
-+++ b/components/game/library-showcase.tsx
-@@ -8,6 +8,8 @@ import { boxCover } from '@/lib/games/box-covers';
- import type { LibraryGame } from '@/lib/games/library-fixtures';
- import { reelFor, reelSource } from '@/lib/games/library-reels';
- import { isHumanOnlyGame } from '@/lib/games/player-policy';
-+// Portfolio embed (scripts/game-embed): the footage loads once the library is on screen.
-+import { useFootageReady } from '@/embed/reels';
- 
- /** How long a game without footage holds the stage. */
- const STILL_MS = 7000;
-@@ -65,6 +67,7 @@ export function Showcase({
-   const ready = tall !== null && reduced !== null;
-   // The lightest cut that still covers the stage on this screen and device.
-   const tier = useReelTier(stage, tall ? 'tall' : 'wide');
-+  const footage = useFootageReady(section);
-   const moving = reduced === false && onScreen;
-   const turning = games.length > 1 && moving && !hovered && !focused;
-   const playing = playingKey === `${gameId}-${tall}`;
-@@ -278,7 +281,7 @@ export function Showcase({
-             />
-           </span>
-         )}
--        {reel && filmed && ready && tier && !reduced && (
-+        {reel && filmed && ready && tier && !reduced && footage && (
-           <video
-             key={`${game.id}-${tall}`}
-             ref={video}
 diff --git a/components/game/rota/rota-solo.tsx b/components/game/rota/rota-solo.tsx
 index 7e7bccf..7f7b50f 100644
 --- a/components/game/rota/rota-solo.tsx

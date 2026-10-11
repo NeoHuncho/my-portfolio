@@ -9,12 +9,15 @@ import {
   Matrix4,
   type Mesh,
   type PerspectiveCamera as Camera,
+  PlaneGeometry,
   SRGBColorSpace,
 } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { type ExhibitId, SHIFTS, type TrioTurn, type Turn } from './exhibitIds';
 import { DayShiftMesh } from '../playground/dayShift';
 import { buildExtra, type KeycapItem, makeTicket, type PropItem } from '../playground/items';
 import { AgentMesh, KeycapMesh, PropMesh } from '../playground/objects';
+import { ShownSmall } from '../playground/shownSmall';
 
 /** These have a front worth seeing (a screen), so they sway round it instead of turning all the way. */
 const FRONT_FACING = new Set<ExhibitId>(['ticket', 'night']);
@@ -200,40 +203,57 @@ function Plinth({ radius, height, glow }: { radius: number; height: number; glow
   );
 }
 
-/** Notches round the turntable's plate, so you can see it turn whatever stands on it. */
+/**
+ * Notches round the turntable's plate, so you can see it turn whatever stands
+ * on it: the first in the accent, the rest merged into one shape, so the lot
+ * is two draws rather than one a notch.
+ */
 function Notches({ radius, count }: { radius: number; count: number }) {
+  const [first, rest] = useMemo(() => {
+    const notch = (i: number) => {
+      const a = (i / count) * Math.PI * 2;
+      return new PlaneGeometry(0.018, i % 6 === 0 ? 0.12 : 0.06)
+        .rotateZ(-a)
+        .rotateX(-Math.PI / 2)
+        .translate(Math.sin(a) * radius, 0.006, Math.cos(a) * radius);
+    };
+    const others = Array.from({ length: count - 1 }, (_, i) => notch(i + 1));
+    const merged = mergeGeometries(others) ?? new PlaneGeometry(0, 0);
+    others.forEach((geometry) => geometry.dispose());
+    return [notch(0), merged];
+  }, [radius, count]);
+  useEffect(
+    () => () => {
+      first.dispose();
+      rest.dispose();
+    },
+    [first, rest]
+  );
   return (
     <group>
-      {Array.from({ length: count }, (_, i) => {
-        const a = (i / count) * Math.PI * 2;
-        return (
-          <mesh
-            key={a}
-            position={[Math.sin(a) * radius, 0.006, Math.cos(a) * radius]}
-            rotation={[-Math.PI / 2, 0, -a]}
-          >
-            <planeGeometry args={[0.018, i % 6 === 0 ? 0.12 : 0.06]} />
-            <meshBasicMaterial
-              color={i === 0 ? '#ff6b35' : '#8d8f99'}
-              transparent
-              opacity={i === 0 ? 1 : 0.55}
-              toneMapped={false}
-            />
-          </mesh>
-        );
-      })}
+      <mesh geometry={first}>
+        <meshBasicMaterial color="#ff6b35" toneMapped={false} />
+      </mesh>
+      <mesh geometry={rest}>
+        <meshBasicMaterial color="#8d8f99" transparent opacity={0.55} toneMapped={false} />
+      </mesh>
     </group>
   );
 }
 
-/** One camera per view, aimed at what stands on the plinth. */
+/**
+ * One camera per view, aimed at what stands on the plinth. Nothing comes
+ * nearer than a few units, so the near plane sits well out: the depth
+ * buffer's precision then goes where the pieces are, and thin layers (a
+ * screen on its lid) never fight on a phone's graphics chip.
+ */
 function ViewCamera({ position, target }: { position: [number, number, number]; target: number }) {
   const camera = useRef<Camera>(null);
   useLayoutEffect(() => {
     camera.current?.lookAt(0, target, 0);
   }, [target]);
   return (
-    <PerspectiveCamera ref={camera} makeDefault position={position} fov={28} near={0.1} far={50} />
+    <PerspectiveCamera ref={camera} makeDefault position={position} fov={28} near={1} far={20} />
   );
 }
 
@@ -447,7 +467,9 @@ export function HolderScene({
       <Plinth radius={1.25} height={0.26} glow={picked ? 1 : 0.55} />
       <group ref={spinner} rotation={[0, phase, 0]}>
         <Fit radius={1.15} height={1.5} lean={HOLDER_LEAN[id]}>
-          <Exhibit id={id} still={still} />
+          <ShownSmall.Provider value>
+            <Exhibit id={id} still={still} />
+          </ShownSmall.Provider>
         </Fit>
       </group>
     </>
@@ -551,7 +573,9 @@ export function ThumbScene({
             height={1.45 * (pose?.size ?? 1)}
             upright={pose !== undefined}
           >
-            <Exhibit id={id} still={still} />
+            <ShownSmall.Provider value>
+              <Exhibit id={id} still={still} />
+            </ShownSmall.Provider>
           </Fit>
         </group>
       </group>
@@ -717,7 +741,9 @@ export function TrioScene({
               >
                 {/* The agents' dock lies flat: a little wider, so it holds its own beside the others. */}
                 <Fit radius={id === 'agents' ? 1.12 : 1} height={1.4} upright={id === 'agents'}>
-                  <Exhibit id={id} still={still} />
+                  <ShownSmall.Provider value>
+                    <Exhibit id={id} still={still} />
+                  </ShownSmall.Provider>
                 </Fit>
               </group>
             </group>

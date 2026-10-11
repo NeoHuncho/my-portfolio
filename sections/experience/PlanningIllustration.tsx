@@ -77,6 +77,29 @@ const slides: Slide[] = [
   },
 ];
 
+/**
+ * The slide itself, redrawn on every animation frame while its animation
+ * plays: kept apart from the tabs and buttons round it, so those are not.
+ */
+function SlideDrawing({
+  slide,
+  index,
+  running,
+  reduced,
+  w,
+  h,
+  locale,
+}: {
+  slide: Slide;
+  index: number;
+  running: boolean;
+  reduced: boolean;
+} & Omit<SlideProps, 't'>) {
+  const clock = useSlideClock(index, running, slide.end);
+  const { Draw } = slide;
+  return <Draw t={reduced ? Infinity : clock} w={w} h={h} locale={locale} />;
+}
+
 const css = `
 @keyframes planning-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .planning-progress { animation-name: planning-progress; animation-timing-function: linear; animation-fill-mode: both; }
@@ -100,8 +123,6 @@ export default function PlanningIllustration({ note }: { note: string }) {
 
   const slide = slides[index];
   const playing = !reduced && inView && !hovered && !focused;
-  const clock = useSlideClock(index, !reduced && inView, slide.end);
-  const time = reduced ? Infinity : clock;
 
   // While it plays, the games below wait to boot: they share the main thread and made it stutter.
   const animating = !reduced && inView;
@@ -182,7 +203,6 @@ export default function PlanningIllustration({ note }: { note: string }) {
     }
   };
 
-  const { Draw } = slide;
   const label = `${index + 1} / ${slides.length} · ${slide.tab[locale]}`;
 
   return (
@@ -283,7 +303,15 @@ export default function PlanningIllustration({ note }: { note: string }) {
               aria-label={slide.description[locale]}
               className="block"
             >
-              <Draw t={time} w={size.w} h={size.h} locale={locale} />
+              <SlideDrawing
+                slide={slide}
+                index={index}
+                running={!reduced && inView}
+                reduced={reduced}
+                w={size.w}
+                h={size.h}
+                locale={locale}
+              />
             </svg>
           </div>
         )}

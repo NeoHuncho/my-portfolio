@@ -1,4 +1,4 @@
-import { type Ref, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useLanguage } from '@hooks/useLanguage';
 import { cx } from '@lib/cx';
@@ -13,23 +13,14 @@ type GameFrameProps = {
   width: number;
   height: number;
   device: 'desktop' | 'phone';
-  /** The iframe, for the page to talk to the game. */
-  frameRef?: Ref<HTMLIFrameElement>;
 };
 
 /**
- * A real build of the game in an iframe, scaled so it keeps its native layout at any width.
- * The page starts it early (useEarlyLoad), so it is already in play when the visitor arrives.
+ * A real build of GameHub in an iframe, scaled so it keeps its native layout at any width.
+ * The page starts it a little before the visitor reaches it (useEarlyLoad), so it is already
+ * playing its showcase when they arrive.
  */
-export default function GameFrame({
-  src,
-  title,
-  poster,
-  width,
-  height,
-  device,
-  frameRef,
-}: GameFrameProps) {
+export default function GameFrame({ src, title, poster, width, height, device }: GameFrameProps) {
   const { strings } = useLanguage();
   const box = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -83,7 +74,6 @@ export default function GameFrame({
             // onLoad only hides the poster; the iframe itself takes the input.
             // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
             <iframe
-              ref={frameRef}
               src={src}
               title={title}
               onLoad={() => setLoaded(true)}

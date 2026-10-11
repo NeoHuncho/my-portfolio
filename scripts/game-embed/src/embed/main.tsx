@@ -1,5 +1,6 @@
 // Portfolio embed entry: Gamehub's own app (SoloGame: its library and every shipped game),
-// opened on a Rota match shared by the page's frames when the URL asks for one (config.ts).
+// opened on its library, or on a Rota match shared by the page's frames when the URL asks for
+// one (config.ts).
 // The frames stay on the same screen and the page can send them home (nav.ts).
 // Copied into the Gamehub worktree by scripts/build-games.mjs (not part of Gamehub itself).
 import { createRoot } from 'react-dom/client';

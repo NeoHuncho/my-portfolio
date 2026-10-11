@@ -1,12 +1,13 @@
 // Portfolio embed: the page loads its game frames early, before the visitor scrolls to them,
-// and Gamehub's 3D tables draw every animation frame. Once a frame has had a few seconds to
-// load and draw its table (shaders compiled, models up), it rests whenever it is scrolled out
-// of view: the page reads as hidden to Gamehub (which pauses its tables and ambience, as for a
-// background tab) and animation frames wait until it is back in view.
+// and they run on the page's own main thread: Gamehub's library animates its showcase and its
+// 3D tables draw every animation frame. Once a frame has had a moment to load and draw its
+// first screen, it rests whenever it is scrolled out of view: the page reads as hidden to
+// Gamehub (which pauses its tables and ambience, as for a background tab) and animation frames
+// wait until it is back in view.
 // Copied into the Gamehub worktree by scripts/build-games.mjs (not part of Gamehub itself).
 
-/** Time from the frame's start during which it always runs, to load and draw its table. */
-const WARM_UP_MS = 6000;
+/** Time from the frame's start during which it always runs, to load and draw its first screen. */
+const WARM_UP_MS = 2500;
 
 export function restWhileOutOfView() {
   if (window.parent === window || typeof IntersectionObserver === 'undefined') return;

@@ -1,30 +1,34 @@
 #!/usr/bin/env node
 // Builds Gamehub for the portfolio into public/games/, served to same-origin iframes:
 //
+//   /games/play.html?match=<n>             Gamehub's own library, its home screen: what the
+//                                          portfolio's frames open on. Frames opened with the
+//                                          same match number stay on the same screen.
 //   /games/play.html?game=rota&match=<n>   a Rota match already under way: bots play the first
 //                                          rounds for every seat (the visitor's at the hardest
 //                                          level, on a seed picked for a strong town), so the
 //                                          towns are built and their traffic is running.
 //                                          Frames opened with the same match number share it
-//                                          live (the portfolio shows it on a desktop and a phone).
-//   /games/play.html                       Gamehub's own library, its home screen.
+//                                          live. Not used by the page any more: a match on the
+//                                          page's own main thread made the whole page lag.
 //
-// From the match, Rota's back control ("All games") opens the library, where the visitor can
-// play any game that ships: Rota, Arena (Versus and Quest), Mora, Nox, Yata and Alto against
-// bots, and Diner (its campaign and levels) alone. Puzzles (Folio) and Lucky (saved on
-// Gamehub's server) and the party games (Know Me, Trivia with its Tower and Expedition,
-// Impostor: they need people at an online table) are left out of the library, and their art is
-// not shipped. The library's showcase plays each shipped game's footage (public/reels: the 720p
-// and 360p cuts and the stills, never the full-HD masters), once the library is on screen.
+// From the library, the visitor can play any game that ships: Rota, Arena (Versus and Quest),
+// Mora, Nox, Yata and Alto against bots, and Diner (its campaign and levels) alone. Puzzles
+// (Folio) and Lucky (saved on Gamehub's server) and the party games (Know Me, Trivia with its
+// Tower and Expedition, Impostor: they need people at an online table) are left out of the
+// library, and their art is not shipped. The library's showcase opens on Rota and plays each
+// shipped game's footage (public/reels: the 720p and 360p cuts and the stills, never the
+// full-HD masters); Rota's clip loads with the library, so it is playing when the visitor
+// scrolls to the frames.
 //
 // Frames opened with the same match number stay on the same screen (embed/nav.ts): going back
 // to the library in one takes the others there, a game started from it opens in the others too
-// (a new Rota match is shared live again), and a frame opened late joins the others' screen.
+// (a new Rota match is shared live), and a frame opened late joins the others' screen.
 // The page talks to each frame with window.postMessage, same origin only:
 //   page → frame   { type: 'gamehub:home' }   back to the library (idempotent)
 //   frame → page   { type: 'gamehub:screen', home: boolean, game: string | null }
 //                                             once on load and on every change
-// Optional query param: rounds=0..6 played before you join (default 6: you join for the last
+// With game=rota, optional query param: rounds=0..6 played before you join (default 6: you join for the last
 // of the Meadow's seven rounds).
 //
 // Usage:
@@ -43,10 +47,10 @@
 // embed entry from scripts/game-embed/src/ (the shared match, the frames' navigation, the
 // library's game list), built with a plain Vite config (base /games/), and only the art,
 // models, sound and footage of the shipped games are copied next to the bundle (SHIP, DYNAMIC
-// and arenaTier below). Every asset is fetched only when its game opens: the shared match loads
-// Rota's models, nothing else; Arena's 3D art waits for its box to open, the footage for the
-// library to be on screen. The worktree is removed at the end (node_modules installs stay
-// cached in GAMES_WORKDIR).
+// and arenaTier below). Every asset is fetched only when its game opens: the library loads its
+// covers and the showcase's clip, Rota's models wait for a match, Arena's 3D art for its box to
+// open. The worktree is removed at the end (node_modules installs stay cached in
+// GAMES_WORKDIR).
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -70,8 +74,8 @@ const WORKDIR = path.resolve(
 const WORKTREE = path.join(WORKDIR, 'gamehub-embed');
 const BUILD_OUT = path.join(WORKDIR, 'out');
 const KEEP_WORKTREE = process.env.GAMES_KEEP_WORKTREE === '1';
-// Everything shipped (~156 MB), though a visitor only downloads what they open: the shared
-// match is the bundle and Rota's models (~10 MB). Arena is the biggest (~76 MB: its 3D art,
+// Everything shipped (~156 MB), though a visitor only downloads what they open: the library is
+// the bundle, its covers and a clip (a few MB). Arena is the biggest (~76 MB: its 3D art,
 // ~63 MB, fetched once its box opens; its Quest map, ~9 MB; its sound, ~4 MB), then the
 // library's footage (~34 MB, a few MB per game watched) and Mora's four worlds (~15 MB).
 const SIZE_BUDGET = 165 * 1024 * 1024;
@@ -294,7 +298,7 @@ function main() {
   if (size > SIZE_BUDGET) log(`WARNING: ${mb(size)} is over the ${mb(SIZE_BUDGET)} budget`);
   fs.rmSync(OUT_PUBLIC, { recursive: true, force: true });
   fs.cpSync(BUILD_OUT, OUT_PUBLIC, { recursive: true });
-  log(`public/games ready (${mb(size)}): ${BASE}play.html?game=rota, ${BASE}play.html`);
+  log(`public/games ready (${mb(size)}): ${BASE}play.html, ${BASE}play.html?game=rota`);
 }
 
 try {

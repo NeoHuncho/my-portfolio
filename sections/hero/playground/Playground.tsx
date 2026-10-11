@@ -14,7 +14,9 @@ import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
 import {
   type CollisionEnterPayload,
   CoefficientCombineRule,
+  ConvexHullCollider,
   CuboidCollider,
+  CylinderCollider,
   Physics,
   type RapierRigidBody,
   RigidBody,
@@ -48,6 +50,7 @@ import {
   type Vec3,
 } from './items';
 import { AGENT_DOCK_RADIUS, AgentMesh, BELT, KeycapMesh, PropMesh } from './objects';
+import { type PhysicsKit, PhysicsKitContext } from './physics';
 import { HoleyShadowFloor, type PipeDrive, PipeExit, PipeHoles } from './pipe';
 import {
   type ClearZone,
@@ -62,6 +65,14 @@ import { HatchVapour, VAPOUR_TAIL_S } from './smoke';
 import { isBelowDetail, SETTINGS, useBudgetDpr, useDetailQuality, useQuality } from '../quality';
 import Ticker from '../Ticker';
 import { type DeskMotion } from '../useDeviceTilt';
+
+/** The engine the desk's objects build their colliders with (see physics.tsx). */
+const RAPIER_KIT: PhysicsKit = {
+  CuboidCollider,
+  CylinderCollider,
+  ConvexHullCollider,
+  useRapier,
+};
 
 export type PlaygroundProps = {
   /** Pauses rendering and physics when the hero is off-screen. */
@@ -2773,19 +2784,21 @@ export default function Playground({
         shadow-bias={-0.0005}
       />
       {/* The desk's surface: invisible but for shadows, and for the pipes cut into it. */}
-      <PipeHoles>
-        <HoleyShadowFloor opacity={0.4} />
-        <Physics
-          gravity={[0, -GRAVITY, 0]}
-          paused={!active || !warm}
-          updateLoop="independent"
-          numSolverIterations={8}
-          numInternalPgsIterations={2}
-        >
-          {/* Tidying up starts the desk over: how I work drops in again on its own. */}
-          <Scene key={deskKey} {...props} onReady={onWarm} />
-        </Physics>
-      </PipeHoles>
+      <PhysicsKitContext.Provider value={RAPIER_KIT}>
+        <PipeHoles>
+          <HoleyShadowFloor opacity={0.4} />
+          <Physics
+            gravity={[0, -GRAVITY, 0]}
+            paused={!active || !warm}
+            updateLoop="independent"
+            numSolverIterations={8}
+            numInternalPgsIterations={2}
+          >
+            {/* Tidying up starts the desk over: how I work drops in again on its own. */}
+            <Scene key={deskKey} {...props} onReady={onWarm} />
+          </Physics>
+        </PipeHoles>
+      </PhysicsKitContext.Provider>
     </Canvas>
   );
 }

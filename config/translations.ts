@@ -220,9 +220,8 @@ export type TranslationStrings = {
     source: string;
     more: string;
     archived: string;
-    gamesHome: string;
-    rotaDesktop: string;
-    rotaPhone: string;
+    desktopFrame: string;
+    phoneFrame: string;
     loadingGame: string;
   };
   footer: {
@@ -558,10 +557,9 @@ export const translations: Record<Locale, TranslationStrings> = {
       source: 'Source code',
       more: 'More projects',
       archived: 'Archived',
-      gamesHome: 'Back to all games',
-      rotaDesktop: 'Rota · desktop',
-      rotaPhone: 'Rota · phone',
-      loadingGame: 'Setting up the table…',
+      desktopFrame: 'GameHub · desktop',
+      phoneFrame: 'GameHub · phone',
+      loadingGame: 'Opening GameHub…',
     },
     footer: {
       title: 'Building a team that works with AI agents?',
@@ -905,10 +903,9 @@ export const translations: Record<Locale, TranslationStrings> = {
       source: 'Code source',
       more: 'Autres projets',
       archived: 'Archivé',
-      gamesHome: 'Retour à tous les jeux',
-      rotaDesktop: 'Rota · ordinateur',
-      rotaPhone: 'Rota · téléphone',
-      loadingGame: 'On installe la table…',
+      desktopFrame: 'GameHub · ordinateur',
+      phoneFrame: 'GameHub · téléphone',
+      loadingGame: 'On ouvre GameHub…',
     },
     footer: {
       title: 'Tu montes une équipe qui travaille avec des agents IA ?',

@@ -22,6 +22,44 @@ function waitForFonts(): Promise<unknown> {
   return fontsReady;
 }
 
+let inMemory: boolean | null = null;
+
+/**
+ * Whether a canvas repainted several times a second is better painted in
+ * memory than on the graphics chip. Safari, and every browser on an iPhone
+ * (all of them WebKit), uploads a canvas painted on the chip by reading it
+ * back: two to three times slower than one painted in memory (5 ms against
+ * under 2 for a 1024-pixel screen), and a read back caught mid-repaint showed
+ * half-drawn screens on phones. Chrome is the other way round: there a canvas
+ * on the chip copies across in a fraction of a millisecond.
+ */
+export function paintInMemory(): boolean {
+  if (inMemory === null) {
+    const agent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+    // Chrome's own, headless or not, and Edge's, say Chrome/; Chrome on an iPhone says CriOS/.
+    inMemory = /AppleWebKit/.test(agent) && !/(Chrome|Chromium)\//.test(agent);
+  }
+  return inMemory;
+}
+
+/**
+ * A canvas for a screen that repaints often, and its texture: painted in
+ * memory where that uploads faster (see paintInMemory). The screens are
+ * opaque, so the texture takes the canvas's premultiplied colours as they
+ * are, saving each upload a pass over every pixel.
+ */
+export function makeScreenTexture(width: number, height: number, anisotropy: number) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: paintInMemory() });
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = anisotropy;
+  texture.premultiplyAlpha = true;
+  return { texture, ctx };
+}
+
 /** Disposes a component's own GPU resource when it is replaced or the component unmounts. */
 export function useResourceDisposal(resource: { dispose: () => void }) {
   useEffect(() => () => resource.dispose(), [resource]);

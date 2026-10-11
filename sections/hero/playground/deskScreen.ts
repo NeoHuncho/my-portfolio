@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { CanvasTexture, SRGBColorSpace } from 'three';
-import { monoFamily, sansFamily, useResourceDisposal } from './labelTexture';
+import { makeScreenTexture, monoFamily, sansFamily, useResourceDisposal } from './labelTexture';
+import { useShownSmall } from './shownSmall';
 import { textureScale, useDetailQuality } from '../quality';
 
 const W = 384;
@@ -15,6 +15,9 @@ const WORKSPACE_MS = 4600;
 const HINT_MS = 900;
 /** The screen is tiny on the page: a dozen repaints a second look smooth. */
 const REPAINT_MS = 80;
+/** Shown small (a shelf, a tray), it is a few dozen pixels across: half the size, five a second. */
+const SMALL_SCALE = 0.5;
+const SMALL_REPAINT_MS = 200;
 
 const OK = '#3fcf8e';
 const ACCENT = '#ff6b35';
@@ -359,16 +362,14 @@ function drawScreen(ctx: Ctx, now: number) {
 /** The monitor on the standing desk: a tiling desktop whose workspaces switch on their own. */
 export function useDeskScreen() {
   // Drawn at its base size, onto a canvas made sharper on devices that can take it.
-  const scale = textureScale(useDetailQuality());
-  const texture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(W * scale);
-    canvas.height = Math.round(H * scale);
-    const result = new CanvasTexture(canvas);
-    result.colorSpace = SRGBColorSpace;
-    result.anisotropy = 4;
-    return result;
-  }, [scale]);
+  const small = useShownSmall();
+  const detail = useDetailQuality();
+  const scale = small ? SMALL_SCALE : textureScale(detail);
+  const every = small ? SMALL_REPAINT_MS : REPAINT_MS;
+  const { texture, ctx } = useMemo(
+    () => makeScreenTexture(Math.round(W * scale), Math.round(H * scale), 4),
+    [scale]
+  );
   const painted = useRef(-Infinity);
   // A sharper canvas starts blank: paint it on the next frame.
   useEffect(() => {
@@ -381,11 +382,10 @@ export function useDeskScreen() {
   // The ambient tick asks for frames while the hero is on screen, so this repaints forever.
   useFrame(() => {
     const now = performance.now();
-    if (now - painted.current < REPAINT_MS) {
+    if (now - painted.current < every) {
       return;
     }
     painted.current = now;
-    const ctx = (texture.image as HTMLCanvasElement).getContext('2d');
     if (ctx) {
       started.current ??= now;
       ctx.setTransform(scale, 0, 0, scale, 0, 0);

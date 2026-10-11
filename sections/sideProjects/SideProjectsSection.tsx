@@ -1,7 +1,7 @@
-import { type CSSProperties, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { FiArrowUpRight, FiCpu, FiGithub, FiGrid, FiStar } from 'react-icons/fi';
+import { FiArrowUpRight, FiCpu, FiGithub, FiStar } from 'react-icons/fi';
 import SectionHeading from '@components/SectionHeading';
 import SwipeRow from '@components/SwipeRow';
 import TechBadge from '@components/TechBadge';
@@ -24,10 +24,11 @@ const PomiDemo = dynamic(() => import('./pomi/PomiDemo'), {
 });
 
 /**
- * A static build of GameHub, produced by `pnpm build:games`: one Rota match, shown on a
- * desktop and on a phone. Frames opened with the same match number share it live.
+ * A static build of GameHub, produced by `pnpm build:games`, open on its library: on a desktop
+ * and on a phone. Frames opened with the same match number stay on the same screen, and share a
+ * Rota match live.
  */
-const rotaMatch = (match: number) => `/games/play.html?game=rota&match=${match}`;
+const library = (match: number) => `/games/play.html?match=${match}`;
 const screens = {
   desktop: { width: 1100, height: 690 },
   phone: { width: 390, height: 844 },
@@ -194,45 +195,6 @@ function SourceLink({ href }: { href: string }) {
   );
 }
 
-type Frames = Array<RefObject<HTMLIFrameElement | null>>;
-
-/**
- * The game frames keep each other on the same screen; this sends them all back to GameHub's
- * home. Each frame reports whether it is home (`gamehub:screen`), and the button rests until
- * one has reported, and while every frame on the page is home.
- */
-function useGamesHome(frames: Frames) {
-  // By frame, as last reported; a frame not on the page (the desktop, on phones) never counts.
-  const [reported, setReported] = useState<Array<boolean | undefined>>([]);
-  useEffect(() => {
-    const onMessage = (event: MessageEvent<{ type?: string; home?: boolean }>) => {
-      const index = frames.findIndex((frame) => frame.current?.contentWindow === event.source);
-      if (
-        event.origin === window.location.origin &&
-        index >= 0 &&
-        event.data?.type === 'gamehub:screen'
-      ) {
-        const home = Boolean(event.data.home);
-        setReported((before) => {
-          const next = [...before];
-          next[index] = home;
-          return next;
-        });
-      }
-    };
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
-  }, [frames]);
-  const mounted = frames.flatMap((frame, i) => (frame.current ? [reported[i]] : []));
-  const home = !mounted.some((h) => h === false);
-  const goHome = () => {
-    frames.forEach((frame) =>
-      frame.current?.contentWindow?.postMessage({ type: 'gamehub:home' }, window.location.origin)
-    );
-  };
-  return { home, goHome };
-}
-
 function Glow({ color }: { color: string }) {
   return (
     <div
@@ -271,13 +233,9 @@ function GameHubBlock({ project }: { project: FeaturedProject }) {
       setMatch((current) => current ?? (crypto.getRandomValues(new Uint32Array(1))[0] || 1));
     }
   }, [load]);
-  const src = match === null ? null : rotaMatch(match);
+  const src = match === null ? null : library(match);
   // Phones get the phone only: a desktop scaled to their width is too small to play.
   const roomy = useMediaQuery('(min-width: 640px)');
-  const desktopFrame = useRef<HTMLIFrameElement>(null);
-  const phoneFrame = useRef<HTMLIFrameElement>(null);
-  const frames = useMemo<Frames>(() => [desktopFrame, phoneFrame], []);
-  const { home, goHome } = useGamesHome(frames);
   return (
     <article
       id={gamehubId}
@@ -287,39 +245,16 @@ function GameHubBlock({ project }: { project: FeaturedProject }) {
       <div className="relative">
         <ProjectInfo project={project} split />
       </div>
-      <div ref={ref} className="relative mt-5 border-t border-line pt-4 sm:mt-6 sm:pt-5">
-        <div className="mx-auto mb-4 flex max-w-5xl max-sm:justify-center">
-          <button
-            type="button"
-            onClick={goHome}
-            disabled={home}
-            className="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-xs font-medium text-ink transition-[background-color,opacity] hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-40"
-          >
-            <FiGrid aria-hidden />
-            {t.gamesHome}
-          </button>
-        </div>
+      <div ref={ref} className="relative mt-5 border-t border-line pt-5 sm:mt-6 sm:pt-6">
         <div
           className="mx-auto grid max-w-5xl items-start gap-6 lg:grid-cols-[minmax(0,1fr)_var(--phone-column)]"
           style={{ '--phone-column': phoneColumn } as CSSProperties}
         >
           {roomy && (
-            <GameFrame
-              device="desktop"
-              src={src}
-              {...screens.desktop}
-              title={t.rotaDesktop}
-              frameRef={desktopFrame}
-            />
+            <GameFrame device="desktop" src={src} {...screens.desktop} title={t.desktopFrame} />
           )}
           <div className="mx-auto w-full max-w-[260px] sm:max-w-[220px] lg:max-w-none">
-            <GameFrame
-              device="phone"
-              src={src}
-              {...screens.phone}
-              title={t.rotaPhone}
-              frameRef={phoneFrame}
-            />
+            <GameFrame device="phone" src={src} {...screens.phone} title={t.phoneFrame} />
           </div>
         </div>
       </div>

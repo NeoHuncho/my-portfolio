@@ -1,6 +1,5 @@
 import { type ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { Physics } from '@react-three/rapier';
 import { useLanguage } from '@hooks/useLanguage';
 import { type ExhibitId, SHELF, shelfPhase, SHIFTS, thumbPhase } from '../phone/exhibitIds';
 import { HolderScene, StageScene, ThumbScene, TrioScene } from '../phone/exhibits';
@@ -110,7 +109,7 @@ function Sprite({
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
       >
         <Suspense fallback={null}>
-          <Physics paused>{children}</Physics>
+          {children}
           <FirstFrame onDrawn={onDrawn} />
         </Suspense>
       </Canvas>

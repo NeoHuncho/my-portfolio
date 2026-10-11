@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { CuboidCollider } from '@react-three/rapier';
-import { CanvasTexture, SRGBColorSpace } from 'three';
 import { type TicketItem } from './items';
 import { textureScale, useDetailQuality } from '../quality';
 import {
+  makeScreenTexture,
   monoFamily,
   sansFamily,
   useLabelTexture,
   useResourceDisposal,
   wrapText,
 } from './labelTexture';
+import { CuboidCollider } from './physics';
 import { RoundedBox } from './roundedBox';
+import { useShownSmall } from './shownSmall';
 
 /** The laptop's base: width, thickness, depth. Its lid stands up from the back edge. */
 export const DAY_SHIFT_SIZE: [number, number, number] = [1.76, 0.06, 0.92];
@@ -37,6 +38,12 @@ const DAY_S = 16;
 /** Everything has happened by then; the screen holds until the day starts over. */
 const DAY_END = 14;
 const REPAINT_MS = 50;
+/**
+ * Shown small (the phone's turntable), the screen is a couple of hundred
+ * pixels across: its texture is half the base size there, which still covers
+ * it once filtered.
+ */
+const SMALL_SCALE = 0.5;
 
 type Ctx = CanvasRenderingContext2D;
 type Point = [number, number];
@@ -681,16 +688,13 @@ export function DayShiftMesh({ item }: { item: TicketItem }) {
   const [lw, lh, lt] = LID;
   const deck = useDeckTexture();
   // Repainted several times a second, so it grows less than the still labels do.
-  const scale = Math.min(1.5, textureScale(useDetailQuality()));
-  const texture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(TW * scale);
-    canvas.height = Math.round(TH * scale);
-    const result = new CanvasTexture(canvas);
-    result.colorSpace = SRGBColorSpace;
-    result.anisotropy = 8;
-    return result;
-  }, [scale]);
+  const detail = useDetailQuality();
+  const small = useShownSmall();
+  const scale = small ? SMALL_SCALE : Math.min(1.5, textureScale(detail));
+  const { texture, ctx } = useMemo(
+    () => makeScreenTexture(Math.round(TW * scale), Math.round(TH * scale), small ? 4 : 8),
+    [scale, small]
+  );
   useResourceDisposal(texture);
 
   const day = useRef({ start: -1, painted: -Infinity, done: false });
@@ -715,7 +719,6 @@ export function DayShiftMesh({ item }: { item: TicketItem }) {
     const t = item.merged ? Math.max(elapsed, DAY_END) : elapsed % DAY_S;
     const moving = t < DAY_END;
     if (now - state.painted >= REPAINT_MS && (moving || !state.done)) {
-      const ctx = (texture.image as HTMLCanvasElement).getContext('2d');
       if (ctx) {
         ctx.setTransform(scale, 0, 0, scale, 0, 0);
         drawScreen(ctx, t, item);
