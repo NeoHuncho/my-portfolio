@@ -24,6 +24,16 @@ type Probe = { webgl: boolean; quality: Quality };
 
 let probed: Probe | null = null;
 let current: Quality = 'medium';
+/**
+ * What the desk is built with: its labels' sharpness, its shadow map, its
+ * particles. Set once, from the first guess, and never changed after: a
+ * change would rebuild every texture at once, a long stall, and stepping
+ * the quality is meant to make frames lighter, not to stall one.
+ */
+let detail: Quality = 'medium';
+/** When the visitor last pointed, scrolled or typed: stepping up waits for a quiet moment. */
+let lastInput = -Infinity;
+const QUIET_MS = 3000;
 /** As high as this device may climb. */
 let ceiling: Quality = 'medium';
 /** Asked for in the address: it stays, however frames come. */
@@ -86,7 +96,14 @@ export function probeGraphics(): Probe {
   const asked = new URLSearchParams(window.location.search).get('quality') as Quality | null;
   const forced = asked && ORDER.includes(asked) ? asked : null;
   current = forced ?? (webgl ? guess(renderer) : 'low');
+  detail = current;
   pinned = forced !== null;
+  const heard = () => {
+    lastInput = performance.now();
+  };
+  ['pointerdown', 'pointermove', 'wheel', 'keydown', 'scroll', 'touchstart'].forEach((type) =>
+    window.addEventListener(type, heard, { passive: true, capture: true })
+  );
   // A computer that starts at `high` may earn `ultra`; anything else may earn one step.
   if (current === 'high') {
     ceiling = isTouch() ? 'high' : 'ultra';
@@ -108,13 +125,27 @@ function subscribe(listener: () => void) {
   };
 }
 
-/** The quality to draw at now, for every canvas of the hero. */
+/** The quality to draw at now, for every canvas of the hero: how sharp, how often. */
 export function useQuality(): Quality {
   return useSyncExternalStore(
     subscribe,
     () => current,
     () => 'medium'
   );
+}
+
+/** The quality the desk is built with, fixed from the first guess: labels, shadow map, particles. */
+export function useDetailQuality(): Quality {
+  return useSyncExternalStore(
+    subscribe,
+    () => detail,
+    () => 'medium'
+  );
+}
+
+/** Below what the desk was built for: it saves where it can without rebuilding anything. */
+export function isBelowDetail(quality: Quality): boolean {
+  return ORDER.indexOf(quality) < ORDER.indexOf(detail);
 }
 
 function lower() {
@@ -180,12 +211,14 @@ export function watchFrame(now: number) {
   watch.samples.length = 0;
   watch.strikes = late ? watch.strikes + 1 : 0;
   watch.smooth = smooth && !lowered ? watch.smooth + 1 : 0;
+  // A sharper canvas means resizing it, a stall of its own: only while nobody is pointing or scrolling.
+  const quiet = now - lastInput > QUIET_MS;
   if (watch.strikes >= 2) {
     watch.strikes = 0;
     // Give the lighter setting a moment before judging it.
     watch.from = now + SETTLE_MS;
     lower();
-  } else if (watch.smooth >= SMOOTH_STRIKES) {
+  } else if (watch.smooth >= SMOOTH_STRIKES && quiet) {
     watch.smooth = 0;
     // The sharper setting has to prove itself too: late frames from here step it back down.
     watch.from = now + SETTLE_MS;
@@ -287,15 +320,16 @@ export const SETTINGS = {
     // As fast as the screen goes (120 Hz and up), as sharp as the screen is, up to 4K.
     ultra: { dpr: 3, fps: 240, shadowMap: 4096, shadowEvery: 1 },
     high: { dpr: 2, fps: 60, shadowMap: 2048, shadowEvery: 1 },
-    medium: { dpr: 1.5, fps: 30, shadowMap: 1024, shadowEvery: 1 },
-    low: { dpr: 1, fps: 24, shadowMap: 512, shadowEvery: 2 },
+    // Things that move on their own glide: never fewer than 60 frames a second on a computer worth `medium`.
+    medium: { dpr: 1.5, fps: 60, shadowMap: 1024, shadowEvery: 1 },
+    low: { dpr: 1, fps: 30, shadowMap: 512, shadowEvery: 2 },
   },
   /** The desk's tray of pieces: at low quality, still pictures only. */
   tray: {
     ultra: { dpr: 3, fps: 240, live: true },
     high: { dpr: 2, fps: 60, live: true },
-    medium: { dpr: 1.5, fps: 30, live: true },
-    low: { dpr: 1, fps: 24, live: false },
+    medium: { dpr: 1.5, fps: 60, live: true },
+    low: { dpr: 1, fps: 30, live: false },
   },
   /** The phone's turntable, which follows a finger. */
   stage: {

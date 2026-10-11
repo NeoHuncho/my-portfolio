@@ -10,7 +10,7 @@ import {
   ShaderMaterial,
   Vector4,
 } from 'three';
-import { useQuality } from '../quality';
+import { useDetailQuality } from '../quality';
 
 /** The desk's edges on the floor: the near one narrowest, the sides splaying out to the far one. */
 export type FieldBounds = {
@@ -245,7 +245,7 @@ export function ForceField({
   halfSize: (uid: string) => [number, number];
   hits: RefObject<RapierRigidBody[]>;
 }) {
-  const quality = useQuality();
+  const quality = useDetailQuality();
   const invalidate = useThree((state) => state.invalidate);
   const { minX, maxX, farMinX, farMaxX, zFar, zNear } = bounds;
   const walls = useMemo(

@@ -9,10 +9,21 @@
 //                                          live (the portfolio shows it on a desktop and a phone).
 //   /games/play.html                       Gamehub's own library, its home screen.
 //
-// From the match, Rota's back control ("All games") opens the library in that frame, where the
-// visitor can play any game that ships: Rota, Mora, Nox, Yata and Alto, against bots. Arena (its
-// 3D battle is ~60 MB), Folio and Lucky (saved on Gamehub's server) and the party games (they
-// need people at an online table) are left out of the library, and their art is not shipped.
+// From the match, Rota's back control ("All games") opens the library, where the visitor can
+// play any game that ships: Rota, Arena (Versus and Quest), Mora, Nox, Yata and Alto against
+// bots, and Diner (its campaign and levels) alone. Puzzles (Folio) and Lucky (saved on
+// Gamehub's server) and the party games (Know Me, Trivia with its Tower and Expedition,
+// Impostor: they need people at an online table) are left out of the library, and their art is
+// not shipped. The library's showcase plays each shipped game's footage (public/reels: the 720p
+// and 360p cuts and the stills, never the full-HD masters), once the library is on screen.
+//
+// Frames opened with the same match number stay on the same screen (embed/nav.ts): going back
+// to the library in one takes the others there, a game started from it opens in the others too
+// (a new Rota match is shared live again), and a frame opened late joins the others' screen.
+// The page talks to each frame with window.postMessage, same origin only:
+//   page → frame   { type: 'gamehub:home' }   back to the library (idempotent)
+//   frame → page   { type: 'gamehub:screen', home: boolean, game: string | null }
+//                                             once on load and on every change
 // Optional query param: rounds=0..6 played before you join (default 6: you join for the last
 // of the Meadow's seven rounds).
 //
@@ -29,11 +40,13 @@
 //
 // The Gamehub working tree is never touched: the commit is checked out as a detached
 // `git worktree` in the scratch dir, patched with scripts/game-embed/gamehub.patch, given the
-// embed entry from scripts/game-embed/src/ (the shared match, the library's game list), built
-// with a plain Vite config (base /games/), and only the art, models and sound of the shipped
-// games are copied next to the bundle (SHIP and DYNAMIC below). Every asset is fetched only
-// when its game opens: the shared match loads Rota's models, nothing else. The worktree is
-// removed at the end (node_modules installs stay cached in GAMES_WORKDIR).
+// embed entry from scripts/game-embed/src/ (the shared match, the frames' navigation, the
+// library's game list), built with a plain Vite config (base /games/), and only the art,
+// models, sound and footage of the shipped games are copied next to the bundle (SHIP, DYNAMIC
+// and arenaTier below). Every asset is fetched only when its game opens: the shared match loads
+// Rota's models, nothing else; Arena's 3D art waits for its box to open, the footage for the
+// library to be on screen. The worktree is removed at the end (node_modules installs stay
+// cached in GAMES_WORKDIR).
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -48,8 +61,8 @@ const OUT_PUBLIC = path.join(REPO, 'public', 'games');
 const BASE = '/games/';
 
 const GAMEHUB_REPO = path.resolve(process.env.GAMEHUB_REPO || path.join(REPO, '..', 'gamehub'));
-// Gamehub 0.28.0. Bump together with scripts/game-embed/gamehub.patch.
-const GAMEHUB_COMMIT = '55bd99ddd61412e29cc9d4cd22b9b028313e6ccb';
+// Gamehub 0.30.0. Bump together with scripts/game-embed/gamehub.patch.
+const GAMEHUB_COMMIT = '657b30899931e111313f3763c858e51f138fe5e9';
 const GAMEHUB_REF = process.env.GAMEHUB_REF || GAMEHUB_COMMIT;
 const WORKDIR = path.resolve(
   process.env.GAMES_WORKDIR || path.join(os.tmpdir(), 'portfolio-games')
@@ -57,9 +70,11 @@ const WORKDIR = path.resolve(
 const WORKTREE = path.join(WORKDIR, 'gamehub-embed');
 const BUILD_OUT = path.join(WORKDIR, 'out');
 const KEEP_WORKTREE = process.env.GAMES_KEEP_WORKTREE === '1';
-// Everything shipped (~53 MB), though a visitor only downloads what they open: the shared
-// match is the bundle and Rota's models (~17 MB); Mora's four worlds are the next biggest (~15 MB).
-const SIZE_BUDGET = 56 * 1024 * 1024;
+// Everything shipped (~156 MB), though a visitor only downloads what they open: the shared
+// match is the bundle and Rota's models (~10 MB). Arena is the biggest (~76 MB: its 3D art,
+// ~63 MB, fetched once its box opens; its Quest map, ~9 MB; its sound, ~4 MB), then the
+// library's footage (~34 MB, a few MB per game watched) and Mora's four worlds (~15 MB).
+const SIZE_BUDGET = 165 * 1024 * 1024;
 
 // Public files the shipped games use, matched against paths relative to Gamehub's public/.
 // SHIP is matched against every literal path in the bundle (world art, box covers and their
@@ -67,11 +82,16 @@ const SIZE_BUDGET = 56 * 1024 * 1024;
 // time. Paths of left-out games and unreferenced candidates are skipped.
 const SHIP = [
   // Library and setup covers of the shipped games, current versions, with their sizes.
-  /^art\/optimized\/box-(rota-(blind|wide)-v1|nox-(blind|wide)-v2|alto-(blind|wide)-v2|mora-game(-wide)?-v2|yata-(toon|wide)-v1)(-\d+)?\.webp$/,
+  /^art\/optimized\/box-(rota-(blind|wide)-v5|arena-(blind|wide)-v3|nox-(blind|wide)-v2|alto-(blind|wide)-v2|mora-game(-wide)?-v2|yata-(toon|wide)-v1|diner-(blind|wide)-v4)(-\d+)?\.webp$/,
+  // Arena: its loading screen, its models and card portraits (its textures: arenaTier), and its
+  // sound (not the Sound Lab's music candidates).
+  /^art\/optimized\/arena-loading-(tall|wide)\.webp$/,
+  /^3d\/arena\/(models|cards)\/[a-z_-]+-[0-9a-f]{8}\.(glb|webp)$/,
+  /^audio\/arena\/(?!music-option-)[a-z0-9-]+-[0-9a-f]{8}\.mp3$/,
   // Mora's four worlds (landscape, portrait and phone plates with their crops), Nox's chart,
   // Yata's counter and plaza.
   /^art\/optimized\/(mora|elsewild|nox|blackwake|yata)-[^/]+\.webp$/,
-  // Rota's town, works, scenery and traffic (vehicles-*, 5 MB: its cars, lorries and trains,
+  // Rota's town, works, scenery and traffic (vehicles-*, 2 MB: its cars, lorries and trains,
   // and the boats of the Harbour map). Rota leaves out a model file it cannot load, so without
   // it the towns would have no traffic.
   /^3d\/rota\/models\/(nature|town|works|vehicles)-[^/]+\.glb$/,
@@ -80,17 +100,41 @@ const SHIP = [
 ];
 const DYNAMIC = [
   // The boxes' spines (the cover's name + -spine).
-  /^art\/optimized\/box-(rota-blind-v1|nox-blind-v2|alto-blind-v2|mora-game-v2|yata-toon-v1)-spine\.webp$/,
+  /^art\/optimized\/box-(rota-blind-v5|arena-blind-v3|nox-blind-v2|alto-blind-v2|mora-game-v2|yata-toon-v1|diner-blind-v4)-spine\.webp$/,
+  // Arena's Quest map, one plate per region, wide and tall, with their 2x sizes.
+  /^art\/optimized\/arena-quest-\d+-(wide|tall)(-2x)?\.webp$/,
   // Creature and dish tokens: mora-paper-<set>-<kind>-v<n>, yata-counter-<menu>-<kind>-v<n>.
   /^art\/optimized\/mora-paper-(inland|coast|desert|alpine)-\d+-v\d+\.webp$/,
   /^art\/optimized\/yata-counter-(lane|alley|plaza|fiesta)-\d+-v\d+\.webp$/,
   // Alto names its art at run time (planets, crew, cargo, upgrades, sky).
   /^art\/optimized\/alto-[^/]+\.webp$/,
+  // Diner's sticker icons and its places' postcards (its 3D and sound are made in code).
+  /^art\/diner\/(icons|places)\/[a-z]+\.webp$/,
   // Ambience beds and one-shots of the card games' worlds (sound starts off in the embed).
   /^audio\/ambience\/(forest|coast|ship|street)\/[^/]+\.m4a$/,
+  // The library's footage of the shipped games (lib/games/library-reels.ts): wide and tall
+  // clips in the 720p and 360p cuts (the embed caps reelTier at 720p) and their stills.
+  /^reels\/(rota|arena|wildgrove|diner|alto|midnight|undertow)-(wide|tall)(-(720|360)\.mp4|\.jpg)$/,
 ];
 // Folders whose files are named at run time, so they are listed from disk.
-const DYNAMIC_DIRS = ['art/optimized', 'audio/ambience'];
+const DYNAMIC_DIRS = ['art/optimized', 'art/diner', 'audio/ambience', 'reels'];
+
+/**
+ * Arena's textures: its manifest lists two tiers, and it only ever fetches 'hq'
+ * (components/game/arena/quality.ts), so only that tier ships. Paths relative to public/.
+ */
+function arenaTier() {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(WORKTREE, 'lib', 'games', 'arena', 'assets.json'), 'utf8')
+  );
+  const files = Object.values(manifest.textures).flatMap((set) => [
+    set.albedo.hq,
+    set.normal,
+    set.orm,
+  ]);
+  if (!files.length) throw new Error('Arena manifest lists no textures (renamed in Gamehub?)');
+  return files.map((f) => f.path.replace(/^\//, ''));
+}
 
 // ---------------------------------------------------------------------------------------------
 
@@ -155,7 +199,7 @@ function installDeps() {
 function copyAssets() {
   const pub = path.join(WORKTREE, 'public');
   const refRe = new RegExp(
-    `${BASE.replace(/\//g, '\\/')}((?:art|audio|3d|maps|geography)\\/[A-Za-z0-9_./-]+)`,
+    `${BASE.replace(/\//g, '\\/')}((?:art|audio|3d|maps|geography|reels)\\/[A-Za-z0-9_./-]+)`,
     'g'
   );
   const referenced = new Set();
@@ -171,6 +215,7 @@ function copyAssets() {
     ...new Set([
       ...[...referenced].filter((p) => SHIP.some((re) => re.test(p))),
       ...[...listed].filter((p) => DYNAMIC.some((re) => re.test(p))),
+      ...arenaTier(),
     ]),
   ].sort();
   // Gamehub's code names a few files its public/ does not have (superseded art it never

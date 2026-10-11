@@ -32,6 +32,7 @@ import {
   Vector2,
   Vector3,
 } from 'three';
+import { compileFully } from './compile';
 import { DAY_SHIFT_SIZE, DayShiftMesh } from './dayShift';
 import { ForceField, GLOW_FROM } from './forceField';
 import {
@@ -58,7 +59,7 @@ import {
 } from './repulsor';
 import { type Footprint, planPath, type Point } from './robotPath';
 import { HatchVapour, VAPOUR_TAIL_S } from './smoke';
-import { SETTINGS, useBudgetDpr, useQuality } from '../quality';
+import { isBelowDetail, SETTINGS, useBudgetDpr, useDetailQuality, useQuality } from '../quality';
 import Ticker from '../Ticker';
 import { type DeskMotion } from '../useDeviceTilt';
 
@@ -81,8 +82,6 @@ export type PlaygroundProps = {
   open?: boolean;
   /** Where each piece of how I work is on the canvas, every frame it is drawn, for its label. */
   onLabels?: (labels: DeskLabel[]) => void;
-  /** A ticket was dropped on an agent. */
-  onShipped: (code: string) => void;
   /** An object was clicked, tapped or picked up. */
   onSelect: (info: InfoId, uid: string) => void;
   /** A click or tap on the empty desk. */
@@ -184,13 +183,13 @@ const RIGHTING_LIFT: Partial<Record<InfoId, number>> = {
   ticket: 1.1,
   sport: 1.5,
   robot: 1,
-  night: 1.1,
+  night: 1.2,
   mountain: 1,
   agents: 0.8,
   flags: 1,
   oss: 0.8,
   server: 0.8,
-  portrait: 0.8,
+  strategy: 0.8,
   keys: 0.6,
 };
 const WORLD_UP = new Vector3(0, 1, 0);
@@ -228,9 +227,9 @@ const FOOTPRINT: Record<InfoId, [number, number]> = {
   server: [0.8, 0.51],
   sport: [0.78, 1.02],
   mountain: [0.9, 0.8],
-  portrait: [0.56, 0.36],
+  strategy: [0.96, 0.96],
   robot: [ROBOT_RADIUS, ROBOT_RADIUS],
-  night: [1.05, 0.42],
+  night: [1.18, 0.52],
   flags: [0.66, 0.58],
 };
 /**
@@ -329,9 +328,9 @@ type Arrangement = {
 /**
  * Where things land, in screen terms, so the desk reads the same at any size.
  * How I work goes left to right, from day to night, the agents a little in
- * front between them; the rest of me goes round it once asked for: me, my
- * robot and my two languages at the back, which reads best from up there,
- * the rest along the front.
+ * front between them; the rest of me goes round it once asked for: a game
+ * board, my robot and my two languages at the back, where the robot reads
+ * best from above, the rest along the front.
  */
 const ARRANGEMENTS: Record<'row' | 'stack' | 'tall', Arrangement> = {
   row: {
@@ -340,8 +339,9 @@ const ARRANGEMENTS: Record<'row' | 'stack' | 'tall', Arrangement> = {
       'ticket-0': [0.14, 0.38],
       agents: [0.45, 0.6],
       'prop-night': [0.79, 0.36],
-      'prop-portrait': [0.08, 0.17],
-      'prop-robot': [0.37, 0.13],
+      // The flat board clear of the laptop's screen; the robot stands tall enough to show behind it.
+      'prop-robot': [0.08, 0.15],
+      'prop-strategy': [0.37, 0.16],
       'prop-flags': [0.64, 0.17],
       'prop-server': [0.9, 0.2],
       'prop-mountain': [0.08, 0.8],
@@ -358,8 +358,8 @@ const ARRANGEMENTS: Record<'row' | 'stack' | 'tall', Arrangement> = {
       'ticket-0': [0.24, 0.36],
       agents: [0.5, 0.66],
       'prop-night': [0.76, 0.4],
-      'prop-portrait': [0.12, 0.14],
-      'prop-robot': [0.5, 0.11],
+      'prop-robot': [0.12, 0.13],
+      'prop-strategy': [0.5, 0.13],
       'prop-flags': [0.86, 0.15],
       'prop-server': [0.12, 0.62],
       'prop-mountain': [0.12, 0.88],
@@ -376,7 +376,7 @@ const ARRANGEMENTS: Record<'row' | 'stack' | 'tall', Arrangement> = {
       agents: [0.66, 0.5],
       'prop-night': [0.32, 0.7],
       'prop-robot': [0.25, 0.08],
-      'prop-portrait': [0.75, 0.1],
+      'prop-strategy': [0.75, 0.1],
       'prop-flags': [0.82, 0.3],
       'prop-mountain': [0.82, 0.7],
       'key-slash': [0.2, 0.9],
@@ -394,7 +394,7 @@ const YAW: Partial<Record<string, number>> = {
   'ticket-0': 0.12,
   agents: 0.1,
   'prop-night': 0.12,
-  'prop-portrait': 0.2,
+  'prop-strategy': 0.2,
   'prop-robot': 0.3,
   'prop-flags': 0.1,
   'prop-sport': 0.1,
@@ -710,6 +710,13 @@ type GrabbableProps = {
   ccd?: boolean;
   /** Carried up through a pipe: moved by its platform until it is on the desk. */
   rising?: boolean;
+  /**
+   * Arriving after the desk was warmed up: hidden, and held where it is,
+   * until its shaders are compiled, away from the page's thread. Drawn
+   * sooner, its first frame would stall on them, all of them at once when
+   * everything is added together.
+   */
+  waitForShaders?: boolean;
   onCollisionEnter?: (payload: CollisionEnterPayload) => void;
   children: ReactNode;
 };
@@ -724,12 +731,35 @@ function Grabbable({
   restitution = 0.05,
   ccd = false,
   rising = false,
+  waitForShaders = false,
   onCollisionEnter,
   children,
 }: GrabbableProps) {
   const ref = useRef<RapierRigidBody>(null);
   const look = useRef<Group>(null);
   const { bodies, objects, press } = usePlaygroundApi();
+  const gl = useThree((state) => state.gl);
+  const camera = useThree((state) => state.camera);
+  const scene = useThree((state) => state.scene);
+  const [shown, setShown] = useState(!waitForShaders);
+
+  useEffect(() => {
+    const object = look.current;
+    if (shown || !object) {
+      return undefined;
+    }
+    let live = true;
+    compileFully(gl, object, camera, scene).then(() => {
+      if (live) {
+        setShown(true);
+      }
+    });
+    return () => {
+      live = false;
+    };
+    // Once, as it arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const body = ref.current;
@@ -758,11 +788,12 @@ function Grabbable({
       linearDamping={0.6}
       angularDamping={1.4}
       ccd={ccd}
-      type={rising ? 'kinematicPosition' : 'dynamic'}
+      type={rising || !shown ? 'kinematicPosition' : 'dynamic'}
       onCollisionEnter={onCollisionEnter}
     >
       <group
         ref={look}
+        visible={shown}
         onPointerDown={(event) => {
           event.stopPropagation();
           press(uid, info, event);
@@ -791,16 +822,41 @@ type PlacedItem = {
 
 const NO_EXTRAS: ExtraId[] = [];
 /** How far in front of its middle each piece of how I work ends, for its label to sit under. */
-const LABEL_DEPTH: Partial<Record<InfoId, number>> = { ticket: 0.5, agents: 0.9, night: 0.45 };
+const LABEL_DEPTH: Partial<Record<InfoId, number>> = { ticket: 0.5, agents: 0.9, night: 0.56 };
 /**
  * The piece itself, too small to see, under the desk: its shaders and
  * textures get ready while its pipe opens, so bringing it up never stalls.
- * Its colliders keep to a still world of their own.
+ * It stays hidden until its shaders are compiled, away from the page's
+ * thread, and is drawn only then: drawn sooner, the frame would wait on them
+ * while the camera moves. Its colliders keep to a still world of their own.
  */
 function WarmPiece({ item }: { item: PlaygroundItem }) {
+  const group = useRef<Group>(null);
+  const gl = useThree((state) => state.gl);
+  const camera = useThree((state) => state.camera);
+  const scene = useThree((state) => state.scene);
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    const piece = group.current;
+    if (!piece) {
+      return undefined;
+    }
+    let live = true;
+    compileFully(gl, piece, camera, scene).then(() => {
+      if (live) {
+        piece.visible = true;
+        invalidate();
+      }
+    });
+    return () => {
+      live = false;
+    };
+    // Once per piece: the camera and scene stay the same.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <Physics paused>
-      <group position={[0, -2, 0]} scale={0.001}>
+      <group ref={group} position={[0, -2, 0]} scale={0.001} visible={false}>
         <ItemMesh item={item} />
       </group>
     </Physics>
@@ -823,8 +879,16 @@ const RISE_SETTLE_MS = 100;
 const FIELD_LEAD_MS = 360;
 const VENT_AFTER_MS = 140;
 const FIELD_GIVE_UP_MS = 1100;
-/** No more pipes than the desk's mask has holes for. */
-const MAX_PIPES = 12;
+/** No more pipes than the desk's mask has holes for, one of them kept by the hidden pipe below. */
+const MAX_PIPES = 11;
+/**
+ * A pipe and its vapour, hidden and shut, mounted with the desk for good:
+ * their shaders compile with everything else and stay compiled, so the
+ * first hatch to open never stalls on them.
+ */
+const RESTING_DRIVE = {
+  current: { presence: 0, aperture: 0, platform: PIPE_FLOOR, ventTime: -1, ventEnd: null },
+};
 
 function easeOutCubic(x: number) {
   return 1 - (1 - x) ** 3;
@@ -915,7 +979,6 @@ function Scene({
   preview = null,
   open = false,
   onLabels,
-  onShipped,
   onSelect,
   selected = null,
   onAnchor,
@@ -1330,17 +1393,34 @@ function Scene({
   };
 
   // Shaders are compiled before anything shows, so the first moves never stall on them.
+  // Two frames are then drawn, still hidden and still: they upload the textures and build
+  // the shadow pass, which compiling alone leaves to the first frame of the fall.
   useEffect(() => {
     let live = true;
-    gl.compileAsync(scene, camera)
-      .catch(() => undefined)
-      .then(() => {
-        if (live) {
+    let frame = 0;
+    compileFully(gl, scene, camera).then(() => {
+      if (!live) {
+        return;
+      }
+      let left = 2;
+      const draw = () => {
+        if (!live) {
+          return;
+        }
+        gl.shadowMap.needsUpdate = true;
+        gl.render(scene, camera);
+        left -= 1;
+        if (left > 0) {
+          frame = requestAnimationFrame(draw);
+        } else {
           onReady?.();
         }
-      });
+      };
+      frame = requestAnimationFrame(draw);
+    });
     return () => {
       live = false;
+      cancelAnimationFrame(frame);
     };
     // Once, for how I work; whatever comes later compiles while its preview floats.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1557,49 +1637,42 @@ function Scene({
     [bodies, coarse, pickUp]
   );
 
-  const tryMerge = useCallback(
-    (ticketUid: string) => {
-      const recently =
-        dragging.current === ticketUid ||
-        performance.now() - (droppedAt.current.get(ticketUid) ?? -Infinity) < MERGE_WINDOW_MS;
-      if (!recently) {
-        return;
-      }
-      if (merged.current.has(ticketUid)) {
-        return;
-      }
-      merged.current.add(ticketUid);
-      righting.current.delete(ticketUid);
-      popQueue.current.push(ticketUid);
-      shippedAt.current = performance.now();
-      const entry = placed.find(({ item }) => item.uid === ticketUid);
-      if (entry?.item.kind === 'ticket') {
-        onShipped(entry.item.code);
-      }
-      buzz([18, 60, 18]);
-      setPlaced((current) =>
-        current.map((placedEntry) =>
-          placedEntry.item.uid === ticketUid && placedEntry.item.kind === 'ticket'
-            ? { ...placedEntry, item: { ...placedEntry.item, merged: true } }
-            : placedEntry
-        )
-      );
-      // Then the next request comes in, on the same physical ticket.
-      const next = makeTicket(nextTicket.current, ticketUid);
-      nextTicket.current = (nextTicket.current + 1) % ticketPool.length;
-      timers.current.push(
-        window.setTimeout(() => {
-          merged.current.delete(ticketUid);
-          setPlaced((current) =>
-            current.map((placedEntry) =>
-              placedEntry.item.uid === ticketUid ? { ...placedEntry, item: next } : placedEntry
-            )
-          );
-        }, NEXT_TICKET_MS)
-      );
-    },
-    [onShipped, placed]
-  );
+  const tryMerge = useCallback((ticketUid: string) => {
+    const recently =
+      dragging.current === ticketUid ||
+      performance.now() - (droppedAt.current.get(ticketUid) ?? -Infinity) < MERGE_WINDOW_MS;
+    if (!recently) {
+      return;
+    }
+    if (merged.current.has(ticketUid)) {
+      return;
+    }
+    merged.current.add(ticketUid);
+    righting.current.delete(ticketUid);
+    popQueue.current.push(ticketUid);
+    shippedAt.current = performance.now();
+    buzz([18, 60, 18]);
+    setPlaced((current) =>
+      current.map((placedEntry) =>
+        placedEntry.item.uid === ticketUid && placedEntry.item.kind === 'ticket'
+          ? { ...placedEntry, item: { ...placedEntry.item, merged: true } }
+          : placedEntry
+      )
+    );
+    // Then the next request comes in, on the same physical ticket.
+    const next = makeTicket(nextTicket.current, ticketUid);
+    nextTicket.current = (nextTicket.current + 1) % ticketPool.length;
+    timers.current.push(
+      window.setTimeout(() => {
+        merged.current.delete(ticketUid);
+        setPlaced((current) =>
+          current.map((placedEntry) =>
+            placedEntry.item.uid === ticketUid ? { ...placedEntry, item: next } : placedEntry
+          )
+        );
+      }, NEXT_TICKET_MS)
+    );
+  }, []);
 
   // Real keys make the matching keycaps hop.
   useEffect(() => {
@@ -1952,10 +2025,9 @@ function Scene({
         return;
       }
       const zone = clearZone(pipe);
-      // Somewhere still in view beside the text; only a desk with no such room falls back to its walls.
+      // The shortest slide out of the way, inside the walls, keeping beside the text where it can.
       const destination = (footprint: FieldFootprint, reserved: FieldFootprint[]) =>
-        fieldDestination(zone, footprint, framing.free, reserved) ??
-        fieldDestination(zone, footprint, bounds, reserved);
+        fieldDestination(zone, footprint, bounds, reserved, framing.free);
       const parking = (except: string) => {
         const reserved: FieldFootprint[] = [];
         bodies.forEach((body, uid) => {
@@ -2543,6 +2615,10 @@ function Scene({
       <CameraRig framing={framing} open={open || grown} />
       <Walls key={boundsKey} bounds={bounds} onHit={onWallHit} />
       <ForceField bounds={bounds} bodies={bodies} halfSize={halfSize} hits={wallHits} />
+      <group visible={false}>
+        <PipeExit position={[0, 0, -40]} radius={0.6} depth={PIPE_DEPTH} drive={RESTING_DRIVE} />
+        <HatchVapour position={[0, 0, -40]} radius={0.6} drive={RESTING_DRIVE} />
+      </group>
       {pipes.map((pipe) => (
         <group key={pipe.key}>
           <PipeExit
@@ -2552,7 +2628,8 @@ function Scene({
             drive={pipe.drive}
           />
           <HatchVapour position={[pipe.x, 0, pipe.z]} radius={pipe.radius} drive={pipe.drive} />
-          {!pipe.rise && <WarmPiece item={pipe.item} />}
+          {/* Kept while its pipe is open, so its shaders are not let go as the piece itself comes up. */}
+          <WarmPiece item={pipe.item} />
         </group>
       ))}
       {placed.map(({ item, spawn, rotation, rising: up }) => {
@@ -2563,6 +2640,7 @@ function Scene({
           spawn,
           rotation,
           rising: up,
+          waitForShaders: !TRIO_UIDS.includes(item.uid),
         };
         switch (item.kind) {
           case 'ticket':
@@ -2605,7 +2683,6 @@ function Scene({
                 // Upright, so they settle instead of rocking, each on its own simple collider.
                 rotation={[0, rotation[1], 0]}
                 colliders={false}
-                ccd={item.info === 'portrait'}
               >
                 <PropMesh item={item} />
               </Grabbable>
@@ -2645,16 +2722,21 @@ export default function Playground({
 }: PlaygroundProps & { deskKey?: number }) {
   const { active, coarse, onMiss, onReady } = props;
   const quality = useQuality();
-  const { dpr: maxDpr, fps, shadowMap, shadowEvery } = SETTINGS.desk[quality];
+  const { dpr: maxDpr, fps } = SETTINGS.desk[quality];
+  // The shadow map stays the size the desk was built with; stepped below it, it is redrawn half as often.
+  const { shadowMap } = SETTINGS.desk[useDetailQuality()];
+  const shadowEvery = isBelowDetail(quality) ? 2 : SETTINGS.desk[quality].shadowEvery;
   // Tablets' dense screens show a smaller desk, a little sharper.
   const canvas = useRef<HTMLCanvasElement>(null);
   const dpr = useBudgetDpr(quality, coarse ? maxDpr + 0.5 : maxDpr, canvas);
-  // Nothing falls until its shaders are ready and it can be seen.
-  const [warm, setWarm] = useState(false);
+  // Nothing is drawn, and nothing falls, till this desk's shaders are compiled and its first
+  // frames drawn: a frame drawn sooner would wait on the compiler. Tidying up starts over.
+  const [warmFor, setWarmFor] = useState<number | null>(null);
+  const warm = warmFor === deskKey;
   const onWarm = useCallback(() => {
-    setWarm(true);
+    setWarmFor(deskKey);
     onReady?.();
-  }, [onReady]);
+  }, [onReady, deskKey]);
   return (
     <Canvas
       ref={canvas}
@@ -2664,7 +2746,7 @@ export default function Playground({
       dpr={dpr}
       // Physics runs on its own loop and asks for a frame while something moves;
       // the animated props add a steady tick on top, only while the hero is on screen.
-      frameloop={active ? 'demand' : 'never'}
+      frameloop={active && warm ? 'demand' : 'never'}
       camera={{ position: CAMERA_POSITION, fov: FOV, near: 0.1, far: 80 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       // No text selection or callout on a long press: that is how things are picked up.
@@ -2672,7 +2754,8 @@ export default function Playground({
       onPointerMissed={onMiss}
       aria-hidden
     >
-      {active && <Ticker fps={fps} />}
+      {/* It draws by itself: only once the desk is warm, like the rest. */}
+      {active && warm && <Ticker fps={fps} />}
       <ShadowCadence every={shadowEvery} />
       <ambientLight intensity={0.75} />
       <hemisphereLight args={['#ffffff', '#2a2622', 0.6]} />

@@ -8,7 +8,7 @@ export const content = {
     title: 'William Guinaudie · CV',
     role: 'AI Engineer · Full-stack Developer',
     tagline:
-      'I build products with AI agents, and the workflows that make those agents reliable. Agents do the legwork; I make the engineering calls, review the code and ship it.',
+      'Agentic engineering: I build products with AI agents, and the workflows that keep them reliable. Agents do the legwork; I make the engineering calls, review the code and ship it.',
     facts: [
       ['Based in', 'Lausanne, Switzerland'],
       ['Nationality', 'British and French'],
@@ -21,7 +21,7 @@ export const content = {
       ['LinkedIn', 'linkedin.com/in/william-g-178156180', 'https://www.linkedin.com/in/william-g-178156180/'],
     ],
     site: 'https://www.williamguinaudie.com/?lang=en',
-    qrCaption: 'The interactive version, with a playable mock of my agent board.',
+    qrCaption: 'The interactive version, with a playable replay of my agent radar on Pomi.',
     how: {
       eyebrow: 'How I work',
       title: 'Agents do the legwork. I make the calls.',
@@ -66,14 +66,14 @@ export const content = {
           ['Most', 'of the repo’s agent tooling, built by me'],
         ],
         built: [
-          'Wealth and retirement simulation across the Swiss three-pillar system, with quick actions like a new retirement date or municipality.',
+          'Retirement planning across the Swiss three pillars: pillar 2 buy-back potential and affiliation details per plan, 3a and 3b withdrawals, scenarios compared side by side.',
           'Balance sheet and operating account for the self-employed: depreciation, cash flow, interest, equity.',
-          'Wealth dashboards, pillar detail panels and PDF reports on AG Grid and AG Charts.',
+          'A report module with PDF export, and wealth dashboards on AG Grid and AG Charts, down to each property’s debt ratio and net yield.',
         ],
         ai: [
-          '<b>Agent instructions and a selective repo memory:</b> only lessons that change how the next agent works, like lead-dev feedback or PR reviews. It is how agents learn in-house libraries no model has seen.',
-          '<b>A worktree per agent</b>, with its own environment and database copy, so several agents each take a task through the full cycle, QA included.',
-          '<b>A radar:</b> scheduled agents go through the codebase and report findings, each with a plan, to one dashboard. I decide what is worth doing.',
+          '<b>Teaching agents our codebase:</b> no model has seen our in-house libraries, so I wrote guides in the repo that explain them. Team feedback becomes rules along the way (a bad call in a plan, a review comment), but only when it changes how the next agent works.',
+          '<b>Several agents in parallel:</b> each works in its own copy of the repo (a git worktree), with its own environment and database copy, so each takes a task from start to finish, QA included, without getting in the others’ way.',
+          '<b>A radar:</b> scheduled agents go through the codebase for performance, security, bugs and code quality, and report each finding, with a plan, to one dashboard. I decide what is worth doing.',
           'Experiments with long-running audits, multi-agent orchestration, evals and observability.',
         ],
         stack: [
@@ -165,7 +165,7 @@ export const content = {
         ],
       },
     ],
-    projectsIntro: 'Built for my own use, and open source.',
+    projectsIntro: 'Built for my own use, open source, with AI inside the product.',
     projects: [
       {
         name: 'Pomi',
@@ -243,7 +243,6 @@ export const content = {
         'Interests',
         'Mountains and outdoor sport · Hardware and self-hosting on my homelab · Designing tabletop games',
       ],
-      ['References', 'Available on request'],
     ],
     footer: 'October 2026',
   },
@@ -254,20 +253,20 @@ export const content = {
     title: 'William Guinaudie · CV',
     role: 'AI Engineer · Développeur Full-stack',
     tagline:
-      'Je construis des produits avec des agents IA, et les workflows qui rendent ces agents fiables. Les agents font le gros du travail ; moi je prends les décisions techniques, je relis le code et je livre.',
+      'Ingénierie agentique : je construis des produits avec des agents IA, et les workflows qui les rendent fiables. Ils font le gros du travail ; je décide, je relis le code et je livre.',
     facts: [
       ['Lieu', 'Lausanne, Suisse'],
-      ['Nationalité', 'Britannique et française'],
+      ['Nationalité', 'Française et britannique'],
       ['Permis', 'Permis de travail suisse'],
       ['Téléphone', '+33 6 35 94 82 91', 'tel:+33635948291'],
       ['E-mail', 'william.guinaudie@gmail.com', 'mailto:william.guinaudie@gmail.com'],
-      ['Langues', 'Anglais et français, langues maternelles'],
+      ['Langues', 'Français et anglais, langues maternelles'],
       ['Portfolio', 'williamguinaudie.com', 'https://www.williamguinaudie.com/?lang=fr'],
       ['GitHub', 'github.com/NeoHuncho', 'https://github.com/NeoHuncho'],
       ['LinkedIn', 'linkedin.com/in/william-g-178156180', 'https://www.linkedin.com/in/william-g-178156180/'],
     ],
     site: 'https://www.williamguinaudie.com/?lang=fr',
-    qrCaption: 'La version interactive, avec une maquette jouable de mon board d’agents.',
+    qrCaption: 'La version interactive, avec une version jouable de mon radar d’agents sur Pomi.',
     how: {
       eyebrow: 'Ma méthode',
       title: 'Les agents font le gros du travail. Je décide.',
@@ -312,14 +311,14 @@ export const content = {
           ['L’essentiel', 'de l’outillage agents du repo, construit par moi'],
         ],
         built: [
-          'Simulation de patrimoine et de retraite sur les trois piliers suisses, avec des actions rapides comme changer de date de retraite ou de commune.',
+          'Planification de la retraite sur les trois piliers suisses : potentiel de rachat du 2e pilier et détail des affiliations par plan, retraits 3a et 3b, scénarios comparés côte à côte.',
           'Bilan et compte d’exploitation des indépendants : amortissements, cash-flow, intérêts, fonds propres.',
-          'Dashboards patrimoniaux, panneaux de détail par pilier et rapports PDF sur AG Grid et AG Charts.',
+          'Un module de rapports avec export PDF, et des dashboards patrimoniaux sur AG Grid et AG Charts, jusqu’au taux d’endettement et au rendement net de chaque bien.',
         ],
         ai: [
-          '<b>Instructions des agents et mémoire sélective du repo :</b> seules les leçons qui changent le travail du prochain agent, comme les retours du lead dev ou les relectures de PR. Les agents y apprennent des librairies maison qu’aucun modèle n’a vues.',
-          '<b>Un worktree par agent</b>, avec son environnement et sa copie de la base : plusieurs agents mènent chacun une tâche sur tout le cycle, QA comprise.',
-          '<b>Un radar :</b> des agents planifiés passent la codebase en revue et remontent leurs constats, chacun avec un plan, dans un même dashboard. Je décide de ce qui vaut le coup.',
+          '<b>Apprendre notre code aux agents :</b> aucun modèle ne connaît nos librairies maison, alors j’ai écrit dans le repo des guides qui les expliquent. Les retours de l’équipe y deviennent des règles (un mauvais choix dans un plan, un commentaire de relecture), mais seulement s’ils changent le travail du prochain agent.',
+          '<b>Plusieurs agents en parallèle :</b> chacun travaille dans sa propre copie du repo (un worktree git), avec son environnement et sa copie de la base, et mène une tâche de bout en bout, QA comprise, sans gêner les autres.',
+          '<b>Un radar :</b> des agents planifiés passent la codebase en revue (performance, sécurité, bugs, qualité du code) et remontent leurs constats, chacun avec un plan, dans un même dashboard. Je décide de ce qui vaut le coup.',
           'Des expérimentations : audits longs, orchestration multi-agents, évaluation et observabilité.',
         ],
         stack: [
@@ -411,7 +410,7 @@ export const content = {
         ],
       },
     ],
-    projectsIntro: 'Construits pour mon propre usage, et open source.',
+    projectsIntro: 'Construits pour mon propre usage, en open source, avec l’IA dans le produit.',
     projects: [
       {
         name: 'Pomi',
@@ -489,7 +488,6 @@ export const content = {
         'Centres d’intérêt',
         'La montagne et le sport en plein air · Le hardware et l’auto-hébergement · Concevoir des jeux de société',
       ],
-      ['Références', 'Sur demande'],
     ],
     footer: 'Octobre 2026',
   },

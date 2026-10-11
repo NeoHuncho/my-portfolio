@@ -15,7 +15,7 @@ export type TicketSource = 'user-feedback' | 'sentry' | 'agent-run' | 'team';
 
 export type Effort = 'S' | 'M' | 'L';
 
-export type CodebaseArea = 'web' | 'api' | 'driver-app' | 'infra' | 'shared';
+export type CodebaseArea = 'frontend' | 'backend' | 'native' | 'shared' | 'ci';
 
 /**
  * Text fields may wrap identifiers, file paths, endpoints and versions in
@@ -88,8 +88,6 @@ export type Ticket = {
   source: TicketSource;
   area: CodebaseArea;
   effort: Effort;
-  /** 0-100, how sure the planning agent is about the plan. */
-  confidence: number;
   /** Card face. For bugs: goal = problem, change = fix. */
   goal: RichText;
   today: RichText;
@@ -110,6 +108,8 @@ export type Ticket = {
   migration?: Migration;
   pr?: PullRequest;
   existing?: ExistingWork;
+  /** Made up for the demo (the docs tickets): tagged as an example, its PR links nowhere. */
+  illustrative?: boolean;
 };
 
 export type TrackMeta = {
@@ -167,14 +167,26 @@ export const sourceLabels: Record<TicketSource, LocalizedString> = {
 };
 
 export const areaLabels: Record<CodebaseArea, string> = {
-  web: 'apps/web',
-  api: 'apps/api',
-  'driver-app': 'apps/driver',
-  infra: 'infra',
+  frontend: 'packages/frontend',
+  backend: 'packages/backend',
+  native: 'packages/frontend/src-tauri',
   shared: 'packages/shared',
+  ci: '.github/workflows',
 };
 
-/** What the board header calls the fictional delivery platform: plainly a demo. */
+/**
+ * The board replays Pomi's radar: tickets come from its GitHub issues and pull requests,
+ * except the docs ones, which are made up.
+ */
 export const boardCompany = {
-  name: 'Demo',
+  name: 'Pomi',
+  logo: '/assets/side-projects/pomi-logo.webp',
+  issues: 'https://github.com/Host-It-Labs/pomi/issues?q=label%3Aradar%3Areleased',
 };
+
+/** The real pull request on GitHub, for a ticket's own PR; PRs opened during the demo have none. */
+export function prHref(ticket: Ticket, pr: number) {
+  return !ticket.illustrative && ticket.pr?.number === pr
+    ? `https://github.com/Host-It-Labs/pomi/pull/${pr}`
+    : undefined;
+}

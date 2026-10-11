@@ -6,7 +6,7 @@ export default function Footer() {
   const { strings, locale } = useLanguage();
 
   return (
-    <footer className="border-t border-line bg-surface/40">
+    <footer className="border-t border-line bg-surface/40 max-sm:border-line-strong">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
         <h2 className="max-w-2xl text-balance text-[1.75rem] font-semibold leading-tight tracking-tight sm:text-4xl">
           {strings.footer.title}

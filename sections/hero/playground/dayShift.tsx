@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { RoundedBox } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { CuboidCollider } from '@react-three/rapier';
 import { CanvasTexture, SRGBColorSpace } from 'three';
 import { type TicketItem } from './items';
-import { textureScale, useQuality } from '../quality';
+import { textureScale, useDetailQuality } from '../quality';
 import {
   monoFamily,
   sansFamily,
@@ -12,6 +11,7 @@ import {
   useResourceDisposal,
   wrapText,
 } from './labelTexture';
+import { RoundedBox } from './roundedBox';
 
 /** The laptop's base: width, thickness, depth. Its lid stands up from the back edge. */
 export const DAY_SHIFT_SIZE: [number, number, number] = [1.76, 0.06, 0.92];
@@ -681,7 +681,7 @@ export function DayShiftMesh({ item }: { item: TicketItem }) {
   const [lw, lh, lt] = LID;
   const deck = useDeckTexture();
   // Repainted several times a second, so it grows less than the still labels do.
-  const scale = Math.min(1.5, textureScale(useQuality()));
+  const scale = Math.min(1.5, textureScale(useDetailQuality()));
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(TW * scale);

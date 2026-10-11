@@ -2,6 +2,7 @@ import { createRef, type RefObject, useCallback, useId, useMemo, useState } from
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { FiCheck, FiPlus, FiRotateCcw } from 'react-icons/fi';
+import { useLanguage } from '@hooks/useLanguage';
 import { cx } from '@lib/cx';
 import { stillOf } from './phone/exhibitIds';
 import { type ExtraId } from './playground/items';
@@ -59,6 +60,7 @@ export default function DeskTray({
   onAddAll,
   onTidy,
 }: DeskTrayProps) {
+  const { locale } = useLanguage();
   const titleId = useId();
   const lineId = useId();
   const remaining = ids.filter((id) => !added.includes(id));
@@ -160,7 +162,7 @@ export default function DeskTray({
                   {/* Until the 3D is up, and for good without it: the still, framed whole. */}
                   {/* Framed as the 3D frames it, at the angle it starts turning from. */}
                   <Image
-                    src={stillOf(id, 'tray')}
+                    src={stillOf(id, 'tray', locale)}
                     alt=""
                     fill
                     sizes="64px"

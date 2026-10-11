@@ -28,6 +28,8 @@ export type BoardState = {
   tickets: Record<string, TicketState>;
   order: string[];
   filter: Track | 'all';
+  /** Latest real PR number: the PRs agents open during the demo follow it. */
+  lastPr: number;
 };
 
 export type BoardAction =
@@ -46,8 +48,9 @@ export type BoardAction =
   | { type: 'reconsider'; id: string; note: string };
 
 export const OTHER_PREFIX = 'other:';
-const RELEASE = 'v2.14.0';
-const FIRST_PR = 1290;
+const RELEASE = 'v0.32.0';
+// Pomi's latest pull request when this demo was written: the ones you open here follow it.
+const FIRST_PR = 312;
 
 export function createInitialState(tickets: Ticket[]): BoardState {
   const state: Record<string, TicketState> = {};
@@ -77,6 +80,11 @@ export function createInitialState(tickets: Ticket[]): BoardState {
     tickets: state,
     order: tickets.map((ticket) => ticket.id),
     filter: 'all',
+    // Made-up tickets' PRs stay out of the count, so demo PRs follow the real ones.
+    lastPr: Math.max(
+      FIRST_PR,
+      ...tickets.filter((ticket) => !ticket.illustrative).map((ticket) => ticket.pr?.number ?? 0)
+    ),
   };
 }
 
@@ -143,15 +151,16 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
       if (ticket?.review !== 'building') {
         return state;
       }
-      const lastPr = Math.max(
-        FIRST_PR,
-        ...Object.values(state.tickets).map((current) => current.prNumber ?? 0)
+      const prNumber = ticket.prNumber ?? state.lastPr + 1;
+      return update(
+        { ...state, lastPr: Math.max(state.lastPr, prNumber) },
+        action.id,
+        (current) => ({
+          ...current,
+          review: 'pr-ready',
+          prNumber,
+        })
       );
-      return update(state, action.id, (current) => ({
-        ...current,
-        review: 'pr-ready',
-        prNumber: current.prNumber ?? lastPr + 1,
-      }));
     }
     case 'confirmExisting':
       if (ticket?.review !== 'already-implemented') {

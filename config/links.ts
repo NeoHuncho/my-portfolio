@@ -20,3 +20,6 @@ export const sectionIds = {
 
 /** My name by my portrait in the hero: the header keeps its own name hidden while this one shows. */
 export const heroNameId = 'hero-name';
+
+/** The GameHub block among the side projects, below Pomi: the strategy board's story leads there. */
+export const gamehubId = 'gamehub';

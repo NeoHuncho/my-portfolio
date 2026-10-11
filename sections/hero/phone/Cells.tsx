@@ -1,6 +1,14 @@
-import { createContext, type ReactNode, type RefObject, useContext, useMemo, useRef } from 'react';
-import { createPortal, useFrame } from '@react-three/fiber';
-import { type PerspectiveCamera, Scene } from 'three';
+import {
+  createContext,
+  type ReactNode,
+  type RefObject,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
+import { createPortal, useFrame, useThree } from '@react-three/fiber';
+import { type Camera, type PerspectiveCamera, Scene } from 'three';
 
 /** Its first frames draw every cell, seen or not, so all of them are ready before they scroll in. */
 const WARM_FRAMES = 2;
@@ -8,6 +16,10 @@ const WARM_FRAMES = 2;
 const AHEAD = 160;
 
 const Warm = createContext<RefObject<number>>({ current: 0 });
+
+/** Each cell's scene and its camera, so the canvas can compile them all before it draws any. */
+export type CellScenes = Map<Scene, () => Camera>;
+export const CellRegistry = createContext<CellScenes | null>(null);
 
 /** Wipes the whole canvas once a frame, before the cells draw into it. */
 function ClearCells({ framesRef }: { framesRef: RefObject<number> }) {
@@ -31,15 +43,25 @@ export function CellLayer({ children }: { children: ReactNode }) {
 }
 
 function CellDraw({
+  scene,
   track,
   index,
   children,
 }: {
+  scene: Scene;
   track: RefObject<HTMLElement | null>;
   index: number;
   children: ReactNode;
 }) {
   const warm = useContext(Warm);
+  const registry = useContext(CellRegistry);
+  const get = useThree((state) => state.get);
+  useEffect(() => {
+    registry?.set(scene, () => get().camera);
+    return () => {
+      registry?.delete(scene);
+    };
+  }, [registry, scene, get]);
   useFrame((state) => {
     const element = track.current;
     if (!element) {
@@ -108,7 +130,7 @@ export function Cell({
 }) {
   const scene = useMemo(() => new Scene(), []);
   return createPortal(
-    <CellDraw track={track} index={index}>
+    <CellDraw scene={scene} track={track} index={index}>
       {children}
     </CellDraw>,
     scene,

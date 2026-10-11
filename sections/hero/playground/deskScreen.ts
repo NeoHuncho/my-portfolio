@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { CanvasTexture, SRGBColorSpace } from 'three';
 import { monoFamily, sansFamily, useResourceDisposal } from './labelTexture';
-import { textureScale, useQuality } from '../quality';
+import { textureScale, useDetailQuality } from '../quality';
 
 const W = 384;
 const H = 216;
@@ -359,7 +359,7 @@ function drawScreen(ctx: Ctx, now: number) {
 /** The monitor on the standing desk: a tiling desktop whose workspaces switch on their own. */
 export function useDeskScreen() {
   // Drawn at its base size, onto a canvas made sharper on devices that can take it.
-  const scale = textureScale(useQuality());
+  const scale = textureScale(useDetailQuality());
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(W * scale);

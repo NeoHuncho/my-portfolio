@@ -1,6 +1,7 @@
-import { type CSSProperties, type Dispatch, type ReactNode } from 'react';
+import { type CSSProperties, type Dispatch, type ReactNode, useLayoutEffect, useRef } from 'react';
 import Image from 'next/image';
 import {
+  FiArrowUp,
   FiCheck,
   FiMic,
   FiPause,
@@ -16,13 +17,20 @@ import {
   ACCENTS,
   PHRASES,
   SESSION_TOTAL,
+  TYPED,
   formatClock,
   visibleTasks,
   type Copy,
   type Locale,
 } from './data';
 import { DONE_COLOR, MIC_COLOR, TaskMeta, Waveform } from './parts';
-import { type DemoAction, type DemoState, heardText, intentionsFor } from './usePomiDemo';
+import {
+  type DemoAction,
+  type DemoState,
+  heardText,
+  intentionsFor,
+  typedText,
+} from './usePomiDemo';
 
 export const PHONE_WIDTH = 280;
 export const PHONE_HEIGHT = 568;
@@ -258,9 +266,29 @@ function IntentionRow({ state, dispatch, copy, locale }: Props) {
   );
 }
 
+/** A sent note as it was typed, while Pomi tidies it into a task. */
+function PendingRow({ text }: { text: string }) {
+  return (
+    <li className="pomi-card-in flex items-center gap-3 rounded-xl px-1 py-[5px]">
+      <span
+        aria-hidden="true"
+        className="size-[22px] shrink-0 rounded-full border-[1.5px] border-dashed border-white/25"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="pomi-shimmer-text truncate text-[13px] leading-[18px] text-muted">{text}</p>
+        <div aria-hidden="true" className="mt-1 flex h-4 items-center gap-1.5">
+          <span className="pomi-shimmer block h-2.5 w-12 rounded-full bg-white/[0.08]" />
+          <span className="pomi-shimmer block h-2.5 w-16 rounded-full bg-white/[0.06]" />
+        </div>
+      </div>
+    </li>
+  );
+}
+
 function TaskList({ state, dispatch, copy, locale }: Props) {
   const done = state.tasks.filter((task) => task.done).length;
-  const tasks = visibleTasks(state.tasks, MAX_TASKS);
+  const pending = state.draft.phase === 'parsing';
+  const tasks = visibleTasks(state.tasks, pending ? MAX_TASKS - 1 : MAX_TASKS);
   const hidden = state.tasks.length - tasks.length;
   return (
     <div className="mt-3 px-3">
@@ -291,7 +319,7 @@ function TaskList({ state, dispatch, copy, locale }: Props) {
               key={task.id}
               className={cx(
                 'flex items-center gap-3 rounded-xl px-1 py-[5px]',
-                task.id === state.fresh && 'pomi-fresh'
+                task.id === state.fresh && 'pomi-fresh-in'
               )}
             >
               <button
@@ -332,21 +360,37 @@ function TaskList({ state, dispatch, copy, locale }: Props) {
             </li>
           );
         })}
+        {pending && <PendingRow text={TYPED[state.draft.typed].raw[locale]} />}
       </ul>
     </div>
   );
 }
 
 /**
- * Voice capture as a quick-add bar along the bottom, the way a composer sits
- * under a chat: the whole bar starts listening, the mic at its end shows
- * what it is doing.
+ * The quick-add bar along the bottom, the way a composer sits under a chat:
+ * the field types a rushed note and sends it, the mic at its end starts
+ * voice capture. While a note is typed, the mic turns into the send button.
  */
-function Composer({ state, dispatch, copy }: Omit<Props, 'locale'>) {
+function Composer({ state, dispatch, copy, locale }: Props) {
   const { phase } = state.capture;
+  const { draft } = state;
   const listening = phase === 'listening';
+  const writing = draft.phase === 'typing' || draft.phase === 'sending';
+  const text = writing ? typedText(draft, locale) : '';
+  const fieldRef = useRef<HTMLSpanElement>(null);
+
+  // Like a one-line input, the field keeps the caret in view as the note grows.
+  useLayoutEffect(() => {
+    const field = fieldRef.current;
+    if (field) {
+      field.scrollLeft = field.scrollWidth;
+    }
+  }, [text]);
+
   let icon = <FiMic aria-hidden="true" />;
-  if (listening) {
+  if (writing) {
+    icon = <FiArrowUp aria-hidden="true" strokeWidth={3} />;
+  } else if (listening) {
     icon = <FiSquare aria-hidden="true" className="fill-current text-[12px]" />;
   } else if (phase === 'parsing') {
     icon = (
@@ -358,38 +402,83 @@ function Composer({ state, dispatch, copy }: Omit<Props, 'locale'>) {
   } else if (phase === 'done') {
     icon = <FiCheck aria-hidden="true" strokeWidth={3} />;
   }
-  const color = phase === 'done' ? DONE_COLOR : MIC_COLOR;
+  const color = phase === 'done' && !writing ? DONE_COLOR : MIC_COLOR;
+  let actionLabel = copy.mic;
+  if (writing) {
+    actionLabel = copy.send;
+  } else if (listening) {
+    actionLabel = copy.micStop;
+  }
+  const hint = listening ? copy.micStop : copy.micHint;
+
   return (
     <div className="absolute inset-x-0 bottom-0 z-20 px-3 pb-3">
-      <button
-        type="button"
-        aria-label={listening ? copy.micStop : copy.mic}
-        title={listening ? copy.micStop : copy.mic}
-        aria-pressed={listening}
-        disabled={phase === 'parsing'}
-        onClick={() => dispatch({ type: 'mic', source: 'app' })}
-        className="pomi-motion group flex h-11 w-full items-center gap-2 rounded-full border border-white/10 bg-[#1a1b21] pl-3.5 pr-1 text-left shadow-[0_10px_24px_-12px_rgb(0_0_0/0.9)] transition-colors duration-200 hover:border-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      <div
+        className={cx(
+          'pomi-motion flex h-11 w-full items-center gap-2 rounded-full border bg-[#1a1b21] pl-3.5 pr-1 shadow-[0_10px_24px_-12px_rgb(0_0_0/0.9)] transition-colors duration-200',
+          writing ? 'border-[color-mix(in_srgb,#5b9cff_45%,transparent)]' : 'border-white/10'
+        )}
       >
-        <FiPlus aria-hidden="true" className="shrink-0 text-[15px] text-muted" />
-        <span aria-hidden="true" className="flex-1 truncate text-[12px] text-muted">
-          {listening ? copy.micStop : copy.micHint}
-        </span>
-        <span
-          aria-hidden="true"
-          className="pomi-motion relative flex size-9 shrink-0 items-center justify-center rounded-full text-[16px] text-bg transition-[background-color,transform] duration-300 group-hover:scale-105 group-active:scale-95"
-          style={{ background: color }}
+        <button
+          type="button"
+          aria-label={listening ? copy.micStop : copy.type}
+          title={listening ? copy.micStop : copy.type}
+          disabled={phase === 'parsing' || draft.phase === 'sending'}
+          onClick={() => dispatch(listening ? { type: 'mic', source: 'app' } : { type: 'type' })}
+          className="group flex h-full min-w-0 flex-1 cursor-text items-center gap-2 rounded-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
-          {listening && (
-            <>
-              <span className="pomi-ripple absolute inset-0 rounded-full" />
-              <span className="pomi-ripple absolute inset-0 rounded-full [animation-delay:600ms]" />
-            </>
-          )}
-          <span key={phase} className="pomi-fade-scale relative flex">
-            {icon}
+          <FiPlus
+            aria-hidden="true"
+            className="shrink-0 text-[15px] text-muted transition-colors group-hover:text-ink"
+          />
+          <span
+            ref={fieldRef}
+            aria-hidden="true"
+            className="min-w-0 flex-1 overflow-hidden whitespace-nowrap text-[12px]"
+          >
+            {writing ? (
+              <span className="text-ink">
+                {text}
+                {draft.phase === 'typing' && (
+                  <span className="ml-px inline-block h-3.5 w-px translate-y-0.5 bg-[#5b9cff] motion-safe:animate-pulse-dot" />
+                )}
+              </span>
+            ) : (
+              <span className="text-muted transition-colors group-hover:text-ink/80">{hint}</span>
+            )}
           </span>
-        </span>
-      </button>
+        </button>
+        <button
+          type="button"
+          aria-label={actionLabel}
+          title={actionLabel}
+          aria-pressed={listening}
+          disabled={phase === 'parsing' || draft.phase === 'sending'}
+          onClick={() => dispatch(writing ? { type: 'send' } : { type: 'mic', source: 'app' })}
+          className="group relative flex size-9 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          <span
+            aria-hidden="true"
+            className={cx(
+              'pomi-motion relative flex size-9 items-center justify-center rounded-full text-[16px] text-bg transition-[background-color,transform] duration-300 group-hover:scale-105 group-active:scale-95',
+              draft.phase === 'sending' && 'pomi-press'
+            )}
+            style={{ background: color }}
+          >
+            {(listening || draft.phase === 'sending') && (
+              <>
+                <span className="pomi-ripple absolute inset-0 rounded-full" />
+                {listening && (
+                  <span className="pomi-ripple absolute inset-0 rounded-full [animation-delay:600ms]" />
+                )}
+              </>
+            )}
+            <span key={writing ? 'send' : phase} className="pomi-fade-scale relative flex">
+              {icon}
+            </span>
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -565,7 +654,7 @@ export default function PomiApp({ state, dispatch, copy, locale }: Props) {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0e0f13] via-[#0e0f13]/90 to-transparent"
         />
         <CaptureSheet state={state} dispatch={dispatch} copy={copy} locale={locale} />
-        <Composer state={state} dispatch={dispatch} copy={copy} />
+        <Composer state={state} dispatch={dispatch} copy={copy} locale={locale} />
       </div>
     </section>
   );

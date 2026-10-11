@@ -5,6 +5,7 @@ import {
   type RefObject,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -39,6 +40,13 @@ const STEP_MS = 7000;
 const TURN_PER_PX = 0.009;
 /** Taps this close to either side bring the piece on that side to the front. */
 const SIDE_TAP = 0.28;
+/**
+ * A shelf card's name and its line under it, in pixels: each kept to one
+ * line, shrinking to fit no smaller than its floor, so every card stands as
+ * tall as the next.
+ */
+const SHELF_TITLE = { size: 13, min: 11 };
+const SHELF_BODY = { size: 11, min: 8.5 };
 
 /**
  * Behind the turntable, a glow for the time of day: warm for my day shift,
@@ -54,6 +62,67 @@ const TINTS = [
   'radial-gradient(55% 65% at 50% 62%, rgb(150 112 255 / 0.18), transparent 72%)',
   'radial-gradient(55% 65% at 50% 62%, rgb(72 112 255 / 0.2), transparent 72%)',
 ];
+
+/**
+ * Text held to one line: too long for its box, it shrinks to fit, down to
+ * `min` pixels, and only past that is it cut short.
+ */
+function FitLine({
+  text,
+  size,
+  min,
+  className,
+}: {
+  text: string;
+  size: number;
+  min: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [fitted, setFitted] = useState(size);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) {
+      return undefined;
+    }
+    const fit = () => {
+      // Half a pixel to spare, so rounding never tips it over into the ellipsis.
+      const room = element.getBoundingClientRect().width - 0.5;
+      // Hidden (wider screens): nothing to fit into.
+      if (room <= 0) {
+        return;
+      }
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      // Text narrows nearly, but not quite, in step with its size: a few tries close in on the fit.
+      let next = size;
+      for (let tries = 0; tries < 4; tries += 1) {
+        element.style.fontSize = `${next}px`;
+        const { width } = range.getBoundingClientRect();
+        if (width <= room || next <= min) {
+          break;
+        }
+        next = Math.max(min, (next * room) / width);
+      }
+      element.style.fontSize = `${next}px`;
+      setFitted(next);
+    };
+    // Again when it first shows, and once the web font is in, which is not as wide as the fallback.
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    let live = true;
+    document.fonts.ready.then(() => live && fit()).catch(() => undefined);
+    return () => {
+      live = false;
+      observer.disconnect();
+    };
+  }, [text, size, min]);
+  return (
+    <span ref={ref} style={{ fontSize: fitted }} className={cx('block truncate', className)}>
+      {text}
+    </span>
+  );
+}
 
 /** Starts fetching the 3D right away, but mounts it once the browser is idle. */
 function useIdleMount(enabled: boolean): boolean {
@@ -79,12 +148,13 @@ function useIdleMount(enabled: boolean): boolean {
  * night shift together, with a step under it for each, from day to night:
  * swipe to turn it, tap to make the piece in front jump. Then the buttons
  * (`children`), then the rest of me on a shelf you swipe along, each piece
- * turning on its own holder; tapping one spins it and tells its story.
+ * turning on its own holder; tapping one spins it round to face you and
+ * tells its story.
  * Still renders stand in until the 3D is ready, and for good where there is
  * no WebGL or motion is reduced.
  */
 export default function PhoneHero({ children }: { children?: ReactNode }) {
-  const { strings } = useLanguage();
+  const { strings, locale } = useLanguage();
   const { trio, more } = strings.hero;
   const reducedMotion = usePrefersReducedMotion();
   const phoneSized = useMediaQuery('(max-width: 639px)');
@@ -416,7 +486,7 @@ export default function PhoneHero({ children }: { children?: ReactNode }) {
                       aria-controls="shelf-caption"
                       onClick={() => pick(shelfId)}
                       className={cx(
-                        'flex w-[118px] flex-col rounded-[20px] border bg-surface px-2 pb-2.5 text-left transition active:scale-[0.97]',
+                        'flex w-[128px] flex-col rounded-[20px] border bg-surface px-2 pb-2.5 text-left transition active:scale-[0.97]',
                         on ? 'border-accent/60' : 'border-line'
                       )}
                     >
@@ -425,22 +495,27 @@ export default function PhoneHero({ children }: { children?: ReactNode }) {
                         className="relative -mx-2 block h-[84px] overflow-hidden"
                       >
                         <Image
-                          src={stillOf(shelfId, 'shelf')}
+                          src={stillOf(shelfId, 'shelf', locale)}
                           alt=""
                           fill
-                          sizes="120px"
+                          sizes="128px"
                           className={cx(
                             'object-cover transition-opacity duration-300',
                             shelfShown && 'opacity-0 delay-500'
                           )}
                         />
                       </span>
-                      <span className="px-0.5 text-[13px] font-semibold leading-tight">
-                        {more.items[shelfId].title}
-                      </span>
-                      <span className="mt-0.5 px-0.5 text-[11px] leading-tight text-muted">
-                        {more.items[shelfId].body}
-                      </span>
+                      {/* Line heights fixed in pixels: a line shrunk to fit leaves the card as tall as the rest. */}
+                      <FitLine
+                        text={more.items[shelfId].title}
+                        {...SHELF_TITLE}
+                        className="font-semibold leading-4"
+                      />
+                      <FitLine
+                        text={more.items[shelfId].body}
+                        {...SHELF_BODY}
+                        className="mt-0.5 leading-[14px] text-muted"
+                      />
                     </button>
                   </li>
                 );

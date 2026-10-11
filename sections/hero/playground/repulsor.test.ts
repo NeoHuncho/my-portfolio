@@ -27,15 +27,60 @@ describe('the hatch field', () => {
     expect(fieldClearance(wide, { ...piece, ...goal })).toBeGreaterThanOrEqual(0.08);
   });
 
-  it('never parks a piece past the edge of the text, even when that is the shortest way out', () => {
+  it('keeps the middle of a piece beside the text, even when that is the shortest way out', () => {
     // The free desk starts just left of the hatch: beside the text, not under it.
     const free = { ...DESK, minX: -1.4, farMinX: -1.6 };
     const piece = { x: -0.9, z: 0.1, halfX: 0.4, halfZ: 0.4 };
-    const goal = fieldDestination(HATCH, piece, free);
+    const goal = fieldDestination(HATCH, piece, DESK, [], free);
     expect(goal).not.toBeNull();
     if (goal) {
-      expect(goal.x - piece.halfX).toBeGreaterThanOrEqual(free.minX);
+      expect(goal.x).toBeGreaterThanOrEqual(free.minX);
       expect(fieldClearance(HATCH, { ...piece, ...goal })).toBeGreaterThanOrEqual(0.08);
+    }
+  });
+
+  it('slides a piece at the edge of the text a little past it instead of across the desk', () => {
+    const free = { ...DESK, minX: -1.4, farMinX: -1.6 };
+    // A big piece against the text's edge, a small one rising just to its right, another parked behind.
+    const piece = { x: -0.5, z: 2, halfX: 0.9, halfZ: 0.8 };
+    const hatch = { x: 0.6, z: 2.2, radius: 0.5, halfX: 0.36, halfZ: 0.36 };
+    const behind = { x: -0.5, z: 0, halfX: 0.9, halfZ: 0.8 };
+    expect(fieldClearance(hatch, piece)).toBeLessThan(0);
+    const goal = fieldDestination(hatch, piece, DESK, [behind], free);
+    expect(goal).not.toBeNull();
+    if (goal) {
+      expect(goal.x).toBeLessThan(piece.x);
+      expect(Math.hypot(goal.x - piece.x, goal.z - piece.z)).toBeLessThan(1);
+      expect(goal.x).toBeGreaterThanOrEqual(free.minX);
+      expect(fieldClearance(hatch, { ...piece, ...goal })).toBeGreaterThanOrEqual(0.08);
+    }
+  });
+
+  it('still finds a way out when the desk beside the text is full', () => {
+    const free = { ...DESK, minX: -1.4, farMinX: -1.6 };
+    const piece = { x: -0.9, z: 0.1, halfX: 0.4, halfZ: 0.4 };
+    // Behind it, in front of it and past the hatch: every spot beside the text is taken.
+    const parked = [
+      { x: -0.6, z: -2.6, halfX: 1.3, halfZ: 1.3 },
+      { x: -0.6, z: 2.8, halfX: 1.3, halfZ: 1.1 },
+      { x: 2.4, z: 0, halfX: 1.2, halfZ: 4 },
+    ];
+    expect(fieldDestination(HATCH, piece, free, parked)).toBeNull();
+    const goal = fieldDestination(HATCH, piece, DESK, parked, free);
+    expect(goal).not.toBeNull();
+    if (goal) {
+      expect(goal.x).toBeLessThan(free.minX);
+      expect(fieldInside(DESK, piece, goal)).toEqual(goal);
+      expect(fieldClearance(HATCH, { ...piece, ...goal })).toBeGreaterThanOrEqual(0.08);
+    }
+  });
+
+  it('never slides back across the hatch while a way out on its own side is open', () => {
+    const piece = { x: -0.6, z: 0, halfX: 0.4, halfZ: 0.4 };
+    const goal = fieldDestination(HATCH, piece, DESK);
+    expect(goal).not.toBeNull();
+    if (goal) {
+      expect(goal.x).toBeLessThan(0);
     }
   });
 

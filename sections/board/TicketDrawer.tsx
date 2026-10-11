@@ -1,6 +1,6 @@
 import { type ReactNode, useId } from 'react';
 import { FiCheck, FiCpu, FiMessageCircle, FiRotateCcw, FiUser, FiX } from 'react-icons/fi';
-import { areaLabels, sourceLabels, type Ticket } from '@config/board';
+import { areaLabels, prHref, sourceLabels, type Ticket } from '@config/board';
 import { useLanguage } from '@hooks/useLanguage';
 import { type TicketState } from './boardReducer';
 import Dialog from './Dialog';
@@ -10,6 +10,7 @@ import {
   answerSummary,
   type DecisionKind,
   OpenQuestion,
+  ExampleTag,
   PrLink,
   TrackChip,
 } from './TicketCard';
@@ -108,7 +109,9 @@ export default function TicketDrawer({ ticket, state, onClose, onDecide }: Ticke
       </div>
     );
   } else if (prReady && state.prNumber) {
-    footer = <PrLink pr={state.prNumber} className="text-xs" />;
+    footer = (
+      <PrLink pr={state.prNumber} href={prHref(ticket, state.prNumber)} className="text-xs" />
+    );
   }
 
   return (
@@ -129,8 +132,9 @@ export default function TicketDrawer({ ticket, state, onClose, onDecide }: Ticke
               {d.area}: {areaLabels[ticket.area]}
             </span>
             <span>
-              {card.effort} {ticket.effort} · {card.confidence} {ticket.confidence}%
+              {card.effort} {ticket.effort}
             </span>
+            <ExampleTag ticket={ticket} />
           </div>
           <h3 id={titleId} className="mt-2 text-xl font-semibold leading-snug tracking-tight">
             {ticket.title[locale]}

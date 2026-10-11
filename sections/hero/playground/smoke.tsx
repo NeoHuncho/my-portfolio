@@ -11,7 +11,7 @@ import {
   ShaderMaterial,
 } from 'three';
 import { type PipeDrive } from './pipe';
-import { useQuality } from '../quality';
+import { useDetailQuality } from '../quality';
 
 /** Puffs per hatch: a low sheet of cool vapour, warmed only where it leaves the iris. */
 const PARTICLES = { low: 36, medium: 64, high: 96, ultra: 128 };
@@ -217,7 +217,7 @@ export function HatchVapour({
   radius: number;
   drive: RefObject<PipeDrive>;
 }) {
-  const count = PARTICLES[useQuality()];
+  const count = PARTICLES[useDetailQuality()];
   const invalidate = useThree((state) => state.invalidate);
   const vapour = useMemo(() => makeVapour(count, radius), [count, radius]);
   const ripple = useMemo(() => makeRipple(radius), [radius]);

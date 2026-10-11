@@ -6,6 +6,7 @@ import {
   PHRASES,
   SEED_TASKS,
   SESSION_TOTAL,
+  TYPED,
   type Locale,
   type Localized,
   type Task,
@@ -36,6 +37,20 @@ export type Capture = {
   words: number;
 };
 
+/**
+ * A task typed into the phone's field: the rushed note is typed out, sent,
+ * then shows raw in the list while Pomi tidies it into a task.
+ */
+export type DraftPhase = 'idle' | 'typing' | 'sending' | 'parsing' | 'done';
+
+export type Draft = {
+  phase: DraftPhase;
+  /** Index into TYPED. */
+  typed: number;
+  /** Characters of the note typed so far. */
+  chars: number;
+};
+
 export type DemoEvent = {
   seq: number;
   kind: 'start' | 'pause' | 'reset' | 'skip' | 'finish' | 'listen' | 'added';
@@ -49,10 +64,12 @@ export type DemoState = {
   selected: Record<TimerType, string | null>;
   tasks: Task[];
   capture: Capture;
-  /** Id of the last task captured by voice, highlighted in the lists. */
+  draft: Draft;
+  /** Id of the last task captured by voice or typed, highlighted in the lists. */
   fresh: string | null;
   nextId: number;
   nextPhrase: number;
+  nextTyped: number;
   /** Increments on every synced change so the UI can show a sync pulse. */
   sync: { seq: number; source: Source };
   event: DemoEvent | null;
@@ -67,6 +84,9 @@ export type DemoAction =
   | { type: 'mic'; source: Source }
   | { type: 'captureStep'; all?: boolean }
   | { type: 'captureClose' }
+  | { type: 'type' }
+  | { type: 'send' }
+  | { type: 'draftStep'; all?: boolean }
   | { type: 'tick'; ms: number };
 
 function freshTimer(type: TimerType, position: number): TimerState {
@@ -90,9 +110,11 @@ export function initialDemoState(): DemoState {
     selected: { work: 'work', break: null, longBreak: null },
     tasks: SEED_TASKS.map((task) => ({ ...task })),
     capture: { phase: 'idle', source: 'app', phrase: 0, words: 0 },
+    draft: { phase: 'idle', typed: 0, chars: 0 },
     fresh: null,
     nextId: 1,
     nextPhrase: 0,
+    nextTyped: 0,
     sync: { seq: 0, source: 'app' },
     event: null,
   };
@@ -156,6 +178,50 @@ function captureStep(state: DemoState, all: boolean): DemoState {
     return { ...state, capture: { ...capture, phase: 'idle' } };
   }
   return state;
+}
+
+/** The longest translation of a note, so both locales finish typing together. */
+function noteLength(index: number): number {
+  const { raw } = TYPED[index];
+  return Math.max(raw.en.length, raw.fr.length);
+}
+
+/** The part of the note typed so far, in the visitor's language. */
+export function typedText(draft: Draft, locale: Locale): string {
+  const raw = TYPED[draft.typed].raw[locale];
+  return raw.slice(0, Math.ceil((raw.length * draft.chars) / noteLength(draft.typed)));
+}
+
+function draftStep(state: DemoState, all: boolean): DemoState {
+  const { draft } = state;
+  switch (draft.phase) {
+    case 'typing': {
+      const length = noteLength(draft.typed);
+      const chars = all ? length : Math.min(length, draft.chars + 1);
+      if (draft.chars < length) {
+        return { ...state, draft: { ...draft, chars } };
+      }
+      return { ...state, draft: { ...draft, phase: 'sending' } };
+    }
+    case 'sending':
+      return { ...state, draft: { ...draft, phase: 'parsing' } };
+    case 'parsing': {
+      const task: Task = { ...TYPED[draft.typed].task, id: `typed-${state.nextId}`, done: false };
+      return {
+        ...commit(
+          state,
+          'app',
+          { tasks: [...state.tasks, task], fresh: task.id, draft: { ...draft, phase: 'done' } },
+          { kind: 'added', type: state.timer.type, next: state.timer.type, title: task.title }
+        ),
+        nextId: state.nextId + 1,
+      };
+    }
+    case 'done':
+      return { ...state, draft: { ...draft, phase: 'idle' } };
+    default:
+      return state;
+  }
 }
 
 export function demoReducer(state: DemoState, action: DemoAction): DemoState {
@@ -224,6 +290,9 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       });
     case 'mic': {
       const { phase } = state.capture;
+      if (state.draft.phase !== 'idle' && state.draft.phase !== 'done') {
+        return state;
+      }
       if (phase === 'listening') {
         return captureStep(state, true);
       }
@@ -242,6 +311,30 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
         event: withEvent(state, { kind: 'listen', type: timer.type, next: timer.type }),
       };
     }
+    case 'type': {
+      const { phase } = state.draft;
+      // Tapping the field again while the note is typed out lets it carry on typing.
+      const capturing = state.capture.phase === 'listening' || state.capture.phase === 'parsing';
+      if (capturing || (phase !== 'idle' && phase !== 'done')) {
+        return state;
+      }
+      return {
+        ...state,
+        // A voice capture's confirmation sheet makes way for the field.
+        capture: { ...state.capture, phase: 'idle' },
+        nextTyped: state.nextTyped + 1,
+        draft: { phase: 'typing', typed: state.nextTyped % TYPED.length, chars: 0 },
+      };
+    }
+    case 'send':
+      return state.draft.phase === 'typing'
+        ? {
+            ...state,
+            draft: { ...state.draft, phase: 'sending', chars: noteLength(state.draft.typed) },
+          }
+        : state;
+    case 'draftStep':
+      return draftStep(state, Boolean(action.all));
     case 'captureStep':
       return captureStep(state, Boolean(action.all));
     case 'captureClose':
@@ -275,8 +368,33 @@ function captureDelay(state: DemoState, reduced: boolean): number | null {
   }
 }
 
+/** Delay before the next draft step: keystrokes vary like a person typing, a beat on spaces. */
+function draftDelay(state: DemoState, reduced: boolean): number | null {
+  const { phase, chars, typed } = state.draft;
+  switch (phase) {
+    case 'typing': {
+      if (reduced) {
+        return 900;
+      }
+      if (chars === 0) {
+        return 270;
+      }
+      const next = TYPED[typed].raw.en[chars] ?? '';
+      return next === ' ' ? 92 : 29 + ((chars * 37) % 35);
+    }
+    case 'sending':
+      return reduced ? 500 : 420;
+    case 'parsing':
+      return reduced ? 700 : 1000;
+    case 'done':
+      return 2800;
+    default:
+      return null;
+  }
+}
+
 /**
- * Owns the demo state, drives the countdown and the scripted voice capture.
+ * Owns the demo state, drives the countdown, the scripted voice capture and the typed note.
  * The countdown only runs while the timer is running, the demo is on screen
  * and the tab is visible.
  */
@@ -290,6 +408,9 @@ export function usePomiDemo(
   const running = state.timer.status === 'running';
   const delay = captureDelay(state, reduced);
   const { phase, words } = state.capture;
+  const typingDelay = draftDelay(state, reduced);
+  const draftPhase = state.draft.phase;
+  const { chars } = state.draft;
 
   useEffect(() => {
     const element = rootRef.current;
@@ -334,6 +455,17 @@ export function usePomiDemo(
     );
     return () => window.clearTimeout(id);
   }, [delay, phase, words, reduced]);
+
+  useEffect(() => {
+    if (typingDelay === null) {
+      return undefined;
+    }
+    const id = window.setTimeout(
+      () => dispatch({ type: 'draftStep', all: reduced && draftPhase === 'typing' }),
+      typingDelay
+    );
+    return () => window.clearTimeout(id);
+  }, [typingDelay, draftPhase, chars, reduced]);
 
   return [state, dispatch];
 }

@@ -21,14 +21,15 @@ const FRONT_FACING = new Set<ExhibitId>(['ticket', 'night']);
 /** Turntable speed when left alone, in radians a second. */
 const SPIN = 0.45;
 const SWAY = 0.6;
-/** A tap spins a shelf piece round about once. */
+/** A tap sets a shelf piece spinning this fast (radians a second), round about once. */
 const TAP_SPIN = 12;
 const TAU = Math.PI * 2;
 
 const ticket = makeTicket(0, 'showcase-ticket');
 const slash = buildExtra('keys') as KeycapItem;
 
-function Exhibit({ id }: { id: ExhibitId }) {
+/** `still`: frozen where its loop starts, for its still. */
+function Exhibit({ id, still }: { id: ExhibitId; still?: boolean }) {
   if (id === 'ticket') {
     return <DayShiftMesh item={ticket} />;
   }
@@ -38,7 +39,12 @@ function Exhibit({ id }: { id: ExhibitId }) {
   if (id === 'keys') {
     return <KeycapMesh item={slash} />;
   }
-  return <PropMesh item={{ uid: `showcase-${id}`, kind: 'prop', info: id as PropItem['info'] }} />;
+  return (
+    <PropMesh
+      item={{ uid: `showcase-${id}`, kind: 'prop', info: id as PropItem['info'] }}
+      still={still}
+    />
+  );
 }
 
 /** Lower than this against its width, an exhibit lies flat: it is stood up on a slant instead. */
@@ -81,12 +87,15 @@ function Fit({
   radius,
   height,
   upright,
+  lean,
   children,
 }: {
   radius: number;
   height: number;
   /** Shown as it stands, flat or not. */
   upright?: boolean;
+  /** Stood on this slant (radians) whatever its shape, for a top worth seeing. */
+  lean?: number;
   children: ReactNode;
 }) {
   const outer = useRef<Group>(null);
@@ -105,8 +114,8 @@ function Fit({
     const spread = (b: Box3) => Math.hypot((b.max.x - b.min.x) / 2, (b.max.z - b.min.z) / 2);
     // Stood on a slant, it leans out towards the camera: a little smaller keeps it over its plinth.
     let shrink = 1;
-    if (!upright && box.max.y - box.min.y < spread(box) * FLAT) {
-      tilt.current.rotation.x = SLANT;
+    if (lean !== undefined || (!upright && box.max.y - box.min.y < spread(box) * FLAT)) {
+      tilt.current.rotation.x = lean ?? SLANT;
       box = measure(tilt.current, middle.current);
       shrink = 0.82;
     }
@@ -117,7 +126,7 @@ function Fit({
       -box.min.y,
       -(box.min.z + box.max.z) / 2
     );
-  }, [radius, height, upright]);
+  }, [radius, height, upright, lean]);
   return (
     <group ref={outer}>
       <group ref={middle}>
@@ -332,7 +341,7 @@ export function StageScene({
         <Notches radius={1.36} count={48} />
         <Arrive key={id} still={still}>
           <Fit radius={front ? 1.4 : 1.25} height={1.55} upright={id === 'agents'}>
-            <Exhibit id={id} />
+            <Exhibit id={id} still={still} />
           </Fit>
         </Arrive>
       </group>
@@ -340,9 +349,28 @@ export function StageScene({
   );
 }
 
+/** Holder pieces stood on a gentler slant than the default, so their top reads (radians). */
+const HOLDER_LEAN: Partial<Record<ExhibitId, number>> = { strategy: 0.6 };
+/** A holder piece's turn when left alone, in radians a second. */
+const HOLDER_SPIN = 0.5;
 /**
- * One of the shelf's holders, turning slowly. Picked, its plinth lights up
- * and it spins round, once more for every tap.
+ * A tapped piece is pulled round to a front at least this far ahead (in
+ * turns), by a spring this stiff, critically damped: it spins off fast and
+ * slows into place facing the viewer, without swinging past.
+ */
+const HOLDER_REACH = 0.75;
+const HOLDER_STIFFNESS = 20;
+/** Faced round, it sways this far either side of its front (radians), this often, and bobs as it does. */
+const HOLDER_SWAY = 0.2;
+const HOLDER_SWAY_RATE = 0.9;
+const HOLDER_BOB = 0.035;
+const HOLDER_BOB_RATE = 2.6;
+
+/**
+ * One of the shelf's holders, turning slowly. Picked, its plinth lights up;
+ * tapped, it spins round, once more for every tap, and comes to rest facing
+ * the viewer, swaying and bobbing gently round its front for as long as its
+ * story is the one told. Another piece picked, it picks up its turn again.
  */
 export function HolderScene({
   id,
@@ -359,10 +387,24 @@ export function HolderScene({
   still?: boolean;
 }) {
   const spinner = useRef<Group>(null);
-  const state = useRef({ angle: phase, vel: 0 });
+  const state = useRef({
+    angle: phase,
+    vel: HOLDER_SPIN,
+    goal: null as number | null,
+    /** Come to rest on its front since the last tap. */
+    arrived: false,
+    settled: 0,
+    sway: 0,
+    bob: 0,
+  });
+  const facing = Boolean(picked) && spins > 0;
   useLayoutEffect(() => {
     if (spins > 0) {
-      state.current.vel += TAP_SPIN;
+      const s = state.current;
+      // Never backwards, however it was going, and never so fast it flies past the front it aims for.
+      s.vel = Math.min(Math.max(s.vel, 0) + TAP_SPIN, TAP_SPIN * 1.5);
+      s.goal = Math.ceil((s.angle + HOLDER_REACH * TAU) / TAU) * TAU;
+      s.arrived = false;
     }
   }, [spins]);
   useFrame((_, delta) => {
@@ -370,10 +412,33 @@ export function HolderScene({
       return;
     }
     const dt = Math.min(delta, 0.05);
+    // Two draws in the same instant: nothing to move.
+    if (dt <= 0) {
+      return;
+    }
     const s = state.current;
-    s.vel *= Math.exp(-dt * 2.2);
-    s.angle += (0.5 + s.vel) * dt;
+    if (facing && s.goal !== null) {
+      if (!s.arrived && Math.abs(s.goal - s.angle) < 0.08 && Math.abs(s.vel) < 0.6) {
+        s.arrived = true;
+        s.sway = 0;
+      }
+      // The sway comes in once it has come to rest, from its front, the way it was turning.
+      s.settled += ((s.arrived ? 1 : 0) - s.settled) * (1 - Math.exp(-dt * 1.5));
+      s.sway += dt * HOLDER_SWAY_RATE;
+      const target = s.goal + Math.sin(s.sway) * HOLDER_SWAY * s.settled;
+      s.vel +=
+        ((target - s.angle) * HOLDER_STIFFNESS - s.vel * 2 * Math.sqrt(HOLDER_STIFFNESS)) * dt;
+    } else {
+      // Let go: what is left of a spin dies away into its slow turn.
+      s.goal = null;
+      s.arrived = false;
+      s.settled += (0 - s.settled) * (1 - Math.exp(-dt * 4));
+      s.vel += (HOLDER_SPIN - s.vel) * (1 - Math.exp(-dt * 2.2));
+    }
+    s.angle += s.vel * dt;
+    s.bob += dt * HOLDER_BOB_RATE;
     spinner.current.rotation.y = s.angle;
+    spinner.current.position.y = Math.sin(s.bob) * HOLDER_BOB * s.settled;
   });
   return (
     <>
@@ -381,8 +446,8 @@ export function HolderScene({
       <Lights />
       <Plinth radius={1.25} height={0.26} glow={picked ? 1 : 0.55} />
       <group ref={spinner} rotation={[0, phase, 0]}>
-        <Fit radius={1.15} height={1.5}>
-          <Exhibit id={id} />
+        <Fit radius={1.15} height={1.5} lean={HOLDER_LEAN[id]}>
+          <Exhibit id={id} still={still} />
         </Fit>
       </group>
     </>
@@ -399,6 +464,14 @@ const FACE_STIFFNESS = 22;
 /** Then it bobs gently where it stands: this high, this often (radians a second). */
 const BOB_HEIGHT = 0.05;
 const BOB_RATE = 3.2;
+/**
+ * Pieces whose story is on top: the whole turn leans back towards the viewer
+ * (radians), so the top shows all the way round, at this share of the size.
+ */
+const THUMB_POSE: Partial<Record<ExhibitId, { lean: number; size: number }>> = {
+  keys: { lean: 0.62, size: 0.62 },
+  strategy: { lean: 0.42, size: 1.12 },
+};
 
 /**
  * One piece in the desk's tray, small: just the piece turning over a soft
@@ -435,6 +508,7 @@ export function ThumbScene({
     [0.6, 'rgb(0 0 0 / 0.2)'],
     [1, 'rgb(0 0 0 / 0)'],
   ]);
+  const pose = THUMB_POSE[id];
   useFrame((_, delta) => {
     if (!spinner.current || still) {
       return;
@@ -470,10 +544,16 @@ export function ThumbScene({
         <circleGeometry args={[1.05, 32]} />
         <meshBasicMaterial map={shadow} transparent depthWrite={false} toneMapped={false} />
       </mesh>
-      <group ref={spinner} rotation={[0, phase, 0]}>
-        <Fit radius={1.08} height={1.45}>
-          <Exhibit id={id} />
-        </Fit>
+      <group rotation={[pose?.lean ?? 0, 0, 0]} position={[0, pose ? 0.3 : 0, 0]}>
+        <group ref={spinner} rotation={[0, phase, 0]}>
+          <Fit
+            radius={1.08 * (pose?.size ?? 1)}
+            height={1.45 * (pose?.size ?? 1)}
+            upright={pose !== undefined}
+          >
+            <Exhibit id={id} still={still} />
+          </Fit>
+        </group>
       </group>
     </>
   );
@@ -637,7 +717,7 @@ export function TrioScene({
               >
                 {/* The agents' dock lies flat: a little wider, so it holds its own beside the others. */}
                 <Fit radius={id === 'agents' ? 1.12 : 1} height={1.4} upright={id === 'agents'}>
-                  <Exhibit id={id} />
+                  <Exhibit id={id} still={still} />
                 </Fit>
               </group>
             </group>

@@ -13,6 +13,7 @@ import { type LocalizedString } from '@config/types';
 import { useLanguage } from '@hooks/useLanguage';
 import { usePrefersReducedMotion } from '@hooks/usePrefersReducedMotion';
 import { cx } from '@lib/cx';
+import { holdQuiet } from '@lib/quiet';
 import BalanceSlide, { BALANCE_END } from './planning/BalanceSlide';
 import DashboardSlide, { DASHBOARD_END } from './planning/DashboardSlide';
 import { type SlideProps, useElementSize, useSlideClock } from './planning/motion';
@@ -101,6 +102,10 @@ export default function PlanningIllustration({ note }: { note: string }) {
   const playing = !reduced && inView && !hovered && !focused;
   const clock = useSlideClock(index, !reduced && inView, slide.end);
   const time = reduced ? Infinity : clock;
+
+  // While it plays, the games below wait to boot: they share the main thread and made it stutter.
+  const animating = !reduced && inView;
+  useEffect(() => (animating ? holdQuiet() : undefined), [animating]);
 
   // Autoplay that resumes where it paused rather than restarting the slide.
   const remaining = useRef(slide.seconds * 1000);

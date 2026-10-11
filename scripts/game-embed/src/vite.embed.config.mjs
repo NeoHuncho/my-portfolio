@@ -11,10 +11,10 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const base = process.env.EMBED_BASE || '/games/';
 const outDir = process.env.EMBED_OUT || path.join(root, 'dist-embed');
 
-// Gamehub refers to its public files by absolute path ('/art/…', '/audio/…', and inside
-// srcset lists, '…320w, /art/…'). Prefix them with the embed base in source so the build is
-// self-contained.
-const PUBLIC_DIRS = ['art', 'audio', '3d', 'maps', 'geography'];
+// Gamehub refers to its public files by absolute path ('/art/…', '/audio/…', '/reels/…', and
+// inside srcset lists, '…320w, /art/…'). Prefix them with the embed base in source so the build
+// is self-contained.
+const PUBLIC_DIRS = ['art', 'audio', '3d', 'maps', 'geography', 'reels'];
 const publicRef = new RegExp(`(['"\`(]|, )/(${PUBLIC_DIRS.join('|')})/`, 'g');
 function prefixPublicPaths() {
   return {

@@ -142,6 +142,49 @@ export const PHRASES: Phrase[] = [
   },
 ];
 
+/** What the visitor "types" on each tap of the field: rushed notes Pomi tidies into tasks. */
+export type Typed = {
+  raw: Localized;
+  task: Omit<Task, 'id' | 'done'>;
+};
+
+export const TYPED: Typed[] = [
+  {
+    raw: {
+      en: 'fix flaky e2e test before standup tmrw 9 urgent!!',
+      fr: 'corriger test e2e flaky avant le standup demain 9h urgent!!',
+    },
+    task: {
+      title: { en: 'Fix the flaky e2e test', fr: 'Corriger le test e2e instable' },
+      intention: 'work',
+      due: { day: 1, time: '09:00' },
+      priority: 'urgent',
+    },
+  },
+  {
+    raw: {
+      en: 'groceries after work.. pasta eggs coffee',
+      fr: 'courses après le taf.. pâtes oeufs café',
+    },
+    task: {
+      title: { en: 'Buy groceries', fr: 'Faire les courses' },
+      intention: 'personal',
+      due: { day: 0, time: '18:00' },
+    },
+  },
+  {
+    raw: {
+      en: 'read the new react docs chapter tonight maybe 8',
+      fr: 'lire le chapitre de la doc react ce soir vers 20h',
+    },
+    task: {
+      title: { en: 'Read the new React docs chapter', fr: 'Lire le chapitre de la doc React' },
+      intention: 'learning',
+      due: { day: 0, time: '20:00' },
+    },
+  },
+];
+
 const en = {
   types: { work: 'Focus', break: 'Break', longBreak: 'Long break' } as Record<TimerType, string>,
   skipTo: {
@@ -169,6 +212,8 @@ const en = {
   mic: 'Capture a task by voice',
   micStop: 'Stop listening',
   micHint: 'Tap to add a task',
+  type: 'Type a task',
+  send: 'Send',
   listening: 'Listening…',
   listeningWatch: 'Listening on the watch…',
   parsing: 'Turning it into a task…',
@@ -215,6 +260,8 @@ const fr: typeof en = {
   mic: 'Dicter une tâche',
   micStop: 'Arrêter l’écoute',
   micHint: 'Touche pour ajouter une tâche',
+  type: 'Écrire une tâche',
+  send: 'Envoyer',
   listening: 'J’écoute…',
   listeningWatch: 'Écoute sur la montre…',
   parsing: 'Je la transforme en tâche…',

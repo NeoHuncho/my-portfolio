@@ -166,7 +166,7 @@ export default function ExperienceSection() {
   return (
     <section
       id={sectionIds.experience}
-      className="content-auto border-t border-line pb-4 pt-10 sm:pb-8 sm:pt-16"
+      className="section-start content-auto border-t border-line pb-12 pt-12 sm:pb-8 sm:pt-16"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeading eyebrow={t.eyebrow} title={t.title} />

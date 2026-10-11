@@ -9,10 +9,10 @@ export type InfoId =
   | 'server'
   | 'sport'
   | 'mountain'
-  | 'portrait'
   | 'robot'
   | 'night'
-  | 'flags';
+  | 'flags'
+  | 'strategy';
 
 export type TicketItem = {
   uid: string;
@@ -44,12 +44,12 @@ export type AgentItem = {
 export type PropItem = {
   uid: string;
   kind: 'prop';
-  info: 'oss' | 'server' | 'sport' | 'mountain' | 'portrait' | 'robot' | 'night' | 'flags';
+  info: 'oss' | 'server' | 'sport' | 'mountain' | 'robot' | 'night' | 'flags' | 'strategy';
 };
 
 export type PlaygroundItem = TicketItem | KeycapItem | AgentItem | PropItem;
 
-/** Same ids and colours as the "How I work" board, so the two sections tell one story. */
+/** Made-up tickets for the day shift's laptop: the client work it stands for stays private. */
 export const ticketPool: Array<Omit<TicketItem, 'uid' | 'kind' | 'info' | 'merged'>> = [
   { code: 'FEAT-142', title: 'Bulk reassign deliveries', color: '#5b9cff', pr: 521 },
   { code: 'SEC-12', title: 'Lock out login brute force', color: '#a78bfa', pr: 523 },
@@ -76,16 +76,19 @@ const slashKey: KeycapItem = {
 export const TRIO = ['ticket', 'agents', 'night'] as const;
 export type TrioId = (typeof TRIO)[number];
 
-/** The rest of me, added round them from the tray on request, most important first. */
+/**
+ * The rest of me, added round them from the tray on request, most important first.
+ * Switzerland and the languages come last: the hero's facts line already says them.
+ */
 export const EXTRAS = [
-  'portrait',
-  'flags',
-  'mountain',
-  'sport',
   'robot',
-  'keys',
-  'server',
+  'sport',
   'oss',
+  'server',
+  'keys',
+  'strategy',
+  'mountain',
+  'flags',
 ] as const;
 export type ExtraId = (typeof EXTRAS)[number];
 

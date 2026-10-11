@@ -42,21 +42,41 @@ export function TrackChip({ ticket }: { ticket: Ticket }) {
 }
 
 /**
- * Where the real review happens. Styled as the GitHub link it would be in the
- * real dashboard; the PRs in this demo do not exist, so it goes nowhere.
+ * Where the real review happens: the ticket's own PR opens on GitHub. A PR opened during
+ * the demo, or a made-up ticket's, keeps the look but goes nowhere.
  */
-export function PrLink({ pr, className }: { pr: number; className?: string }) {
+export function PrLink({ pr, href, className }: { pr: number; href?: string; className?: string }) {
   const { strings } = useLanguage();
-  return (
-    <span
-      className={cx(
-        'inline-flex items-center gap-1.5 font-mono text-[11px] text-accent underline decoration-accent/40 underline-offset-4',
-        className
-      )}
-    >
+  const classes = cx(
+    'inline-flex items-center gap-1.5 font-mono text-[11px] text-accent underline decoration-accent/40 underline-offset-4',
+    href && 'transition hover:decoration-accent',
+    className
+  );
+  const content = (
+    <>
       <FiGitPullRequest aria-hidden />
       {strings.board.openPr(pr)}
       <FiArrowUpRight aria-hidden />
+    </>
+  );
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
+      {content}
+    </a>
+  ) : (
+    <span className={classes}>{content}</span>
+  );
+}
+
+/** Marks the few made-up tickets, so the real ones read as real. */
+export function ExampleTag({ ticket }: { ticket: Ticket }) {
+  const { strings } = useLanguage();
+  if (!ticket.illustrative) {
+    return null;
+  }
+  return (
+    <span className="shrink-0 rounded-full border border-line-strong px-1.5 py-px text-[10px] text-faint">
+      {strings.board.example}
     </span>
   );
 }
@@ -165,6 +185,7 @@ function DecisionCardView({ ticket, state, onOpen, onDecide }: DecisionCardProps
         <span className="min-w-0 truncate text-[11px] text-faint">
           {sourceLabels[ticket.source][locale]}
         </span>
+        <ExampleTag ticket={ticket} />
         <button
           type="button"
           onClick={() => onOpen(ticket.id)}
@@ -236,11 +257,8 @@ function DecisionCardView({ ticket, state, onOpen, onDecide }: DecisionCardProps
           <FiX aria-hidden />
           {strings.board.reject}
         </button>
-        <span
-          className="ml-auto text-[11px] text-faint"
-          title={`${card.effort} ${ticket.effort} · ${card.confidence} ${ticket.confidence}%`}
-        >
-          {card.confidence} {ticket.confidence}%
+        <span className="ml-auto text-[11px] text-faint">
+          {card.effort} {ticket.effort}
         </span>
       </div>
     </article>
@@ -278,6 +296,7 @@ function CompactCard({
     >
       <div className="flex items-center gap-2">
         <TrackChip ticket={ticket} />
+        <ExampleTag ticket={ticket} />
         {aside && (
           <span className="ml-auto inline-flex items-center gap-1 font-mono text-[11px] text-faint">
             {aside}

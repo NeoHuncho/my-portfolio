@@ -12,7 +12,8 @@
 //
 // Bots never double-play (only the host runs them) and the dice never diverge (the RNG
 // state travels with the match). Without Web Locks or BroadcastChannel, each frame keeps
-// its own match.
+// its own match. Only the host saves the match (`persist`), so frames never fight over the
+// device's save.
 import { observe, play, type RotaGame, type RotaMove } from '@/lib/games/rota/engine';
 import { botRound } from '@/lib/games/rota/bot';
 
@@ -57,8 +58,16 @@ export class RotaSync {
   private listeners = new Set<() => void>();
   private botTimer: ReturnType<typeof setTimeout> | undefined;
   private disposed = false;
+  /** Host only: called with the match after every change (and the match before it). */
+  private persist?: (g: RotaGame, before: RotaGame) => void;
 
-  constructor(name: string, initial: RotaGame, epoch: string) {
+  constructor(
+    name: string,
+    initial: RotaGame,
+    epoch: string,
+    persist?: (g: RotaGame, before: RotaGame) => void
+  ) {
+    this.persist = persist;
     this.confirmed = this.view = initial;
     this.epoch = this.viewEpoch = epoch;
     const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
@@ -158,11 +167,15 @@ export class RotaSync {
     if (this.disposed || this.host) return;
     this.host = true;
     this.hostId = this.id;
+    // The last match the old host confirmed: a finish it never confirmed (this frame's own
+    // last move) is this host's to save and record.
+    const before = this.confirmed;
     // Carry on from what this frame shows, its own moves included.
     this.confirmed = this.view;
     this.epoch = this.viewEpoch;
     this.pending = [];
     this.acks = { ...this.acks, [this.id]: this.seq };
+    this.persist?.(this.confirmed, before);
     this.broadcast();
     this.scheduleBots();
   }
@@ -170,6 +183,7 @@ export class RotaSync {
   /** Host only: applies one frame's move or new match, then tells everyone. */
   private apply(from: string, op: Op) {
     if ((this.acks[from] ?? 0) < op.seq) {
+      const before = this.confirmed;
       this.acks = { ...this.acks, [from]: op.seq };
       if ('replace' in op) {
         this.confirmed = op.replace;
@@ -177,6 +191,7 @@ export class RotaSync {
       } else if (op.epoch === this.epoch) this.confirmed = play(this.confirmed, op.m, 0);
       this.view = this.confirmed;
       this.viewEpoch = this.epoch;
+      this.persist?.(this.confirmed, before);
       this.notify();
       this.scheduleBots();
     }
@@ -217,6 +232,7 @@ export class RotaSync {
       for (const m of botRound(observe(cur, bot), bot)) next = play(next, m, bot);
       this.confirmed = this.view = next;
       this.viewEpoch = this.epoch;
+      this.persist?.(next, cur);
       this.notify();
       this.broadcast();
       this.scheduleBots();

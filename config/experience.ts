@@ -64,20 +64,16 @@ export const experiences: Experience[] = [
     ],
     built: [
       {
-        en: 'Wealth and retirement simulation across the Swiss three-pillar system, with quick actions like changing the retirement date or moving to another municipality.',
-        fr: 'Simulation de patrimoine et de retraite sur les trois piliers suisses, avec des actions rapides comme changer la date de retraite ou de commune.',
+        en: 'Retirement planning across the Swiss three-pillar system: pillar 2 buy-back potential and affiliation details per pension plan, pillar 3a and 3b withdrawals, and several scenarios compared side by side.',
+        fr: 'Planification de la retraite sur les trois piliers suisses : potentiel de rachat du 2e pilier et détail des affiliations par plan de prévoyance, retraits des piliers 3a et 3b, et plusieurs scénarios comparés côte à côte.',
       },
       {
         en: 'Balance sheet and operating account for self-employed clients: depreciation, cash flow, interest and equity.',
         fr: "Bilan et compte d'exploitation pour les indépendants : amortissements, cash-flow, intérêts et fonds propres.",
       },
       {
-        en: 'Wealth dashboards, pillar detail panels and PDF reports on AG Grid and AG Charts.',
-        fr: 'Dashboards patrimoniaux, panneaux de détail par pilier et rapports PDF sur AG Grid et AG Charts.',
-      },
-      {
-        en: 'On the side, an animated e-card for an international client.',
-        fr: 'À côté, une e-card animée pour un client international.',
+        en: 'A report module with saved plan views and PDF export, and wealth dashboards on AG Grid and AG Charts, down to the debt ratio and net yield of each property.',
+        fr: 'Un module de rapports avec vues de plan enregistrées et export PDF, et des dashboards patrimoniaux sur AG Grid et AG Charts, jusqu’au taux d’endettement et au rendement net de chaque bien immobilier.',
       },
     ],
     aiLead: {
@@ -87,26 +83,26 @@ export const experiences: Experience[] = [
     ai: [
       {
         title: {
-          en: 'Agent instructions and repo memory',
-          fr: 'Instructions des agents et mémoire du repo',
+          en: 'Teaching agents our codebase',
+          fr: 'Apprendre notre code aux agents',
         },
         body: {
-          en: 'Agents learn our in-house libraries from instructions I wrote and a selective repo memory fed by the whole team: lead-dev notes, bad calls in plans, review comments on generated code. Only lessons that change how the next agent works go in.',
-          fr: "Les agents apprennent nos librairies maison grâce à mes instructions et à une mémoire du repo sélective, nourrie par toute l'équipe : notes du lead dev, mauvais choix dans les plans, commentaires sur le code généré. N'y entrent que les leçons qui changent le travail du prochain agent.",
+          en: 'No model has seen our in-house libraries, so I wrote guides in the repo that explain them to agents. Team feedback becomes rules along the way, from a bad call in a plan to a review comment, but only when it changes how the next agent works.',
+          fr: 'Aucun modèle ne connaît nos librairies maison : j’ai écrit dans le repo des guides qui les expliquent aux agents. Les retours de l’équipe y deviennent des règles au fil de l’eau, d’un mauvais choix dans un plan à un commentaire de relecture, mais seulement quand ils changent le travail du prochain agent.',
         },
       },
       {
-        title: { en: 'A worktree per agent', fr: 'Un worktree par agent' },
+        title: { en: 'Several agents in parallel', fr: 'Plusieurs agents en parallèle' },
         body: {
-          en: 'Each agent gets its own worktree, local environment and database copy, so several take tasks through the full cycle, QA included, in parallel.',
-          fr: 'Chaque agent a son worktree, son environnement local et sa copie de la base : plusieurs mènent des tâches sur tout le cycle, QA comprise, en parallèle.',
+          en: 'Each agent works in its own copy of the repo (a git worktree), with its own local environment and its own copy of the database. Several agents can then each take a task from start to finish, QA included, without getting in each other’s way.',
+          fr: 'Chaque agent travaille dans sa propre copie du repo (un worktree git), avec son environnement local et sa propre copie de la base de données. Plusieurs agents peuvent ainsi mener chacun une tâche de bout en bout, QA comprise, sans se gêner.',
         },
       },
       {
         title: { en: 'A radar for agent runs', fr: "Un radar pour les runs d'agents" },
         body: {
-          en: 'Scheduled agents review the codebase and report to one dashboard, the radar. Each finding comes with a plan; I decide what gets done.',
-          fr: 'Des agents planifiés passent la codebase en revue et remontent dans un dashboard, le radar. Chaque point arrive avec un plan ; je décide de la suite.',
+          en: 'Scheduled agents go through the codebase looking for performance, security, bugs and code quality, and report to one dashboard, the radar. Each finding comes with a plan; I decide what gets done.',
+          fr: 'Des agents planifiés passent la codebase en revue (performance, sécurité, bugs, qualité du code) et remontent dans un dashboard, le radar. Chaque point arrive avec un plan ; je décide de la suite.',
         },
         linkToBoard: true,
       },

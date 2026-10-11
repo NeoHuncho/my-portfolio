@@ -1,15 +1,13 @@
-// Portfolio embed entry: a Rota match shared by the page's frames, or Gamehub's own library.
+// Portfolio embed entry: Gamehub's own app (SoloGame: its library and every shipped game),
+// opened on a Rota match shared by the page's frames when the URL asks for one (config.ts).
+// The frames stay on the same screen and the page can send them home (nav.ts).
 // Copied into the Gamehub worktree by scripts/build-games.mjs (not part of Gamehub itself).
-import { lazy, Suspense, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@/app/globals.css';
 import './embed.css';
 import SoloGame from '@/components/game/solo';
 import { CopyGuard } from '@/components/game/copy-guard';
-import { rotaEmbed } from './config';
 import { restWhileOutOfView } from './frame-visibility';
-
-const SharedRota = lazy(() => import('./rota-shared'));
 
 // Sound starts off in the portfolio; a visitor who turns it on keeps their choice.
 for (const key of ['gamehub.volume.v3', 'gamehub.ambience.v1', 'gamehub.rota.volume'])
@@ -30,35 +28,11 @@ document.addEventListener(
 
 restWhileOutOfView();
 
-/** The shared match until the visitor goes back to the library, which plays on its own. */
-function App() {
-  const [home, setHome] = useState(!rotaEmbed);
-  if (home || !rotaEmbed) return <SoloGame />;
-  return (
-    <div className="app at-table rota">
-      <Suspense fallback={<Loading name="Rota" />}>
-        <SharedRota embed={rotaEmbed} onHome={() => setHome(true)} />
-      </Suspense>
-    </div>
-  );
-}
-
-function Loading({ name }: { name: string }) {
-  return (
-    <main className="startup-loading" aria-busy="true">
-      <output className="startup-loading-content">
-        <strong>{name}</strong>
-        <span>Laying out the town</span>
-      </output>
-    </main>
-  );
-}
-
 const root = document.getElementById('root');
 if (root)
   createRoot(root).render(
     <>
-      <App />
+      <SoloGame />
       <CopyGuard />
     </>
   );

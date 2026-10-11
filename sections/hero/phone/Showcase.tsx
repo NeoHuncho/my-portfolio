@@ -1,23 +1,88 @@
-import { type ReactNode, type RefObject, Suspense, useEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  type RefObject,
+  Suspense,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
 import { cx } from '@lib/cx';
-import { Cell, CellLayer } from './Cells';
-import { type ExhibitId, SHELF, type ShelfId, thumbPhase, type TrioTurn } from './exhibitIds';
+import { Cell, CellLayer, CellRegistry, type CellScenes } from './Cells';
+import {
+  type ExhibitId,
+  SHELF,
+  shelfPhase,
+  type ShelfId,
+  thumbPhase,
+  type TrioTurn,
+} from './exhibitIds';
 import { HolderScene, ThumbScene, TrioScene } from './exhibits';
+import { compileFully } from '../playground/compile';
 import { SETTINGS, useBudgetDpr, useQuality } from '../quality';
 import Ticker from '../Ticker';
 
 /**
- * Draws a first few frames as soon as it is up, seen or not, so shaders and
- * textures are ready before anyone scrolls to it; then says so.
+ * Gets the canvas ready as soon as it is up, seen or not, before anyone
+ * scrolls to it. First its shaders, every cell's too, are compiled away from
+ * the page's thread: the canvas draws nothing till then, since a frame drawn
+ * sooner would wait on the compiler. Then it draws a first few frames, which
+ * upload the textures, and says so.
  */
-function WarmUp({ onReady }: { onReady: () => void }) {
+function WarmUp({
+  cells,
+  onCompiled,
+  onReady,
+}: {
+  /** How many cells will register: they come up a few frames apart. */
+  cells: number;
+  onCompiled: () => void;
+  onReady: () => void;
+}) {
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+  const camera = useThree((state) => state.camera);
   const invalidate = useThree((state) => state.invalidate);
+  const registry = useContext(CellRegistry);
   const frames = useRef(0);
   useEffect(() => {
-    invalidate();
-  }, [invalidate]);
+    let live = true;
+    let frame = 0;
+    let waited = 0;
+    const compile = () => {
+      if (!live) {
+        return;
+      }
+      // Every cell in first, unless one never comes (about ten seconds).
+      if ((registry?.size ?? 0) < cells && waited < 600) {
+        waited += 1;
+        frame = requestAnimationFrame(compile);
+        return;
+      }
+      const scenes = [...(registry ?? new Map())].map(([cell, cameraOf]) =>
+        compileFully(gl, cell, cameraOf())
+      );
+      Promise.all([compileFully(gl, scene, camera), ...scenes])
+        .catch(() => undefined)
+        .then(() => {
+          if (live) {
+            onCompiled();
+            invalidate();
+          }
+        });
+    };
+    compile();
+    return () => {
+      live = false;
+      cancelAnimationFrame(frame);
+    };
+    // Once, when the canvas is up.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useFrame(() => {
     frames.current += 1;
     if (frames.current < 3) {
@@ -30,31 +95,67 @@ function WarmUp({ onReady }: { onReady: () => void }) {
 }
 
 /**
+ * From the canvas fading in over its still to that still being gone (the
+ * tray's still waits half a second, then fades for half a second): the
+ * pieces hold the pose the still shows till then, so the two never part.
+ */
+const HANDOVER_MS = 1000;
+
+/**
+ * Sets whatever moves on its own going again, from where it stopped: time
+ * spent not drawing (held for the handover, or scrolled away) never shows
+ * as a jump in the pieces' own animations.
+ */
+function Moving({ fps }: { fps: number }) {
+  const clock = useThree((state) => state.clock);
+  useLayoutEffect(() => {
+    if (clock.running) {
+      clock.oldTime = performance.now();
+    }
+  }, [clock]);
+  return <Ticker fps={fps} />;
+}
+
+/**
  * A transparent canvas filling whatever it is put in. It sits in the page
  * with what it draws, so the two scroll together, and never takes a touch:
  * the page underneath handles those. It fades in over the still under it
- * once its first frames are drawn, and redraws only while on screen.
+ * once its first frames are drawn, starts moving once the still is gone,
+ * and redraws only while on screen.
  */
 function Layer({
   active,
   onReady,
   use,
+  cells = 0,
   children,
 }: {
   active: boolean;
   onReady: () => void;
   /** Which settings it draws with, at the device's quality. */
   use: 'stage' | 'shelf' | 'tray';
+  /** How many cells it holds, if it draws into cells. */
+  cells?: number;
   children: ReactNode;
 }) {
   const quality = useQuality();
   const { dpr: maxDpr, fps } = SETTINGS[use][quality];
   const dpr = useBudgetDpr(quality, maxDpr);
+  const registry = useMemo<CellScenes>(() => new Map(), []);
+  const [compiled, setCompiled] = useState(false);
   const [ready, setReady] = useState(false);
+  const [moving, setMoving] = useState(false);
   const onWarm = () => {
     setReady(true);
     onReady();
   };
+  useEffect(() => {
+    if (!ready) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setMoving(true), HANDOVER_MS);
+    return () => window.clearTimeout(timer);
+  }, [ready]);
   return (
     <div
       className={cx(
@@ -64,20 +165,42 @@ function Layer({
       aria-hidden
     >
       <Canvas
-        frameloop="demand"
+        frameloop={compiled ? 'demand' : 'never'}
         dpr={dpr}
         gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
         style={{ pointerEvents: 'none' }}
       >
-        <Suspense fallback={null}>
-          {/* The desk's objects carry their colliders; paused, nothing moves them. */}
-          <Physics paused>{children}</Physics>
-          <WarmUp onReady={onWarm} />
-          {active && <Ticker fps={fps} />}
-        </Suspense>
+        <CellRegistry.Provider value={registry}>
+          <Suspense fallback={null}>
+            {/* The desk's objects carry their colliders; paused, nothing moves them. */}
+            <Physics paused>{children}</Physics>
+            <WarmUp cells={cells} onCompiled={() => setCompiled(true)} onReady={onWarm} />
+            {active && moving && <Moving fps={fps} />}
+          </Suspense>
+        </CellRegistry.Provider>
       </Canvas>
     </div>
   );
+}
+
+/**
+ * How many of `total` things to have up: one more each frame. Building a
+ * piece (its shapes, its labels) takes a few milliseconds; a whole shelf of
+ * them at once would hold one frame up for the lot.
+ */
+function OneAFrame({ children }: { children: ReactNode[] }) {
+  // None in the first frame: making the canvas is enough for one. Mounted inside the physics,
+  // it only starts counting once the physics is ready, so its pieces never pile up behind it.
+  const [shown, setShown] = useState(0);
+  const total = children.length;
+  useEffect(() => {
+    if (shown >= total) {
+      return undefined;
+    }
+    const frame = requestAnimationFrame(() => setShown((count) => count + 1));
+    return () => cancelAnimationFrame(frame);
+  }, [shown, total]);
+  return <>{children.slice(0, shown)}</>;
 }
 
 /** The phone's turntable of how I work, drawn into the stage it is put in. */
@@ -115,18 +238,20 @@ export function ShelfShow({
   onReady: () => void;
 }) {
   return (
-    <Layer active={active} onReady={onReady} use="shelf">
+    <Layer active={active} onReady={onReady} use="shelf" cells={SHELF.length}>
       <CellLayer>
-        {SHELF.map((id, i) => (
-          <Cell key={id} track={holders[id]} index={i + 2}>
-            <HolderScene
-              id={id}
-              picked={picked.id === id}
-              spins={picked.id === id ? picked.spins : 0}
-              phase={i * 1.1}
-            />
-          </Cell>
-        ))}
+        <OneAFrame>
+          {SHELF.map((id, i) => (
+            <Cell key={id} track={holders[id]} index={i + 2}>
+              <HolderScene
+                id={id}
+                picked={picked.id === id}
+                spins={picked.id === id ? picked.spins : 0}
+                phase={shelfPhase(id)}
+              />
+            </Cell>
+          ))}
+        </OneAFrame>
       </CellLayer>
     </Layer>
   );
@@ -148,12 +273,15 @@ export function TrayShow<Id extends ExhibitId>({
   active: boolean;
   onReady: () => void;
 }) {
+  const placed = ids.flatMap((id) => {
+    const slot = slots[id];
+    return slot ? [{ id, slot }] : [];
+  });
   return (
-    <Layer active={active} onReady={onReady} use="tray">
+    <Layer active={active} onReady={onReady} use="tray" cells={placed.length}>
       <CellLayer>
-        {ids.map((id) => {
-          const slot = slots[id];
-          return slot ? (
+        <OneAFrame>
+          {placed.map(({ id, slot }) => (
             <Cell key={id} track={slot} index={ids.indexOf(id) + 2}>
               <ThumbScene
                 id={id}
@@ -162,8 +290,8 @@ export function TrayShow<Id extends ExhibitId>({
                 phase={thumbPhase(id)}
               />
             </Cell>
-          ) : null;
-        })}
+          ))}
+        </OneAFrame>
       </CellLayer>
     </Layer>
   );

@@ -43,12 +43,67 @@ export function fieldInside(bounds: FieldBounds, piece: FieldFootprint, point: P
   return { x: left > right ? (left + right) / 2 : Math.max(left, Math.min(right, point.x)), z };
 }
 
-/** Slide out radially; beside a wall, choose the nearest clear direction back into the desk. */
+/** How far a footprint at `point` reaches past `bounds`: 0 when it is wholly inside. */
+export function fieldOverhang(bounds: FieldBounds, piece: FieldFootprint, point: Point): number {
+  const inside = fieldInside(bounds, piece, point);
+  return Math.hypot(inside.x - point.x, inside.z - point.z);
+}
+
+/** What a straight slide to `to` costs on top of its length: back across the hatch, or through parked pieces. */
+function slideDetour(
+  zone: ClearZone,
+  piece: FieldFootprint,
+  to: Point,
+  reserved: FieldFootprint[]
+): number {
+  const start = fieldClearance(zone, piece);
+  let hatch = 0;
+  const crossed = new Set<FieldFootprint>();
+  for (let step = 1; step <= 8; step++) {
+    const f = step / 8;
+    const at = { ...piece, x: piece.x + (to.x - piece.x) * f, z: piece.z + (to.z - piece.z) * f };
+    if (fieldClearance(zone, at) < start - 0.05) {
+      hatch = 4;
+    }
+    reserved.forEach((other) => {
+      if (
+        Math.abs(other.x - at.x) < other.halfX + at.halfX &&
+        Math.abs(other.z - at.z) < other.halfZ + at.halfZ
+      ) {
+        crossed.add(other);
+      }
+    });
+  }
+  return hatch + crossed.size * 1.2;
+}
+
+/**
+ * Where a piece in the hatch's way slides to: clear of it, inside the walls
+ * (`bounds`), on no other piece's spot, by the shortest and straightest slide.
+ * It would rather keep beside the text (`preferred`), but a short slide a
+ * little past it beats a long trip across the desk; its middle never ends up
+ * past it, unless the desk beside the text has no room left at all. Sliding
+ * back across the hatch or through parked pieces costs extra.
+ */
 export function fieldDestination(
   zone: ClearZone,
   piece: FieldFootprint,
   bounds: FieldBounds,
-  reserved: FieldFootprint[] = []
+  reserved: FieldFootprint[] = [],
+  preferred: FieldBounds = bounds
+): Point | null {
+  return (
+    parkingSpot(zone, piece, bounds, reserved, preferred) ??
+    (preferred === bounds ? null : parkingSpot(zone, piece, bounds, reserved, bounds))
+  );
+}
+
+function parkingSpot(
+  zone: ClearZone,
+  piece: FieldFootprint,
+  bounds: FieldBounds,
+  reserved: FieldFootprint[],
+  preferred: FieldBounds
 ): Point | null {
   const dx = piece.x - zone.x;
   const dz = piece.z - zone.z;
@@ -58,6 +113,10 @@ export function fieldDestination(
     Math.hypot(dx, dz) > 0.01 ? Math.atan2(dz, dx) : Math.atan2(centreZ - zone.z, centreX - zone.x);
   const reach =
     zone.radius + Math.hypot(zone.halfX, zone.halfZ) + Math.hypot(piece.halfX, piece.halfZ) + 0.3;
+  // Already past the preferred edge, it is not charged for what it already overhangs.
+  const overhung = fieldOverhang(preferred, piece, piece);
+  const middle = { ...piece, halfX: 0, halfZ: 0 };
+  const middleOut = fieldOverhang(preferred, middle, piece);
   let best: Point | null = null;
   let cost = Infinity;
   for (let i = 0; i < 32; i++) {
@@ -93,8 +152,15 @@ export function fieldDestination(
       if (occupied) {
         continue;
       }
+      if (fieldOverhang(preferred, middle, candidate) > middleOut + 0.001) {
+        continue;
+      }
+      const overhang = fieldOverhang(preferred, piece, candidate);
       const distance =
-        Math.hypot(candidate.x - piece.x, candidate.z - piece.z) + Math.abs(turn) * 0.16;
+        Math.hypot(candidate.x - piece.x, candidate.z - piece.z) +
+        Math.abs(turn) * 0.4 +
+        Math.max(0, overhang - overhung) * 2 +
+        slideDetour(zone, piece, candidate, reserved);
       if (distance < cost) {
         best = candidate;
         cost = distance;

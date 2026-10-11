@@ -82,6 +82,7 @@ const STYLES = `
 @keyframes pomi-spin { to { transform: rotate(360deg); } }
 @keyframes pomi-shimmer { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 @keyframes pomi-fresh { from { background-color: rgb(91 156 255 / 0.2); } to { background-color: transparent; } }
+@keyframes pomi-press { 0%, 100% { transform: scale(1); } 35% { transform: scale(0.8); } }
 @keyframes pomi-card-in { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
 .pomi-pop { animation: pomi-pop 280ms ease-out both; }
 .pomi-picked { animation: pomi-picked 240ms ease-out; }
@@ -95,12 +96,14 @@ const STYLES = `
 .pomi-shimmer, .pomi-shimmer-text { animation: pomi-shimmer 1.1s ease-in-out infinite; }
 .pomi-fresh { animation: pomi-fresh 2.4s ease-out both; }
 .pomi-card-in { animation: pomi-card-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pomi-fresh-in { animation: pomi-fresh 2.4s ease-out both, pomi-card-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pomi-press { animation: pomi-press 360ms ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   .pomi-pop, .pomi-picked, .pomi-fade-scale, .pomi-wave > span, .pomi-ripple, .pomi-halo,
-  .pomi-shimmer, .pomi-shimmer-text, .pomi-card-in { animation: none; }
+  .pomi-shimmer, .pomi-shimmer-text, .pomi-card-in, .pomi-press { animation: none; }
   .pomi-spin { animation-duration: 2.4s; }
   .pomi-ripple { display: none; }
-  .pomi-fresh { animation: none; background-color: rgb(91 156 255 / 0.12); }
+  .pomi-fresh, .pomi-fresh-in { animation: none; background-color: rgb(91 156 255 / 0.12); }
   .pomi-travel { animation: none; visibility: hidden; }
   .pomi-motion { transition: none !important; }
 }

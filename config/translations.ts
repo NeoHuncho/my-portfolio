@@ -4,9 +4,9 @@ type ObjectInfo = { title: string; body: string };
 
 /** How I work, the hero's three pieces, from day to night. */
 type TrioId = 'ticket' | 'agents' | 'night';
-/** The rest of me, added to the desk from its tray; phones show all but the last two. */
-type ExtraId = 'portrait' | 'flags' | 'mountain' | 'sport' | 'robot' | 'keys' | 'server' | 'oss';
-type ShelfId = Exclude<ExtraId, 'portrait' | 'keys'>;
+/** The rest of me, added to the desk from its tray; phones, with no keyboard, show all but the search key. */
+type ExtraId = 'mountain' | 'flags' | 'robot' | 'sport' | 'oss' | 'server' | 'keys' | 'strategy';
+type ShelfId = Exclude<ExtraId, 'keys'>;
 
 export type TranslationStrings = {
   nav: {
@@ -23,19 +23,26 @@ export type TranslationStrings = {
   };
   hero: {
     eyebrow: string;
+    /** The photo by my name: a click shows it bigger. */
+    viewPhoto: string;
     role: string;
     tagline: string;
     /** Follows the tagline from `sm` up; phones show the first sentence only. */
     taglineMore: string;
+    /** The line I stand by, set a touch brighter than the rest of the tagline. */
+    taglineClaim: string;
+    /** What a recruiter checks first: where I am, my permit, my languages. */
+    facts: string[];
     primaryCta: string;
     secondaryCta: string;
-    shipped: (code: string) => string;
     closeInfo: string;
     /** The robot's callout: start and stop it driving after the pointer. */
     robotFollow: string;
     robotStop: string;
     /** The night shift's callout: a link down to the "How I work" board. */
     nightShiftLink: string;
+    /** The strategy games' callout: a link down to GameHub, where mine are. */
+    strategyLink: string;
     /** Phones: the desk follows the phone's tilt once switched on. */
     tiltOff: string;
     tiltOn: string;
@@ -73,10 +80,10 @@ export type TranslationStrings = {
       | 'server'
       | 'sport'
       | 'mountain'
-      | 'portrait'
       | 'robot'
       | 'night'
-      | 'flags',
+      | 'flags'
+      | 'strategy',
       ObjectInfo
     >;
   };
@@ -85,6 +92,10 @@ export type TranslationStrings = {
     title: string;
     intro: string;
     radar: string;
+    /** Link from the board header to Pomi's real radar issues. */
+    onGitHub: string;
+    /** Tag on the few made-up tickets (docs), so the real ones read as real. */
+    example: string;
     filterAll: string;
     toDecide: (count: number) => string;
     columns: { decision: string; review: string; released: string };
@@ -125,7 +136,6 @@ export type TranslationStrings = {
       fix: string;
       inCode: string;
       effort: string;
-      confidence: string;
       migration: string;
       disagree: string;
     };
@@ -210,8 +220,7 @@ export type TranslationStrings = {
     source: string;
     more: string;
     archived: string;
-    liveDemo: string;
-    gamesNote: string;
+    gamesHome: string;
     rotaDesktop: string;
     rotaPhone: string;
     loadingGame: string;
@@ -266,16 +275,20 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     hero: {
       eyebrow: 'William Guinaudie',
+      viewPhoto: 'See my photo',
       role: 'AI Engineer',
-      tagline: 'I build products with AI agents, and the workflows that keep them reliable.',
-      taglineMore: 'They take on the legwork. I make the calls and stand behind what ships.',
+      tagline:
+        'Agentic engineering: I build products with AI agents, and the workflows that keep them reliable.',
+      taglineMore: 'They take on the legwork.',
+      taglineClaim: 'I make the calls and stand behind what ships.',
+      facts: ['Lausanne, Switzerland', 'Swiss work permit', 'English and French, both native'],
       primaryCta: 'See my experience',
       secondaryCta: 'Download CV',
-      shipped: (code) => `✓ ${code} merged, on my approval`,
       closeInfo: 'Close',
       robotFollow: 'Follow my mouse',
       robotStop: 'Stop following',
       nightShiftLink: 'See how I work',
+      strategyLink: 'See GameHub',
       tiltOff: 'Tilt to play',
       tiltOn: 'Tilt on',
       previous: 'Previous',
@@ -291,7 +304,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         turnHint: 'Swipe to turn it',
         caption: {
           ticket:
-            'By day, I make the architecture decisions with the team. Agents extend my own thinking: we dig through the code together, and I edit their plans until they hold up.',
+            'By day, I make the architecture decisions with the team. Agents extend my own thinking: they explore the code with me and draft plans that I edit until they hold up.',
           agents:
             'I run a modded Claude Code as my main driver, with the Codex CLI wired in to make full use of both subscriptions. Each model takes the work it does best and checks the other’s.',
           night:
@@ -303,14 +316,14 @@ export const translations: Record<Locale, TranslationStrings> = {
         addAll: 'Add everything',
         tidy: 'Tidy up',
         items: {
-          portrait: { title: 'That’s me', body: 'Hi, I’m William' },
-          flags: { title: 'EN · FR', body: 'Both native' },
           mountain: { title: 'Switzerland', body: 'Work permit ✓' },
-          sport: { title: 'Walk and talk', body: 'Dictating at 4.5 km/h' },
+          flags: { title: 'EN · FR', body: 'Both native' },
           robot: { title: 'Automation', body: 'At home too' },
-          keys: { title: 'Shortcuts', body: 'Press / to search' },
+          sport: { title: 'Walk and talk', body: 'Dictating at 4.5 km/h' },
+          oss: { title: 'Open source', body: 'Fork, fix, publish' },
           server: { title: 'Homelab', body: 'Self-hosted' },
-          oss: { title: 'Open source', body: 'Use, fix, publish' },
+          keys: { title: 'Shortcuts', body: 'Press / to search' },
+          strategy: { title: 'Strategy games', body: 'One more turn' },
         },
         caption: {
           flags:
@@ -318,18 +331,20 @@ export const translations: Record<Locale, TranslationStrings> = {
           mountain:
             'My favourite place is the mountains, so Switzerland worked out suspiciously well. Swiss work permit: already sorted.',
           sport:
-            'I love to move. At my standing desk I walk on a walking pad and dictate a lot of my prompts.',
+            'I love to move. At my standing desk I walk on a walking pad and dictate much of what I write.',
           robot:
             'I automate where it makes sense, at home too: agent workflows take care of the repetitive bits of my personal life.',
           server:
-            'I love hardware. I self-host what I can on my homelab, and everything I build can be self-hosted too.',
-          oss: 'I use open source every day, contribute upstream when I can and publish my own projects.',
+            'I love hardware. I self-host what I can on my homelab, and my side projects can be self-hosted too.',
+          oss: 'I use open source every day and run my own forks of several projects, tailored to my needs. I contribute upstream when I can and publish my own.',
+          strategy:
+            'I love strategy games: thinking a few turns ahead, then adapting when the other side moves. Enough to design my own, on GameHub.',
         },
       },
       objects: {
         ticket: {
           title: 'Day shift',
-          body: 'By day, I make the architecture decisions with the team, so the code serves the business. Agents extend my own thinking: we dig through the codebase together, and I edit their plans until they hold up.',
+          body: 'By day, I make the architecture decisions with the team, so the code serves the business. Agents extend my own thinking: they explore the codebase with me and draft plans that I edit until they hold up.',
         },
         keys: {
           title: 'Keyboard shortcuts',
@@ -341,23 +356,19 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         oss: {
           title: 'Open source',
-          body: 'I use open source every day, contribute upstream when I can, and publish my own projects.',
+          body: 'I use open source every day and run my own forks of several projects, tailored to how I work. I contribute upstream when I can and publish my own projects.',
         },
         server: {
           title: 'Homelab',
-          body: 'I am passionate about hardware in general. I self-host what I can on my homelab, and everything I build can be self-hosted too.',
+          body: 'I am passionate about hardware in general. I self-host what I can on my homelab, and my side projects can be self-hosted too.',
         },
         sport: {
           title: 'Walk and talk',
-          body: 'I love to move, and sport is how I recharge. At my standing desk I walk on a walking pad and dictate a lot of my prompts: I talk as much as I type.',
+          body: 'I love to move, and sport is how I recharge. At my standing desk I walk on a walking pad and dictate much of what I write.',
         },
         mountain: {
           title: 'Switzerland',
           body: 'For someone whose favourite place is the mountains, ending up in Switzerland worked out suspiciously well. Swiss work permit: already sorted.',
-        },
-        portrait: {
-          title: 'That’s me',
-          body: 'Hi, I’m William. I have been building products for six years, and AI agents are now at the heart of how I work.',
         },
         robot: {
           title: 'Automation, at home too',
@@ -371,14 +382,20 @@ export const translations: Record<Locale, TranslationStrings> = {
           title: 'British and French',
           body: 'I am a dual British and French citizen, and both languages are native to me: I work just as well in English as in French.',
         },
+        strategy: {
+          title: 'Strategy games',
+          body: 'I love strategy games: thinking a few turns ahead, weighing trade-offs, adapting when the other side moves. Enough to design my own: they are on GameHub, further down.',
+        },
       },
     },
     board: {
       eyebrow: '03 · How I work',
       title: 'Agents do the legwork. I make the calls.',
       intro:
-        'Scheduled agent runs turn feedback, errors and the codebase into tickets with a plan. I make the decisions and own every change that ships, even the ones too big to read line by line. Try it.',
+        'Scheduled agent runs turn feedback, errors and the codebase into tickets with a plan. I make the decisions and own every change that ships. Below, a replay of the radar on Pomi, my side project. Try it.',
       radar: 'Daily radar',
+      onGitHub: 'Real issues on GitHub',
+      example: 'Example',
       filterAll: 'All',
       toDecide: (count) => `${count} to decide`,
       columns: {
@@ -416,7 +433,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         items: [
           {
             title: 'Ownership',
-            body: '{link} makes me reason through each plan before it is built, Geoffrey Litt’s {link} quizzes me on what was built. A pull request can be too big to read line by line, never too big to understand.',
+            body: '{link} makes me reason through each plan before it is built, and Geoffrey Litt’s {link} quizzes me on what was built, so I understand each change before it merges.',
             links: [
               { label: 'VibeWise', href: 'https://github.com/nykooi1/vibe-wise' },
               {
@@ -426,16 +443,16 @@ export const translations: Record<Locale, TranslationStrings> = {
             ],
           },
           {
-            title: 'Evaluation',
+            title: 'Feedback loop',
             body: 'My accepts, rejections and review comments go back into the agent instructions and the repo memory, so the next run repeats fewer mistakes.',
           },
           {
             title: 'Scoring',
-            body: 'Every plan comes with effort, confidence and evidence. When the agent is unsure about a plan, it asks a question before anything is built.',
+            body: 'Every plan comes with an effort estimate and the evidence behind it. When the agent is unsure about a plan, it asks a question before anything is built.',
           },
           {
-            title: 'Observability',
-            body: 'Every agent run is traced: steps, tool calls, cost and time. A wrong result can be followed back to the step that caused it, and Matt Pocock’s {link} takes me back through past runs to find what to improve.',
+            title: 'Retrospectives',
+            body: 'Matt Pocock’s {link} takes me back through past agent runs to see where they went wrong and what to change in the instructions.',
             links: [
               {
                 label: 'retro skill',
@@ -453,7 +470,6 @@ export const translations: Record<Locale, TranslationStrings> = {
         fix: 'Fix',
         inCode: 'In the code',
         effort: 'Effort',
-        confidence: 'Confidence',
         migration: 'Migration',
         disagree: 'What disagrees',
       },
@@ -520,7 +536,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     experience: {
       eyebrow: '02 · Experience',
-      title: 'Six years of shipping products, front to back.',
+      title: 'Five years of shipping products, front to back.',
       present: 'Now',
       fullTime: 'Full time',
       built: 'What I built',
@@ -536,21 +552,20 @@ export const translations: Record<Locale, TranslationStrings> = {
     sideProjects: {
       eyebrow: '04 · Side projects',
       title: 'Things I built. Open source.',
-      intro: 'Built for my own use, not as side businesses.',
+      intro:
+        'Built for my own use, not as side businesses. This is where I put AI inside the product itself.',
       stars: (count) => `${count}+ stars`,
       source: 'Source code',
       more: 'More projects',
       archived: 'Archived',
-      liveDemo: 'Live demo',
-      gamesNote:
-        'The real game against bots, one match on both screens. Play on either; “All games” opens the others.',
+      gamesHome: 'Back to all games',
       rotaDesktop: 'Rota · desktop',
       rotaPhone: 'Rota · phone',
       loadingGame: 'Setting up the table…',
     },
     footer: {
-      title: 'Want agents that actually ship in your codebase?',
-      body: 'I am happy to talk about AI engineering, developer workflows, or your next product.',
+      title: 'Building a team that works with AI agents?',
+      body: 'I am open to AI engineering roles in Switzerland, and happy to talk about how your team could work with agents.',
       email: 'Email me',
       builtWith: 'Built with Next.js, React Three Fiber and Rapier.',
     },
@@ -601,18 +616,24 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     hero: {
       eyebrow: 'William Guinaudie',
+      viewPhoto: 'Voir ma photo',
       role: 'AI Engineer',
       tagline:
-        'Je construis des produits avec des agents IA, et les workflows qui les rendent fiables.',
-      taglineMore:
-        'Ils abattent le gros du travail. Moi, je tranche et j’assume ce qui part en production.',
+        'Ingénierie agentique : je construis des produits avec des agents IA, et les workflows qui les rendent fiables.',
+      taglineMore: 'Ils abattent le gros du travail.',
+      taglineClaim: 'Moi, je tranche et j’assume ce qui part en production.',
+      facts: [
+        'Lausanne, Suisse',
+        'Permis de travail suisse',
+        'Français et anglais, langues maternelles',
+      ],
       primaryCta: 'Voir mon expérience',
       secondaryCta: 'Télécharger le CV',
-      shipped: (code) => `✓ ${code} mergé, sur mon feu vert`,
       closeInfo: 'Fermer',
       robotFollow: 'Suivre ma souris',
       robotStop: 'Arrêter de suivre',
       nightShiftLink: 'Voir ma méthode',
+      strategyLink: 'Voir GameHub',
       tiltOff: 'Incliner pour jouer',
       tiltOn: 'Inclinaison active',
       previous: 'Précédent',
@@ -628,7 +649,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         caption: {
           ticket:
-            'Le jour, je prends les décisions d’architecture avec l’équipe. Les agents prolongent ma propre réflexion : on explore le code ensemble, et je retravaille leurs plans jusqu’à ce qu’ils tiennent la route.',
+            'Le jour, je prends les décisions d’architecture avec l’équipe. Les agents prolongent ma propre réflexion : ils explorent le code avec moi et rédigent des plans que je retravaille jusqu’à ce qu’ils tiennent la route.',
           agents:
             'J’utilise une version moddée de Claude Code comme outil principal, avec la CLI Codex intégrée pour exploiter pleinement mes deux abonnements. Chaque modèle prend ce qu’il fait le mieux et vérifie le travail de l’autre.',
           night:
@@ -640,33 +661,35 @@ export const translations: Record<Locale, TranslationStrings> = {
         addAll: 'Tout ajouter',
         tidy: 'Ranger',
         items: {
-          portrait: { title: 'C’est moi', body: 'Salut, moi c’est William' },
-          flags: { title: 'EN · FR', body: 'Deux langues maternelles' },
           mountain: { title: 'Suisse', body: 'Permis de travail ✓' },
-          sport: { title: 'Marcher et parler', body: 'Je dicte à 4,5 km/h' },
+          flags: { title: 'FR · EN', body: 'Deux langues maternelles' },
           robot: { title: 'Automatisation', body: 'À la maison aussi' },
-          keys: { title: 'Raccourcis', body: 'Appuie sur / pour chercher' },
+          sport: { title: 'Marcher et parler', body: 'Je dicte à 4,5 km/h' },
+          oss: { title: 'Open source', body: 'Forker, corriger, publier' },
           server: { title: 'Homelab', body: 'Auto-hébergé' },
-          oss: { title: 'Open source', body: 'Utiliser, corriger, publier' },
+          keys: { title: 'Raccourcis', body: 'Appuie sur / pour chercher' },
+          strategy: { title: 'Jeux de stratégie', body: 'Encore un tour' },
         },
         caption: {
           flags:
-            'Double nationalité britannique et française, deux langues maternelles : je travaille aussi bien en anglais qu’en français.',
+            'Double nationalité française et britannique, deux langues maternelles : je travaille aussi bien en français qu’en anglais.',
           mountain:
             'Quand on préfère la montagne à tout, finir en Suisse tombe étrangement bien. Permis de travail suisse : déjà en poche.',
           sport:
-            'J’adore bouger. À mon bureau debout, je marche sur un tapis et je dicte une bonne partie de mes prompts.',
+            'J’adore bouger. À mon bureau debout, je marche sur un tapis et je dicte une bonne partie de ce que j’écris.',
           robot:
             'J’automatise là où ça a du sens, à la maison aussi : des workflows d’agents s’occupent des tâches répétitives de ma vie perso.',
           server:
-            'Passionné de hardware, j’auto-héberge ce que je peux sur mon homelab, et tout ce que je construis peut l’être aussi.',
-          oss: 'J’utilise l’open source tous les jours, je contribue quand je peux et je publie mes propres projets.',
+            'Passionné de hardware, j’auto-héberge ce que je peux sur mon homelab, et mes projets perso peuvent l’être aussi.',
+          oss: 'J’utilise l’open source tous les jours et j’entretiens mes propres forks de plusieurs projets, adaptés à mes besoins. Je contribue quand je peux et je publie les miens.',
+          strategy:
+            'J’adore les jeux de stratégie : voir quelques tours à l’avance, puis s’adapter quand l’adversaire joue. Au point de concevoir les miens, sur GameHub.',
         },
       },
       objects: {
         ticket: {
           title: 'L’équipe de jour',
-          body: 'Le jour, je prends les décisions d’architecture avec l’équipe, pour que le code serve le métier. Les agents prolongent ma propre réflexion : on explore la codebase ensemble, et je retravaille leurs plans jusqu’à ce qu’ils tiennent la route.',
+          body: 'Le jour, je prends les décisions d’architecture avec l’équipe, pour que le code serve le métier. Les agents prolongent ma propre réflexion : ils explorent la codebase avec moi et rédigent des plans que je retravaille jusqu’à ce qu’ils tiennent la route.',
         },
         keys: {
           title: 'Raccourcis clavier',
@@ -678,23 +701,19 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         oss: {
           title: 'Open source',
-          body: 'J’utilise l’open source tous les jours, je contribue quand je peux et je publie mes propres projets.',
+          body: 'J’utilise l’open source tous les jours et j’entretiens mes propres forks de plusieurs projets, adaptés à ma façon de travailler. Je contribue quand je peux et je publie mes propres projets.',
         },
         server: {
           title: 'Homelab',
-          body: 'Je suis passionné par le hardware en général. J’auto-héberge ce que je peux sur mon homelab, et tout ce que je construis peut l’être aussi.',
+          body: 'Je suis passionné par le hardware en général. J’auto-héberge ce que je peux sur mon homelab, et mes projets perso peuvent l’être aussi.',
         },
         sport: {
           title: 'Marcher et parler',
-          body: 'J’adore bouger, et le sport me ressource. À mon bureau debout, je marche sur un tapis de marche et je dicte une bonne partie de mes prompts : je parle autant que je tape.',
+          body: 'J’adore bouger, et le sport me ressource. À mon bureau debout, je marche sur un tapis de marche et je dicte une bonne partie de ce que j’écris.',
         },
         mountain: {
           title: 'La Suisse',
           body: 'Quand on préfère la montagne à tout le reste, finir en Suisse, ça tombe étrangement bien. Permis de travail suisse : déjà en poche.',
-        },
-        portrait: {
-          title: 'C’est moi',
-          body: 'Salut, moi c’est William. Je construis des produits depuis six ans, et les agents IA sont aujourd’hui au cœur de ma façon de travailler.',
         },
         robot: {
           title: 'L’automatisation, à la maison aussi',
@@ -706,7 +725,11 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         flags: {
           title: 'Franco-britannique',
-          body: 'J’ai la double nationalité britannique et française, et les deux langues sont maternelles pour moi : je travaille aussi bien en anglais qu’en français.',
+          body: 'J’ai la double nationalité française et britannique, et les deux langues sont maternelles pour moi : je travaille aussi bien en français qu’en anglais.',
+        },
+        strategy: {
+          title: 'Les jeux de stratégie',
+          body: 'J’adore les jeux de stratégie : voir quelques tours à l’avance, peser le pour et le contre, s’adapter quand l’adversaire joue. Au point de concevoir les miens : ils sont sur GameHub, plus bas.',
         },
       },
     },
@@ -714,8 +737,10 @@ export const translations: Record<Locale, TranslationStrings> = {
       eyebrow: '03 · Ma méthode',
       title: 'Les agents font le gros du travail. Je décide.',
       intro:
-        'Des runs d’agents planifiés transforment les retours, les erreurs et la codebase en tickets avec un plan. Je prends les décisions et je réponds de chaque changement livré, même ceux trop gros pour être lus ligne à ligne. Essaie.',
+        'Des runs d’agents planifiés transforment les retours, les erreurs et la codebase en tickets avec un plan. Je prends les décisions et je réponds de chaque changement livré. Ci-dessous, le radar de Pomi, mon projet perso, rejoué. Essaie.',
       radar: 'Radar quotidien',
+      onGitHub: 'Les vrais tickets sur GitHub',
+      example: 'Exemple',
       filterAll: 'Tout',
       toDecide: (count) => `${count} à décider`,
       columns: {
@@ -754,7 +779,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         items: [
           {
             title: 'Maîtrise',
-            body: '{link} m’oblige à raisonner moi-même sur chaque plan avant qu’il soit construit, le {link} de Geoffrey Litt me questionne sur ce qui a été construit. Une pull request peut être trop grosse pour être lue ligne à ligne, jamais trop pour être comprise.',
+            body: '{link} m’oblige à raisonner moi-même sur chaque plan avant qu’il soit construit, et le {link} de Geoffrey Litt me questionne sur ce qui a été construit : je comprends chaque changement avant qu’il soit mergé.',
             links: [
               { label: 'VibeWise', href: 'https://github.com/nykooi1/vibe-wise' },
               {
@@ -764,16 +789,16 @@ export const translations: Record<Locale, TranslationStrings> = {
             ],
           },
           {
-            title: 'Évaluation',
+            title: 'Boucle de retours',
             body: 'Mes acceptations, mes rejets et mes commentaires de relecture repartent dans les instructions des agents et la mémoire du repo, pour que le run suivant répète moins d’erreurs.',
           },
           {
             title: 'Scoring',
-            body: 'Chaque plan arrive avec un effort, un niveau de confiance et des preuves. Quand l’agent doute d’un plan, il pose une question avant que quoi que ce soit ne se construise.',
+            body: 'Chaque plan arrive avec une estimation de l’effort et les preuves qui le justifient. Quand l’agent doute d’un plan, il pose une question avant que quoi que ce soit ne se construise.',
           },
           {
-            title: 'Observabilité',
-            body: 'Chaque run d’agent est tracé : étapes, appels d’outils, coût et durée. Un résultat faux se remonte jusqu’à l’étape qui l’a causé, et le {link} de Matt Pocock me fait repasser sur les runs passés pour trouver quoi améliorer.',
+            title: 'Rétrospectives',
+            body: 'Le {link} de Matt Pocock me fait repasser sur les runs d’agents passés, pour voir où ils ont dérapé et ce qu’il faut changer dans les instructions.',
             links: [
               {
                 label: 'skill retro',
@@ -791,7 +816,6 @@ export const translations: Record<Locale, TranslationStrings> = {
         fix: 'Correctif',
         inCode: 'Dans le code',
         effort: 'Effort',
-        confidence: 'Confiance',
         migration: 'Migration',
         disagree: 'Ce qui se contredit',
       },
@@ -859,7 +883,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     experience: {
       eyebrow: '02 · Expérience',
-      title: 'Six ans à livrer des produits, du front au back.',
+      title: 'Cinq ans à livrer des produits, du front au back.',
       present: 'Actuel',
       fullTime: 'Temps plein',
       built: "Ce que j'ai construit",
@@ -875,21 +899,20 @@ export const translations: Record<Locale, TranslationStrings> = {
     sideProjects: {
       eyebrow: '04 · Projets perso',
       title: 'Ce que j’ai construit. En open source.',
-      intro: 'Construits pour mon propre usage, pas comme des side business.',
+      intro:
+        'Construits pour mon propre usage, pas comme des side business. C’est là que je mets l’IA dans le produit lui-même.',
       stars: (count) => `${count}+ étoiles`,
       source: 'Code source',
       more: 'Autres projets',
       archived: 'Archivé',
-      liveDemo: 'Démo live',
-      gamesNote:
-        'Le vrai jeu contre des bots, une seule partie sur les deux écrans. Joue sur l’un ou l’autre ; « All games » ouvre les autres.',
+      gamesHome: 'Retour à tous les jeux',
       rotaDesktop: 'Rota · ordinateur',
       rotaPhone: 'Rota · téléphone',
       loadingGame: 'On installe la table…',
     },
     footer: {
-      title: 'Envie d’agents qui livrent vraiment dans ta codebase ?',
-      body: 'Parlons IA engineering, workflows de dev, ou de ton prochain produit.',
+      title: 'Tu montes une équipe qui travaille avec des agents IA ?',
+      body: 'Je suis ouvert à des postes d’AI Engineer en Suisse, et partant pour parler de la façon dont ton équipe pourrait travailler avec des agents.',
       email: 'Écris-moi',
       builtWith: 'Construit avec Next.js, React Three Fiber et Rapier.',
     },

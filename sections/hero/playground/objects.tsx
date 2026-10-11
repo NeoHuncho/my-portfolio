@@ -1,5 +1,4 @@
-import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { RoundedBox } from '@react-three/drei';
+import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import {
   CoefficientCombineRule,
@@ -12,15 +11,19 @@ import {
 import {
   AdditiveBlending,
   Box3,
+  BoxGeometry,
   BufferAttribute,
-  type BufferGeometry,
+  BufferGeometry,
   CanvasTexture,
   Color,
   ConeGeometry,
+  CylinderGeometry,
   DoubleSide,
   ExtrudeGeometry,
   type Group,
+  type InstancedMesh,
   LatheGeometry,
+  Matrix4,
   type Mesh,
   type MeshBasicMaterial,
   MeshStandardMaterial,
@@ -31,23 +34,29 @@ import {
   RepeatWrapping,
   Shape,
   ShaderMaterial,
+  SphereGeometry,
   SRGBColorSpace,
   TorusGeometry,
   Vector2,
   Vector3,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
-import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { useLanguage } from '@hooks/useLanguage';
+import { RoundedBox } from './roundedBox';
 import { CLAUDE_PATH, CODEX_PATH } from '../brandMarks';
 import { useDeskScreen } from './deskScreen';
-import { type KeycapItem, type PropItem, ticketPool } from './items';
+import { type KeycapItem, type PropItem } from './items';
 import {
   monoFamily,
   roundRect,
   sansFamily,
   useLabelTexture,
   useResourceDisposal,
+  wrapText,
 } from './labelTexture';
+import { textureScale, useDetailQuality } from '../quality';
 
 const PAPER = '#f4f2ed';
 const ACCENT = '#ff6b35';
@@ -876,63 +885,74 @@ function noise3(x: number, y: number, z: number) {
  * (see useMountainMaterial), so its edge stays soft and irregular instead of
  * following the triangles.
  */
+/**
+ * Built once a page for each peak and shared: the desk, the tray and the
+ * phone's shelf all show the same mountain, and building one takes a while.
+ */
+const mountains = new Map<string, BufferGeometry>();
+
 function useMountainGeometry(radius: number, height: number, seed: number): BufferGeometry {
-  const geometry = useMemo(() => {
-    const source = new ConeGeometry(radius, height, 96, 36);
-    source.deleteAttribute('normal');
-    source.deleteAttribute('uv');
-    const geometry = mergeVertices(source);
-    // Merging copies the buffers, so the temporary cone is no longer needed.
-    source.dispose();
-    const positions = geometry.getAttribute('position');
-    // Per vertex: height up the peak (0 to 1), how deep in a gully, and the peak's seed.
-    const snowData = new Float32Array(positions.count * 3);
-
-    for (let i = 0; i < positions.count; i += 1) {
-      const x = positions.getX(i);
-      const y = positions.getY(i);
-      const z = positions.getZ(i);
-      const t = (y + height / 2) / height;
-      const angle = Math.atan2(z, x);
-      const slope = Math.sin(Math.PI * Math.min(1, t * 1.15));
-      const ridges = 1 - Math.abs(Math.sin(angle * 2.5 + seed + t * 1.8));
-      const detail =
-        0.09 * Math.sin(angle * 3 + seed) +
-        0.06 * Math.sin(angle * 5 - seed * 1.7 + t * 3) +
-        0.035 * Math.sin(angle * 11 + seed * 0.6 + t * 7) +
-        0.02 * Math.sin(angle * 23 + t * 11);
-      const scale = 1 + (detail + 0.14 * ridges - 0.07) * (0.6 + 0.4 * slope);
-      // Lean the summit a little so it is not a perfect cone.
-      const lean = t * t * 0.12 * radius;
-      positions.setXYZ(
-        i,
-        x * scale + lean,
-        y + 0.04 * height * Math.sin(angle * 4 + seed + t * 5) * slope,
-        z * scale - lean * 0.4
-      );
-      snowData.set([t, 1 - ridges, seed], i * 3);
-    }
-    geometry.computeVertexNormals();
-
-    const colors = new Float32Array(positions.count * 3);
-    const color = new Color();
-    for (let i = 0; i < positions.count; i += 1) {
-      const t = snowData[i * 3];
-      const gully = snowData[i * 3 + 1];
-      const grain = noise3(
-        positions.getX(i) * 5 + seed * 10,
-        positions.getY(i) * 5,
-        positions.getZ(i) * 5
-      );
-      color.copy(ROCK_LOW).lerp(ROCK_HIGH, smoothstep(0, 0.6, t) * (0.6 + 0.4 * (1 - gully)));
-      color.multiplyScalar(0.88 + 0.12 * grain);
-      colors.set([color.r, color.g, color.b], i * 3);
-    }
-    geometry.setAttribute('color', new BufferAttribute(colors, 3));
-    geometry.setAttribute('snowData', new BufferAttribute(snowData, 3));
-    return geometry;
+  return useMemo(() => {
+    const key = `${radius} ${height} ${seed}`;
+    const built = mountains.get(key) ?? buildMountain(radius, height, seed);
+    mountains.set(key, built);
+    return built;
   }, [radius, height, seed]);
-  useResourceDisposal(geometry);
+}
+
+function buildMountain(radius: number, height: number, seed: number): BufferGeometry {
+  const source = new ConeGeometry(radius, height, 96, 36);
+  source.deleteAttribute('normal');
+  source.deleteAttribute('uv');
+  const geometry = mergeVertices(source);
+  // Merging copies the buffers, so the temporary cone is no longer needed.
+  source.dispose();
+  const positions = geometry.getAttribute('position');
+  // Per vertex: height up the peak (0 to 1), how deep in a gully, and the peak's seed.
+  const snowData = new Float32Array(positions.count * 3);
+
+  for (let i = 0; i < positions.count; i += 1) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    const z = positions.getZ(i);
+    const t = (y + height / 2) / height;
+    const angle = Math.atan2(z, x);
+    const slope = Math.sin(Math.PI * Math.min(1, t * 1.15));
+    const ridges = 1 - Math.abs(Math.sin(angle * 2.5 + seed + t * 1.8));
+    const detail =
+      0.09 * Math.sin(angle * 3 + seed) +
+      0.06 * Math.sin(angle * 5 - seed * 1.7 + t * 3) +
+      0.035 * Math.sin(angle * 11 + seed * 0.6 + t * 7) +
+      0.02 * Math.sin(angle * 23 + t * 11);
+    const scale = 1 + (detail + 0.14 * ridges - 0.07) * (0.6 + 0.4 * slope);
+    // Lean the summit a little so it is not a perfect cone.
+    const lean = t * t * 0.12 * radius;
+    positions.setXYZ(
+      i,
+      x * scale + lean,
+      y + 0.04 * height * Math.sin(angle * 4 + seed + t * 5) * slope,
+      z * scale - lean * 0.4
+    );
+    snowData.set([t, 1 - ridges, seed], i * 3);
+  }
+  geometry.computeVertexNormals();
+
+  const colors = new Float32Array(positions.count * 3);
+  const color = new Color();
+  for (let i = 0; i < positions.count; i += 1) {
+    const t = snowData[i * 3];
+    const gully = snowData[i * 3 + 1];
+    const grain = noise3(
+      positions.getX(i) * 5 + seed * 10,
+      positions.getY(i) * 5,
+      positions.getZ(i) * 5
+    );
+    color.copy(ROCK_LOW).lerp(ROCK_HIGH, smoothstep(0, 0.6, t) * (0.6 + 0.4 * (1 - gully)));
+    color.multiplyScalar(0.88 + 0.12 * grain);
+    colors.set([color.r, color.g, color.b], i * 3);
+  }
+  geometry.setAttribute('color', new BufferAttribute(colors, 3));
+  geometry.setAttribute('snowData', new BufferAttribute(snowData, 3));
   return geometry;
 }
 
@@ -1504,11 +1524,17 @@ const BUBBLE_AT: Array<[number, number, number]> = [
 ];
 /** Sparks circling the beam, blue and red in turn. */
 const SPARKS = 6;
+/** Each language's bubble: its flag, and the name its texture goes by. */
+const LANGUAGES = {
+  en: { draw: drawUnionJack, name: 'uk' },
+  fr: { draw: drawTricolore, name: 'fr' },
+} as const;
 
 /**
  * British and French: a little hologram emitter on the desk, two speech
  * bubbles hovering over it, one in each language. They take turns to speak,
- * the one talking rising and lighting up while the other waits.
+ * the one talking rising and lighting up while the other waits. The site's
+ * language sits on the left and speaks first.
  */
 function BilingualBubbles() {
   const base = -0.2;
@@ -1517,12 +1543,15 @@ function BilingualBubbles() {
   const emitter = useEmitterGeometry(radius, puck);
   const beam = useBeamMaterial();
   const ring = useRingMaterial();
-  const sweepUk = useSweepMaterial(BUBBLE[0], BUBBLE[1], BUBBLE_CORNER, 3.8);
-  const sweepFr = useSweepMaterial(BUBBLE[0], BUBBLE[1], BUBBLE_CORNER, 3.8);
-  const uk = useRef<Group>(null);
-  const fr = useRef<Group>(null);
-  const ukGlow = useRef<MeshStandardMaterial>(null);
-  const frGlow = useRef<MeshStandardMaterial>(null);
+  const { locale } = useLanguage();
+  const [first, second] =
+    locale === 'fr' ? [LANGUAGES.fr, LANGUAGES.en] : [LANGUAGES.en, LANGUAGES.fr];
+  const sweepFirst = useSweepMaterial(BUBBLE[0], BUBBLE[1], BUBBLE_CORNER, 3.8);
+  const sweepSecond = useSweepMaterial(BUBBLE[0], BUBBLE[1], BUBBLE_CORNER, 3.8);
+  const left = useRef<Group>(null);
+  const right = useRef<Group>(null);
+  const leftGlow = useRef<MeshStandardMaterial>(null);
+  const rightGlow = useRef<MeshStandardMaterial>(null);
   const sparks = useRef<Group>(null);
   const talk = useRef([1, 0]);
 
@@ -1530,14 +1559,14 @@ function BilingualBubbles() {
     const t = clock.elapsedTime;
     beam.uniforms.time.value = t;
     ring.uniforms.time.value = t;
-    sweepUk.uniforms.time.value = t;
-    // The French one's light comes round half a sweep later.
-    sweepFr.uniforms.time.value = t + 1.9;
+    sweepFirst.uniforms.time.value = t;
+    // The second one's light comes round half a sweep later.
+    sweepSecond.uniforms.time.value = t + 1.9;
     const speaker = Math.floor(t / TURN_S) % 2;
     const ease = 1 - Math.exp(-Math.min(delta, 0.1) * 7);
     const sides = [
-      { group: uk.current, glow: ukGlow.current, sweep: sweepUk },
-      { group: fr.current, glow: frGlow.current, sweep: sweepFr },
+      { group: left.current, glow: leftGlow.current, sweep: sweepFirst },
+      { group: right.current, glow: rightGlow.current, sweep: sweepSecond },
     ];
     sides.forEach(({ group, glow, sweep }, i) => {
       const [x, y, z] = BUBBLE_AT[i];
@@ -1609,149 +1638,405 @@ function BilingualBubbles() {
       {/* Leaning back a little towards the camera, turned in towards each other */}
       {/* At rest where they hover, so whatever measures the emitter sees them there */}
       <group
-        ref={uk}
+        ref={left}
         position={[BUBBLE_AT[0][0], base + BUBBLE_AT[0][1], BUBBLE_AT[0][2]]}
         rotation={[-0.32, 0.16, 0]}
       >
-        <SpeechBubble draw={drawUnionJack} name="uk" tail={1} glow={ukGlow} sweep={sweepUk} />
+        <SpeechBubble
+          draw={first.draw}
+          name={first.name}
+          tail={1}
+          glow={leftGlow}
+          sweep={sweepFirst}
+        />
       </group>
       <group
-        ref={fr}
+        ref={right}
         position={[BUBBLE_AT[1][0], base + BUBBLE_AT[1][1], BUBBLE_AT[1][2]]}
         rotation={[-0.32, -0.16, 0]}
       >
-        <SpeechBubble draw={drawTricolore} name="fr" tail={-1} glow={frGlow} sweep={sweepFr} />
+        <SpeechBubble
+          draw={second.draw}
+          name={second.name}
+          tail={-1}
+          glow={rightGlow}
+          sweep={sweepSecond}
+        />
       </group>
     </>
   );
 }
 
-const PORTRAIT_SRC = '/assets/about/profile.webp';
-/** The frame's shell, about the photo's proportions (490 × 509), and the screen inside it. */
-const FRAME: [number, number, number] = [1.12, 1.16, 0.09];
-const SCREEN: [number, number] = [0.98, 1.018];
-/** How far the frame leans back on its stand. */
-const FRAME_LEAN = 0.24;
-const FRAME_SHELL = '#f1efea';
-const FRAME_BEZEL = '#0b0c11';
-const FRAME_STAND = '#2c2d34';
-/** The darkest blue at the photo's edges, behind it while it loads. */
-const PRINT_EDGE = '#0d0a2c';
+/** The board: five by five square tiles, stepped up into a hill towards the middle. */
+const GRID = 5;
+const TILE = 0.32;
+const PITCH = 0.36;
+const CAP = 0.05;
+const PLATE_HALF = 0.96;
+const PLATE_HEIGHT = 0.08;
+const PLATE_BASE = -0.14;
+const PLATE_TOP = PLATE_BASE + PLATE_HEIGHT;
+/** How high each step of the hill stands, from the summit out to the edge. */
+const STEP_HEIGHT = [0.34, 0.19, 0.06];
+/** Unclaimed stone, a shade lighter up each step, so the hill reads from afar. */
+const STONE = ['#c3c6cc', '#a2a6ae', '#858991'].map((color) => new Color(color));
+const SIDE_COLORS = [new Color(ACCENT), new Color('#5b9cff')];
+const PIECE_PALE = '#efece6';
+const GEM_GOLD = '#d6b25e';
 
-function usePortraitImage() {
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
-  useEffect(() => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.onload = () => setImage(img);
-    img.src = PORTRAIT_SRC;
-    return () => {
-      img.onload = null;
-    };
+type Cell = [number, number];
+/** Each side's home corner, its banner planted there: the front left, and the back right. */
+const HOMES: Cell[] = [
+  [0, 4],
+  [4, 0],
+];
+/**
+ * One match, a move every beat, the two sides taking turns: each climbs
+ * towards the summit, the summit changes hands, and a tile or two is taken
+ * back on the way.
+ */
+const MOVES: Array<{ side: number; cell: Cell }> = [
+  { side: 0, cell: [1, 4] },
+  { side: 1, cell: [3, 0] },
+  { side: 0, cell: [1, 3] },
+  { side: 1, cell: [3, 1] },
+  { side: 0, cell: [0, 2] },
+  { side: 1, cell: [4, 2] },
+  { side: 0, cell: [2, 3] },
+  { side: 1, cell: [2, 1] },
+  { side: 0, cell: [2, 2] },
+  { side: 1, cell: [3, 2] },
+  { side: 0, cell: [3, 3] },
+  { side: 1, cell: [2, 2] },
+  { side: 0, cell: [1, 2] },
+  { side: 1, cell: [2, 3] },
+  { side: 0, cell: [1, 1] },
+  { side: 1, cell: [3, 4] },
+];
+const BEAT = 1.05;
+/** The share of a beat a hop takes, and how high it goes. */
+const HOP = 0.42;
+const HOP_HEIGHT = 0.2;
+/** After the last move: both pieces hop home, then the tiles flip back to stone, from the summit out. */
+const HOME_HOP = 0.6;
+const FLIP_SECONDS = 0.5;
+const FLIP_STAGGER = 0.2;
+const MATCH = MOVES.length * BEAT;
+/** Seen for the first time, the match is already under way. */
+const OPENING = 7.2 * BEAT;
+const LOOP = MATCH + HOME_HOP + 2 * FLIP_STAGGER + FLIP_SECONDS + 0.8;
+/** The pieces, a little bigger than drawn, to stand out at the desk's distance. */
+const PIECE_SCALE = 1.7;
+
+const cellIndex = ([col, row]: Cell) => row * GRID + col;
+const ringOf = (index: number) =>
+  Math.max(Math.abs((index % GRID) - 2), Math.abs(Math.floor(index / GRID) - 2));
+const TILES = Array.from({ length: GRID * GRID }, (_, index) => {
+  const ring = ringOf(index);
+  return {
+    x: ((index % GRID) - 2) * PITCH,
+    z: (Math.floor(index / GRID) - 2) * PITCH,
+    ring,
+    top: PLATE_TOP + STEP_HEIGHT[ring] + CAP,
+    home: HOMES.findIndex((home) => cellIndex(home) === index),
+  };
+});
+/** Every claim on each tile, in order: when it lands, and by whom. */
+const CLAIMS = TILES.map((_, index) =>
+  MOVES.flatMap(({ side, cell }, m) =>
+    cellIndex(cell) === index ? [{ at: m * BEAT + HOP * BEAT, side }] : []
+  )
+);
+
+/** The columns the tiles stand on, as one shape. */
+function useStepGeometry() {
+  const geometry = useMemo(() => {
+    const parts = TILES.map(({ x, z, ring }) => {
+      const height = STEP_HEIGHT[ring];
+      const part = new BoxGeometry(TILE * 0.96, height, TILE * 0.96);
+      part.translate(x, PLATE_TOP + height / 2, z);
+      return part;
+    });
+    const merged = mergeGeometries(parts) ?? new BufferGeometry();
+    parts.forEach((part) => part.dispose());
+    return merged;
   }, []);
-  return image;
+  useResourceDisposal(geometry);
+  return geometry;
+}
+
+/** A playing piece in a side's colours: a pale foot and body, and a cap in its colour. */
+function usePieceGeometry(color: Color) {
+  const geometry = useMemo(() => {
+    const pale = new Color(PIECE_PALE);
+    const foot = new CylinderGeometry(0.06, 0.066, 0.035, 16);
+    foot.translate(0, 0.0175, 0);
+    const body = new CylinderGeometry(0.038, 0.048, 0.085, 16);
+    body.translate(0, 0.035 + 0.0425, 0);
+    const cap = new SphereGeometry(0.05, 16, 10);
+    cap.translate(0, 0.12 + 0.03, 0);
+    const parts = [foot, body, cap].map((part, i) => {
+      const flat = part.toNonIndexed();
+      const tint = i === 2 ? color : pale;
+      const colors = new Float32Array(flat.attributes.position.count * 3);
+      for (let v = 0; v < colors.length; v += 3) {
+        colors.set([tint.r, tint.g, tint.b], v);
+      }
+      flat.setAttribute('color', new BufferAttribute(colors, 3));
+      return flat;
+    });
+    const merged = mergeGeometries(parts) ?? new BufferGeometry();
+    [foot, body, cap, ...parts].forEach((part) => part.dispose());
+    merged.computeVertexNormals();
+    merged.scale(PIECE_SCALE, PIECE_SCALE, PIECE_SCALE);
+    return merged;
+  }, [color]);
+  useResourceDisposal(geometry);
+  return geometry;
+}
+
+/** A side's banner on its home corner: a pole and a cloth that ripples in the wind. */
+function Banner({ side }: { side: number }) {
+  const cloth = useRef<Mesh>(null);
+  const geometry = useMemo(() => {
+    const geometry = new PlaneGeometry(0.22, 0.14, 8, 2);
+    geometry.translate(0.11, 0, 0);
+    return geometry;
+  }, []);
+  useResourceDisposal(geometry);
+  const rest = useMemo(
+    () => Float32Array.from(geometry.attributes.position.array as Float32Array),
+    [geometry]
+  );
+  useFrame(({ clock }) => {
+    const positions = cloth.current?.geometry.attributes.position as BufferAttribute | undefined;
+    if (!positions) {
+      return;
+    }
+    const t = clock.elapsedTime * 4 + side * 2;
+    for (let v = 0; v < positions.count; v += 1) {
+      const x = rest[v * 3];
+      positions.setZ(v, Math.sin(t - x * 22) * 0.03 * (x / 0.22));
+    }
+    positions.needsUpdate = true;
+  });
+  const tile = TILES[cellIndex(HOMES[side])];
+  // On the corner of the home tile furthest from the board's middle.
+  const out = side === 0 ? [-1, 1] : [1, -1];
+  return (
+    <group
+      position={[tile.x + out[0] * TILE * 0.36, tile.top, tile.z + out[1] * TILE * 0.36]}
+      rotation={[0, side === 0 ? 0.5 : Math.PI + 0.5, 0]}
+    >
+      <mesh position={[0, 0.21, 0]} castShadow>
+        <cylinderGeometry args={[0.009, 0.012, 0.42, 8]} />
+        <meshStandardMaterial color={PIECE_PALE} roughness={0.4} metalness={0.3} />
+      </mesh>
+      <mesh ref={cloth} geometry={geometry} position={[0.005, 0.34, 0]} castShadow>
+        <meshStandardMaterial color={SIDE_COLORS[side]} roughness={0.7} side={DoubleSide} />
+      </mesh>
+    </group>
+  );
 }
 
 /**
- * Me: a little smart frame on the desk, the photo lit like a screen behind
- * glass, a light crossing it now and then, and a status light breathing on
- * its stand.
+ * Strategy games, without naming one: a stepped board with a prize on its
+ * summit, two sides climbing towards it from their banners, each tile they
+ * land on taken in their colour. The match ends, the pieces go home, the
+ * tiles turn back to stone from the summit out, and it starts again.
  */
-function Portrait() {
-  const photo = usePortraitImage();
-  const texture = useLabelTexture(
-    490,
-    509,
-    (ctx, w, h) => {
-      // Rounded like the screen's corners; the corners stay transparent.
-      roundRect(ctx, 0, 0, w, h, 22);
-      ctx.save();
-      ctx.clip();
-      ctx.fillStyle = PRINT_EDGE;
-      ctx.fillRect(0, 0, w, h);
-      if (photo) {
-        ctx.drawImage(photo, 0, 0, w, h);
-      }
-      ctx.restore();
-    },
-    `portrait-${photo ? 'photo' : 'blank'}`
+function StrategyBoard() {
+  const steps = useStepGeometry();
+  const capGeometry = useMemo(() => new RoundedBoxGeometry(TILE, CAP, TILE, 2, 0.018), []);
+  useResourceDisposal(capGeometry);
+  const pieceGeometries = [usePieceGeometry(SIDE_COLORS[0]), usePieceGeometry(SIDE_COLORS[1])];
+  const caps = useRef<InstancedMesh>(null);
+  const pieces = useRef<Array<Mesh | null>>([]);
+  const gem = useRef<Mesh>(null);
+  const scratch = useMemo(
+    () => ({
+      matrix: new Matrix4(),
+      turn: new Quaternion(),
+      color: new Color(),
+      axis: new Vector3(1, 0, 0),
+    }),
+    []
   );
-  const [w, h, d] = FRAME;
-  const [sw, sh] = SCREEN;
-  const shell = useRoundedPanel(w, h, 0.09, d);
-  const bezel = useRoundedPanel(sw + 0.04, sh + 0.04, 0.05, 0.01);
-  const sweep = useSweepMaterial(sw, sh, 0.04, 5.5);
-  const led = useRef<MeshStandardMaterial>(null);
+
   useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    sweep.uniforms.time.value = t;
-    sweep.uniforms.strength.value = 0.5;
-    if (led.current) {
-      led.current.emissiveIntensity = 0.6 + 0.6 * (0.5 + 0.5 * Math.sin(t * 2.2));
+    const t = (clock.elapsedTime + OPENING) % LOOP;
+    const mesh = caps.current;
+    const { matrix, turn, color, axis } = scratch;
+    const lift = TILES.map(() => 0);
+    if (mesh) {
+      TILES.forEach((tile, index) => {
+        // Who holds it now, and how fresh the claim is: a fresh claim bounces and washes in.
+        let owner = tile.home;
+        let before = tile.home;
+        let since = Infinity;
+        CLAIMS[index].forEach(({ at, side }) => {
+          if (t >= at) {
+            before = owner;
+            owner = side;
+            since = t - at;
+          }
+        });
+        // The match over, it flips back to stone, the summit first.
+        const flipAt = MATCH + HOME_HOP + tile.ring * FLIP_STAGGER;
+        const flip = tile.home < 0 ? smoothstep(flipAt, flipAt + FLIP_SECONDS, t) * Math.PI : 0;
+        if (flip > Math.PI / 2) {
+          owner = -1;
+        }
+        const stone = STONE[tile.ring];
+        const wash = Math.min(1, since / 0.25);
+        color
+          .copy(before < 0 ? stone : SIDE_COLORS[before])
+          .lerp(owner < 0 ? stone : SIDE_COLORS[owner], flip > 0 ? 1 : wash);
+        // Just taken, it flashes a little brighter.
+        color.multiplyScalar(1 + 0.35 * Math.max(0, 1 - since / 0.4));
+        mesh.setColorAt(index, color);
+        // Never claimed this match, it rests: sin(Infinity) would put it nowhere.
+        const bounce = since < 1 ? Math.exp(-since * 7) * Math.sin(since * 22) * 0.025 : 0;
+        lift[index] = bounce + Math.sin(flip) * 0.14;
+        turn.setFromAxisAngle(axis, flip);
+        matrix.makeRotationFromQuaternion(turn);
+        matrix.setPosition(tile.x, tile.top - CAP / 2 + lift[index], tile.z);
+        mesh.setMatrixAt(index, matrix);
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) {
+        mesh.instanceColor.needsUpdate = true;
+      }
+    }
+
+    [0, 1].forEach((side) => {
+      const piece = pieces.current[side];
+      if (!piece) {
+        return;
+      }
+      // Where it hopped from and to last, and how far through that hop it is.
+      let from = cellIndex(HOMES[side]);
+      let to = from;
+      let start = -Infinity;
+      MOVES.forEach(({ side: mover, cell }, m) => {
+        if (mover === side && t >= m * BEAT) {
+          from = to;
+          to = cellIndex(cell);
+          start = m * BEAT;
+        }
+      });
+      let span = HOP * BEAT;
+      if (t >= MATCH) {
+        from = to;
+        to = cellIndex(HOMES[side]);
+        start = MATCH;
+        span = HOME_HOP;
+      }
+      const u = smoothstep(0, 1, (t - start) / span);
+      const a = TILES[from];
+      const b = TILES[to];
+      const reach = Math.hypot(b.x - a.x, b.z - a.z);
+      piece.position.set(
+        a.x + (b.x - a.x) * u,
+        a.top +
+          (b.top - a.top) * u +
+          lift[from] * (1 - u) +
+          lift[to] * u +
+          Math.sin(Math.PI * u) * (HOP_HEIGHT + reach * 0.15),
+        a.z + (b.z - a.z) * u
+      );
+    });
+
+    if (gem.current) {
+      // On its own clock, not the match's, so it never jumps as the match starts over.
+      gem.current.rotation.y = clock.elapsedTime * 0.8;
+      gem.current.position.y = TILES[12].top + 0.36 + Math.sin(clock.elapsedTime * 1.6) * 0.025;
     }
   });
 
-  const base = -0.25;
-  const stand: [number, number, number] = [0.92, 0.08, 0.4];
-  // The frame stands in the stand's slot, leaning back round its bottom edge.
-  const foot = base + stand[1] - 0.01;
-  const up = Math.cos(FRAME_LEAN) * (h / 2);
-  const back = -Math.sin(FRAME_LEAN) * (h / 2);
   return (
     <>
+      {/* The plate, then each step of the hill, so things rest on the board as it is drawn. */}
       <CuboidCollider
-        args={[stand[0] / 2, stand[1] / 2, stand[2] / 2]}
-        position={[0, base + stand[1] / 2, 0]}
-        density={2}
+        args={[PLATE_HALF, PLATE_HEIGHT / 2, PLATE_HALF]}
+        position={[0, PLATE_BASE + PLATE_HEIGHT / 2, 0]}
       />
-      <CuboidCollider
-        args={[w / 2, h / 2, d / 2]}
-        position={[0, foot + up, back]}
-        rotation={[-FRAME_LEAN, 0, 0]}
-        density={0.3}
-      />
+      {STEP_HEIGHT.map((height, ring) => {
+        const half = (2 - ring) * PITCH + TILE / 2;
+        const tall = (height + CAP) / 2;
+        return (
+          <CuboidCollider
+            // Fixed: one per step, summit first.
+            // eslint-disable-next-line react/no-array-index-key
+            key={ring}
+            args={[half, tall, half]}
+            position={[0, PLATE_TOP + tall, 0]}
+          />
+        );
+      })}
       <RoundedBox
-        args={stand}
+        args={[PLATE_HALF * 2, PLATE_HEIGHT, PLATE_HALF * 2]}
         radius={0.03}
         smoothness={2}
-        position={[0, base + stand[1] / 2, 0]}
+        position={[0, PLATE_BASE + PLATE_HEIGHT / 2, 0]}
         castShadow
         receiveShadow
       >
-        <meshStandardMaterial color={FRAME_STAND} roughness={0.4} metalness={0.3} />
+        <meshStandardMaterial color="#2a2b31" roughness={0.55} metalness={0.2} />
       </RoundedBox>
-      <mesh position={[0.34, base + stand[1] / 2, stand[2] / 2 + 0.002]}>
-        <circleGeometry args={[0.016, 16]} />
+      <mesh geometry={steps} castShadow receiveShadow>
+        <meshStandardMaterial color="#62656e" roughness={0.75} />
+      </mesh>
+      <instancedMesh
+        ref={(mesh) => {
+          caps.current = mesh;
+          // Colours from the first frame on, so the board is never drawn white.
+          if (mesh && !mesh.instanceColor) {
+            TILES.forEach((tile, index) => {
+              mesh.setColorAt(index, tile.home < 0 ? STONE[tile.ring] : SIDE_COLORS[tile.home]);
+              mesh.setMatrixAt(
+                index,
+                new Matrix4().setPosition(tile.x, tile.top - CAP / 2, tile.z)
+              );
+            });
+          }
+        }}
+        args={[capGeometry, undefined, TILES.length]}
+        castShadow
+        receiveShadow
+      >
+        <meshStandardMaterial roughness={0.5} />
+      </instancedMesh>
+      <Banner side={0} />
+      <Banner side={1} />
+      {[0, 1].map((side) => (
+        <mesh
+          key={side}
+          ref={(mesh) => {
+            pieces.current[side] = mesh;
+          }}
+          geometry={pieceGeometries[side]}
+          position={[
+            TILES[cellIndex(HOMES[side])].x,
+            TILES[cellIndex(HOMES[side])].top,
+            TILES[cellIndex(HOMES[side])].z,
+          ]}
+          castShadow
+        >
+          <meshStandardMaterial vertexColors roughness={0.4} />
+        </mesh>
+      ))}
+      <mesh ref={gem} position={[0, TILES[12].top + 0.36, 0]} castShadow>
+        <octahedronGeometry args={[0.13]} />
         <meshStandardMaterial
-          ref={led}
-          color="#3fcf8e"
-          emissive="#3fcf8e"
-          emissiveIntensity={1}
-          toneMapped={false}
+          color={GEM_GOLD}
+          emissive={GEM_GOLD}
+          emissiveIntensity={0.45}
+          roughness={0.25}
+          metalness={0.6}
+          flatShading
         />
       </mesh>
-      <group position={[0, foot + up, back]} rotation={[-FRAME_LEAN, 0, 0]}>
-        <mesh geometry={shell} castShadow receiveShadow>
-          <meshStandardMaterial color={FRAME_SHELL} roughness={0.45} />
-        </mesh>
-        <mesh geometry={bezel} position={[0, 0, d / 2]}>
-          <meshStandardMaterial color={FRAME_BEZEL} roughness={0.2} metalness={0.4} />
-        </mesh>
-        <mesh position={[0, 0, d / 2 + 0.007]}>
-          <planeGeometry args={[sw, sh]} />
-          <meshStandardMaterial
-            map={texture}
-            emissiveMap={texture}
-            emissive="#ffffff"
-            emissiveIntensity={0.45}
-            alphaTest={0.5}
-            roughness={0.25}
-          />
-        </mesh>
-        <mesh position={[0, 0, d / 2 + 0.01]} material={sweep} raycast={() => null}>
-          <planeGeometry args={[sw, sh]} />
-        </mesh>
-      </group>
     </>
   );
 }
@@ -1994,484 +2279,1014 @@ function Robot() {
   );
 }
 
-/** The night line's bed: length along the belt, height, depth. */
-const LINE_BED: [number, number, number] = [2, 0.2, 0.62];
-const LINE_TOP = LINE_BED[1] / 2;
-const LINE_FRAME = '#d9dce3';
-const LINE_TRIM = '#eef0f3';
-const LINE_DARK = '#2b2e36';
-/** Where things sit along the line: the to-do hopper, the belt, the done tray, and the two agents' stops. */
-const HOPPER: [number, number] = [-1, -0.6];
-const BELT_SPAN: [number, number] = [-0.66, 0.58];
-const TRAY: [number, number] = [0.6, 0.98];
-const STATIONS = [-0.19, 0.19];
-const CARD: [number, number, number] = [0.3, 0.02, 0.2];
-/** The gantry over the belt: its posts' height, and the beam the agents hang from. */
-const GANTRY_Y = 0.74;
-const BEAM: [number, number, number] = [0.72, 0.07, 0.12];
-/** Where each agent's head rests, and how far it comes down to work on a ticket. */
-const HEAD_Y = GANTRY_Y - 0.22;
-const HEAD_DROP = 0.15;
-/** A night: each ticket rides in, is worked on under its agent, and rides on to the tray. */
-const NIGHT_TICKETS = 4;
-const INTERVAL = 2.6;
-const RIDE_IN = 1.1;
-const WORK = 1.4;
-const RIDE_OUT = 1;
-const CLEAR_AT = 12.6;
-const NIGHT_LOOP = 13.6;
-const BELT_SPEED = 0.45;
-const AGENT_COLORS = [CLAUDE_ORANGE, CODEX_VIOLET];
+/** The night board: a light wedge standing on the desk, its face a kanban board leaning back towards the viewer. */
+const BOARD_W = 2.3;
+/** The face, from the ledge along the front up to the top edge at the back, and how far it leans back from upright. */
+const BOARD_H = 1.38;
+const BOARD_LEAN = 0.78;
+/** The ledge under the face, the light frame round it, and the underside. */
+const BOARD_LEDGE = 0.1;
+const BOARD_LIP = 0.05;
+const BOARD_FOOT = -0.1;
+const BOARD_DEPTH = BOARD_H * Math.sin(BOARD_LEAN);
+const BOARD_RISE = BOARD_H * Math.cos(BOARD_LEAN);
+const BOARD_FRAME = '#d9dce3';
+const NIGHT_INK = '#c3c8d8';
+/** The wedge's corners, for its collider: the underside, the back, and the face sloping down to the ledge. */
+const BOARD_HULL = new Float32Array(
+  [-1, 1].flatMap((side) => {
+    const x = (side * BOARD_W) / 2;
+    const d = BOARD_DEPTH / 2;
+    return [
+      ...[x, BOARD_FOOT, d],
+      ...[x, BOARD_FOOT, -d],
+      ...[x, BOARD_FOOT + BOARD_LEDGE + BOARD_RISE, -d],
+      ...[x, BOARD_FOOT + BOARD_LEDGE, d],
+    ];
+  })
+);
 
-/** Where ticket `i` is, `t` seconds into the night, and whether its agent is done with it. */
-function lineCardAt(i: number, t: number) {
-  const station = STATIONS[i % 2];
-  const start = i * INTERVAL;
-  const local = t - start;
-  const cardY = LINE_TOP + CARD[1] / 2 + 0.002;
-  const enter = HOPPER[1] - CARD[0] / 2;
-  if (local < 0) {
-    // Still in the hopper.
-    return { x: (HOPPER[0] + HOPPER[1]) / 2, y: cardY, scale: 0, working: 0, done: false };
+/**
+ * On the face, in its own units: across from the middle (u), up from the
+ * ledge (v), and out from it. The frame leaves the face this much inside.
+ */
+const FACE_W = BOARD_W - 2 * BOARD_LIP;
+const FACE_H = BOARD_H - 2 * BOARD_LIP;
+const FACE_TOP = BOARD_H - BOARD_LIP;
+/** Texture pixels to a unit of face. */
+const FACE_PX = 480;
+/** The night bar along the top: the clock, and the night going by from the moon to the sun. */
+const BAR_V: [number, number] = [1.14, 1.31];
+const BAR_W = 2.08;
+const BAR_PX = 500;
+/** The lanes: where the agents look for work, then to do, doing, and what waits for me in the morning. */
+const LANE_TOP = 1.09;
+const LANE_BOTTOM = 0.08;
+const LANE_HEAD = 0.14;
+type Glyph =
+  'search' | 'todo' | 'doing' | 'sun' | 'code' | 'logs' | 'chat' | 'bug' | 'shield' | 'bolt';
+const LANES: Array<{ u: number; w: number; title: string; glyph: Glyph }> = [
+  { u: -0.84, w: 0.4, title: 'Scan', glyph: 'search' },
+  { u: -0.34, w: 0.52, title: 'To do', glyph: 'todo' },
+  { u: 0.22, w: 0.52, title: 'Doing', glyph: 'doing' },
+  { u: 0.78, w: 0.52, title: 'Morning', glyph: 'sun' },
+];
+/** Three cards to a lane, top to bottom; what the agents scan sits in the same rows. */
+const ROWS = [0.79, 0.51, 0.23];
+const SOURCES: Array<{ title: string; glyph: Glyph; color: string; lines: string[] }> = [
+  { title: 'Code', glyph: 'code', color: '#8fb4ff', lines: ['#c792ea', '#82aaff', '#c3e88d'] },
+  { title: 'Logs', glyph: 'logs', color: '#7ee0a8', lines: ['#4a5372', '#4a5372', '#ff5d5d'] },
+  { title: 'Feedback', glyph: 'chat', color: '#ffc069', lines: ['#4a5372', '#4a5372', '#ffc069'] },
+];
+const SOURCE: [number, number] = [0.34, 0.22];
+/** A card: across, thick, up the face. */
+const NIGHT_CARD: [number, number, number] = [0.46, 0.016, 0.24];
+const NIGHT_CARD_PX = 1000;
+
+/** Above the face: a ticket gliding from lane to lane, a ticket just found. */
+const CARRY = 0.04;
+const FOUND = 0.03;
+/** A scan sweeps this far either side of the middle of its source. */
+const SWEEP = 0.14;
+/** Being scanned, a source lights up in this cool light; so does a ticket it has just turned up. */
+const SCAN_LIGHT = '#9fd8ff';
+
+/** Somewhere on the face: across, up, and how far out from it. */
+type Spot = [number, number, number];
+type Key = [number, Spot];
+const source = (row: number): Spot => [LANES[0].u, ROWS[row], FOUND];
+const slot = (lane: number, row: number, lift = 0): Spot => [LANES[lane].u, ROWS[row], lift];
+
+/**
+ * One night, in seconds. Agents scan the code, the logs and the feedback;
+ * what they find becomes a ticket, which they pick up and work through on
+ * their own, the ticket saying what they are doing as they go, and lay in
+ * the morning lane. By six the night's work waits there for me.
+ */
+const NIGHT_S = 18;
+const DAWN = 15;
+const CLEAR_AT = 16.9;
+/**
+ * The board opens late in the night, never empty: two tickets ready in the
+ * morning lane, the code being scanned, a ticket about to be picked up. Its
+ * still is this moment too, so the 3D takes over from it without a jump.
+ */
+const NIGHT_OPENS = 10.6;
+/** Where a source's tickets say they came from, till an agent picks them up. */
+const FOUND_IN = ['Found in the code', 'Found in the logs', 'From user feedback'];
+type NightCard = {
+  code: string;
+  title: string;
+  color: string;
+  glyph: Glyph;
+  /** The source it came out of, and when. */
+  row: number;
+  born: number;
+  keys: Key[];
+  /** Worked on in the doing lane, saying each of its steps in turn. */
+  work?: [number, number];
+  steps?: [string, string, string];
+  /** Laid in the morning lane. */
+  ready?: number;
+};
+const NIGHT_CARDS: NightCard[] = [
+  {
+    code: 'BUG-88',
+    title: 'Upload fails on iOS',
+    color: '#ff5d5d',
+    glyph: 'bug',
+    row: 1,
+    born: 1.5,
+    keys: [
+      [1.5, source(1)],
+      [2.3, slot(1, 0)],
+      [3.0, slot(1, 0)],
+      [3.2, slot(1, 0, CARRY)],
+      [4.0, slot(2, 0, CARRY)],
+      [4.2, slot(2, 0)],
+      [6.6, slot(2, 0)],
+      [6.8, slot(2, 0, CARRY)],
+      [7.6, slot(3, 0, CARRY)],
+      [7.8, slot(3, 0)],
+    ],
+    work: [4.2, 6.6],
+    steps: ['Reproducing', 'Finding the cause', 'Drafting a plan'],
+    ready: 7.8,
+  },
+  {
+    code: 'SEC-14',
+    title: 'Unescaped search input',
+    color: '#a78bfa',
+    glyph: 'shield',
+    row: 0,
+    born: 2.6,
+    keys: [
+      [2.6, source(0)],
+      [3.4, slot(1, 1)],
+      [3.6, slot(1, 1)],
+      [3.95, slot(1, 0)],
+      [4.0, slot(1, 0)],
+      [4.2, slot(1, 0, CARRY)],
+      [5.0, slot(2, 1, CARRY)],
+      [5.2, slot(2, 1)],
+      [7.8, slot(2, 1)],
+      [8.0, slot(2, 1, CARRY)],
+      [8.8, slot(3, 1, CARRY)],
+      [9.0, slot(3, 1)],
+    ],
+    work: [5.2, 7.8],
+    steps: ['Tracing the input', 'Checking the impact', 'Drafting a plan'],
+    ready: 9.0,
+  },
+  {
+    code: 'FB-23',
+    title: 'Export routes to CSV',
+    color: '#5b9cff',
+    glyph: 'chat',
+    row: 2,
+    born: 9.8,
+    keys: [
+      [9.8, source(2)],
+      [10.6, slot(1, 0)],
+      [10.7, slot(1, 0)],
+      [10.9, slot(1, 0, CARRY)],
+      [11.7, slot(2, 0, CARRY)],
+      [11.9, slot(2, 0)],
+      [13.6, slot(2, 0)],
+      [13.8, slot(2, 0, CARRY)],
+      [14.6, slot(3, 2, CARRY)],
+      [14.8, slot(3, 2)],
+    ],
+    work: [11.9, 13.6],
+    steps: ['Reading the feedback', 'Checking the code', 'Drafting a plan'],
+    ready: 14.8,
+  },
+  {
+    // Found just before dawn: it waits in to do for tomorrow night.
+    code: 'PERF-32',
+    title: 'Slow route list query',
+    color: '#3fcf8e',
+    glyph: 'bolt',
+    row: 0,
+    born: 11.6,
+    keys: [
+      [11.6, source(0)],
+      [12.4, slot(1, 0)],
+    ],
+  },
+];
+/** When each source is scanned, and which: the ticket it turns up comes out at the end. */
+const NIGHT_SCANS: Array<[number, number, number]> = [
+  [0.3, 1.5, 1],
+  [1.0, 2.6, 0],
+  [8.8, 9.8, 2],
+  [10.0, 11.6, 0],
+];
+
+type CardStatus = { text: string; mode: 'found' | 'working' | 'ready' };
+
+/** What a ticket says it is at, `t` seconds into the night. */
+function cardStatus(card: NightCard, t: number): CardStatus {
+  if (card.ready !== undefined && t >= card.ready) {
+    return { text: 'Ready for you', mode: 'ready' };
   }
-  if (local < RIDE_IN) {
-    const f = smoothstep(0, RIDE_IN, local);
-    return { x: enter + (station - enter) * f, y: cardY, scale: 1, working: 0, done: false };
+  if (card.work && card.steps && t >= card.work[0]) {
+    const done = (t - card.work[0]) / (card.work[1] - card.work[0]);
+    return { text: card.steps[Math.min(2, Math.floor(done * 3))], mode: 'working' };
   }
-  if (local < RIDE_IN + WORK) {
-    const w = (local - RIDE_IN) / WORK;
-    return { x: station, y: cardY, scale: 1, working: Math.sin(Math.PI * w), done: w > 0.7 };
-  }
-  // Rides on, then drops onto the pile in the tray.
-  const trayX = (TRAY[0] + TRAY[1]) / 2;
-  const f = smoothstep(0, RIDE_OUT, local - RIDE_IN - WORK);
-  const pile = LINE_TOP + 0.02 + CARD[1] / 2 + i * (CARD[1] + 0.004);
-  let scale = 1;
-  if (t >= CLEAR_AT) {
-    scale = 1 - smoothstep(CLEAR_AT, CLEAR_AT + 0.6, t);
-  }
-  return {
-    x: station + (trayX - station) * f,
-    y:
-      cardY +
-      (pile - cardY) * smoothstep(0.6, 1, f) +
-      Math.sin(Math.PI * smoothstep(0.55, 1, f)) * 0.06,
-    scale,
-    working: 0,
-    done: true,
-  };
+  return { text: FOUND_IN[card.row], mode: 'found' };
 }
 
-/** Chevrons along the belt, pointing the way it runs. */
-function useLineBeltTexture() {
-  const belt = useLabelTexture(
-    256,
-    128,
-    (ctx, w, h) => {
-      ctx.fillStyle = LINE_DARK;
-      ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = '#4a4f5c';
-      ctx.lineWidth = 14;
-      ctx.lineJoin = 'round';
-      [0, w / 2].forEach((x) => {
+/** Where something is along its keys at `t`: eased from one to the next, lifted a little as it travels. */
+function follow(keys: Key[], t: number, out: Spot): Spot {
+  let next = 0;
+  while (next < keys.length && keys[next][0] <= t) {
+    next += 1;
+  }
+  if (next === 0 || next === keys.length) {
+    const [, at] = keys[next === 0 ? 0 : keys.length - 1];
+    out[0] = at[0];
+    out[1] = at[1];
+    out[2] = at[2];
+    return out;
+  }
+  const [from, a] = keys[next - 1];
+  const [to, b] = keys[next];
+  const f = smoothstep(from, to, t);
+  const travel = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  out[0] = a[0] + (b[0] - a[0]) * f;
+  out[1] = a[1] + (b[1] - a[1]) * f;
+  out[2] = a[2] + (b[2] - a[2]) * f + Math.sin(Math.PI * f) * Math.min(0.04, travel * 0.05);
+  return out;
+}
+
+/** 1 between `from` and `to`, easing in and out over `edge` seconds at either end. */
+function within(t: number, from: number, to: number, edge: number) {
+  return smoothstep(from, from + edge, t) * (1 - smoothstep(to - edge, to, t));
+}
+
+/** Pops past its size and settles back. */
+function overshoot(x: number) {
+  const t = Math.min(1, Math.max(0, x)) - 1;
+  return 1 + 2.7 * t * t * t + 1.7 * t * t;
+}
+
+/** The board's small icons, drawn round (x, y) within about `r`. */
+function drawGlyph(
+  ctx: CanvasRenderingContext2D,
+  glyph: Glyph,
+  x: number,
+  y: number,
+  r: number,
+  color: string
+) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = r * 0.26;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  switch (glyph) {
+    case 'search':
+      ctx.beginPath();
+      ctx.arc(-r * 0.18, -r * 0.18, r * 0.62, 0, Math.PI * 2);
+      ctx.moveTo(r * 0.28, r * 0.28);
+      ctx.lineTo(r * 0.9, r * 0.9);
+      ctx.stroke();
+      break;
+    case 'todo':
+      ctx.setLineDash([r * 0.38, r * 0.3]);
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.8, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    case 'doing':
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.8, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, r * 0.45, -Math.PI / 2, Math.PI / 2);
+      ctx.fill();
+      break;
+    case 'sun':
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 8; i += 1) {
+        const a = (i / 8) * Math.PI * 2;
         ctx.beginPath();
-        ctx.moveTo(x + 40, 18);
-        ctx.lineTo(x + 92, h / 2);
-        ctx.lineTo(x + 40, h - 18);
+        ctx.moveTo(Math.cos(a) * r * 0.66, Math.sin(a) * r * 0.66);
+        ctx.lineTo(Math.cos(a) * r * 0.95, Math.sin(a) * r * 0.95);
+        ctx.stroke();
+      }
+      break;
+    case 'code':
+    case 'logs':
+      ctx.font = `700 ${r * 1.15}px ${monoFamily}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(glyph === 'code' ? '</>' : '>_', 0, r * 0.06);
+      break;
+    case 'chat':
+      roundRect(ctx, -r * 0.85, -r * 0.7, r * 1.7, r * 1.15, r * 0.35);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.45, r * 0.4);
+      ctx.lineTo(-r * 0.6, r * 0.9);
+      ctx.lineTo(-r * 0.05, r * 0.4);
+      ctx.fill();
+      break;
+    case 'bug':
+      ctx.beginPath();
+      ctx.ellipse(0, r * 0.15, r * 0.42, r * 0.58, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, -r * 0.5, r * 0.26, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = r * 0.16;
+      [-0.1, 0.2, 0.5].forEach((dy) => {
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.85, r * dy);
+        ctx.lineTo(r * 0.85, r * dy);
         ctx.stroke();
       });
-    },
-    'night-belt'
-  );
-  useEffect(() => {
-    belt.wrapS = RepeatWrapping;
-    belt.repeat.x = 3;
-    belt.needsUpdate = true;
-  }, [belt]);
-  return belt;
+      break;
+    case 'shield':
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.9);
+      ctx.lineTo(r * 0.75, -r * 0.6);
+      ctx.quadraticCurveTo(r * 0.75, r * 0.5, 0, r * 0.95);
+      ctx.quadraticCurveTo(-r * 0.75, r * 0.5, -r * 0.75, -r * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'bolt':
+      ctx.beginPath();
+      ctx.moveTo(r * 0.2, -r * 0.95);
+      ctx.lineTo(-r * 0.55, r * 0.12);
+      ctx.lineTo(-r * 0.02, r * 0.12);
+      ctx.lineTo(-r * 0.2, r * 0.95);
+      ctx.lineTo(r * 0.55, -r * 0.12);
+      ctx.lineTo(r * 0.02, -r * 0.12);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    default:
+      break;
+  }
+  ctx.restore();
 }
 
-/** The hopper's lid: a crescent and the night's queue. */
-function useHopperTexture() {
+/** The face, all but what moves: the lanes and their headings, and the three sources the agents scan. */
+function useNightFaceTexture() {
+  const width = Math.round(FACE_W * FACE_PX);
+  const height = Math.round(FACE_H * FACE_PX);
   return useLabelTexture(
-    256,
-    256,
+    width,
+    height,
     (ctx, w, h) => {
-      ctx.fillStyle = LINE_TRIM;
+      const x = (u: number) => (u + FACE_W / 2) * FACE_PX;
+      const y = (v: number) => (FACE_TOP - v) * FACE_PX;
+      ctx.fillStyle = '#121726';
       ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#e3a72f';
-      ctx.beginPath();
-      ctx.arc(w / 2, h / 2, 62, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = LINE_TRIM;
-      ctx.beginPath();
-      ctx.arc(w / 2 + 34, h / 2 - 22, 56, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.textBaseline = 'middle';
+      LANES.forEach((lane, i) => {
+        const left = x(lane.u - lane.w / 2);
+        const top = y(LANE_TOP);
+        const laneW = lane.w * FACE_PX;
+        ctx.fillStyle = i === 0 ? '#151b2d' : '#1b2135';
+        roundRect(ctx, left, top, laneW, (LANE_TOP - LANE_BOTTOM) * FACE_PX, 18);
+        ctx.fill();
+        if (i === 0) {
+          ctx.save();
+          ctx.setLineDash([10, 8]);
+          ctx.strokeStyle = '#2f3958';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.restore();
+        }
+        const middle = y(LANE_TOP - LANE_HEAD / 2);
+        drawGlyph(ctx, lane.glyph, left + 30, middle, 14, i === 3 ? '#ffc24a' : NIGHT_INK);
+        ctx.fillStyle = NIGHT_INK;
+        ctx.font = `600 30px ${sansFamily}`;
+        ctx.fillText(lane.title, left + 54, middle + 1);
+      });
+      SOURCES.forEach((src, row) => {
+        const left = x(LANES[0].u - SOURCE[0] / 2);
+        const top = y(ROWS[row] + SOURCE[1] / 2);
+        const tileW = SOURCE[0] * FACE_PX;
+        ctx.fillStyle = '#222a45';
+        roundRect(ctx, left, top, tileW, SOURCE[1] * FACE_PX, 14);
+        ctx.fill();
+        drawGlyph(ctx, src.glyph, left + 26, top + 28, 14, src.color);
+        ctx.fillStyle = NIGHT_INK;
+        ctx.font = `600 23px ${sansFamily}`;
+        ctx.fillText(src.title, left + 50, top + 29);
+        src.lines.forEach((color, line) => {
+          ctx.fillStyle = color;
+          roundRect(ctx, left + 18, top + 56 + line * 15, [96, 120, 74][line], 8, 4);
+          ctx.fill();
+        });
+      });
     },
-    'night-hopper'
+    'night-face'
   );
 }
 
-/** The gantry's little screen: the time through the night, and the night's tickets, done in green. */
-function useLineScreen() {
+/** On a card, in its own space: the progress bar along its foot, its spinner, its tick. */
+const CARD_TRACK: [number, number, number] = [-0.202, 0.404, 0.105];
+const CARD_STATUS: [number, number] = [-0.184, 0.076];
+const CARD_CHECK: [number, number] = [0.19, -0.075];
+const CARD_INK = '#1d1d22';
+const CARD_MUTED = '#6b6a72';
+const CARD_WORKING = '#d9531e';
+const CARD_READY = '#16a34a';
+
+/**
+ * A card: what it is and its number, a short title, and what the agents are
+ * doing with it, over the track its progress fills. No name and no face:
+ * nobody is assigned, the agents just get on with it.
+ */
+function drawNightCard(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  card: NightCard,
+  status: CardStatus
+) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#f7f6f2';
+  roundRect(ctx, 0, 0, w, h, 16);
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = card.color;
+  ctx.fillRect(0, 0, 12, h);
+  ctx.restore();
+  ctx.textBaseline = 'middle';
+  // What kind of ticket, as a coloured badge, then its number.
+  ctx.fillStyle = card.color;
+  roundRect(ctx, 28, 20, 46, 46, 11);
+  ctx.fill();
+  drawGlyph(ctx, card.glyph, 51, 43, 15, '#ffffff');
+  ctx.fillStyle = CARD_MUTED;
+  ctx.font = `600 26px ${monoFamily}`;
+  ctx.fillText(card.code, 88, 45);
+  ctx.fillStyle = CARD_INK;
+  ctx.font = `700 34px ${sansFamily}`;
+  wrapText(ctx, card.title, w - 52, 2).forEach((line, i) => {
+    ctx.fillText(line, 28, 104 + i * 40);
+  });
+  // Working, a spinner turns where the icon would be; it is drawn in 3D over this.
+  if (status.mode === 'found') {
+    drawGlyph(ctx, 'search', 46, 190, 12, CARD_MUTED);
+  } else if (status.mode === 'ready') {
+    ctx.strokeStyle = CARD_READY;
+    ctx.lineWidth = 4.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(36, 190);
+    ctx.lineTo(43, 197);
+    ctx.lineTo(56, 183);
+    ctx.stroke();
+  }
+  ctx.font = `600 28px ${sansFamily}`;
+  ctx.fillStyle = { found: CARD_MUTED, working: CARD_WORKING, ready: CARD_READY }[status.mode];
+  ctx.fillText(status.text, 72, 191);
+  ctx.fillStyle = '#e4e1da';
+  roundRect(ctx, 28, 219, 404, 8, 4);
+  ctx.fill();
+}
+
+/** A card's face, repainted only when what it says changes. */
+function useNightCardFace(card: NightCard) {
+  // Repainted as it changes, so it grows less than the still labels do.
+  const scale = Math.min(1.5, textureScale(useDetailQuality()));
+  const width = Math.round(NIGHT_CARD[0] * NIGHT_CARD_PX);
+  const height = Math.round(NIGHT_CARD[2] * NIGHT_CARD_PX);
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 128;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const result = new CanvasTexture(canvas);
     result.colorSpace = SRGBColorSpace;
     result.anisotropy = 4;
     return result;
-  }, []);
+  }, [width, height, scale]);
   useResourceDisposal(texture);
   const shown = useRef('');
+  useEffect(() => {
+    shown.current = '';
+    // The site's fonts may come in after the first paint: paint again once they have.
+    document.fonts?.ready.then(() => {
+      shown.current = '';
+    });
+  }, [texture]);
+  const paint = useCallback(
+    (status: CardStatus) => {
+      if (status.text === shown.current) {
+        return;
+      }
+      const ctx = (texture.image as HTMLCanvasElement).getContext('2d');
+      if (!ctx) {
+        return;
+      }
+      shown.current = status.text;
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      drawNightCard(ctx, width, height, card, status);
+      texture.needsUpdate = true;
+    },
+    [texture, scale, width, height, card]
+  );
+  return { texture, paint };
+}
+
+type CardHandle = {
+  group: RefObject<Group | null>;
+  halo: RefObject<MeshBasicMaterial | null>;
+  track: RefObject<Group | null>;
+  spinner: RefObject<Mesh | null>;
+  tick: RefObject<Mesh | null>;
+  paint: (status: CardStatus) => void;
+};
+
+/** One ticket on the board; the board moves it and tells it what to say. */
+function NightCardMesh({
+  index,
+  geometry,
+  halo,
+  check,
+  register,
+}: {
+  index: number;
+  geometry: BufferGeometry;
+  halo: CanvasTexture;
+  check: CanvasTexture;
+  register: (index: number, handle: CardHandle) => void;
+}) {
+  const card = NIGHT_CARDS[index];
+  const { texture, paint } = useNightCardFace(card);
+  const group = useRef<Group>(null);
+  const glow = useRef<MeshBasicMaterial>(null);
+  const track = useRef<Group>(null);
+  const spinner = useRef<Mesh>(null);
+  const tick = useRef<Mesh>(null);
+  useLayoutEffect(() => {
+    register(index, { group, halo: glow, track, spinner, tick, paint });
+  }, [register, index, paint]);
+  const top = NIGHT_CARD[1] / 2;
+  return (
+    <group ref={group} visible={false}>
+      <mesh geometry={geometry} castShadow receiveShadow>
+        <meshStandardMaterial color={PAPER} roughness={0.85} />
+      </mesh>
+      <mesh position={[0, top + 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[NIGHT_CARD[0], NIGHT_CARD[2]]} />
+        <meshStandardMaterial map={texture} transparent roughness={0.85} />
+      </mesh>
+      {/* Just turned up: a soft light round it. */}
+      <mesh position={[0, -top, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[NIGHT_CARD[0] * 1.35, NIGHT_CARD[2] * 1.55]} />
+        <meshBasicMaterial
+          ref={glow}
+          map={halo}
+          color={SCAN_LIGHT}
+          transparent
+          opacity={0}
+          depthWrite={false}
+          blending={AdditiveBlending}
+          toneMapped={false}
+        />
+      </mesh>
+      <group ref={track} position={[CARD_TRACK[0], top + 0.002, CARD_TRACK[2]]} visible={false}>
+        <mesh position={[CARD_TRACK[1] / 2, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[CARD_TRACK[1], 0.008]} />
+          <meshBasicMaterial color={CARD_WORKING} toneMapped={false} />
+        </mesh>
+      </group>
+      <mesh
+        ref={spinner}
+        position={[CARD_STATUS[0], top + 0.003, CARD_STATUS[1]]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={false}
+      >
+        <torusGeometry args={[0.012, 0.0026, 6, 24, Math.PI * 1.4]} />
+        <meshBasicMaterial color={CARD_WORKING} toneMapped={false} />
+      </mesh>
+      <mesh
+        ref={tick}
+        position={[CARD_CHECK[0], top + 0.003, CARD_CHECK[1]]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={false}
+      >
+        <planeGeometry args={[0.062, 0.062]} />
+        <meshBasicMaterial map={check} transparent toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+/** The night bar: the moon and the time, the night going by along a track, and the sun at the end. */
+function useNightBar() {
+  // Repainted as the clock moves, so it grows less than the still labels do.
+  const scale = Math.min(1.5, textureScale(useDetailQuality()));
+  const width = Math.round(BAR_W * BAR_PX);
+  const height = Math.round((BAR_V[1] - BAR_V[0]) * BAR_PX);
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const result = new CanvasTexture(canvas);
+    result.colorSpace = SRGBColorSpace;
+    result.anisotropy = 4;
+    return result;
+  }, [width, height, scale]);
+  useResourceDisposal(texture);
+  const shown = useRef('');
+  useEffect(() => {
+    shown.current = '';
+  }, [texture]);
   const paint = (t: number) => {
-    // Eleven at night to six in the morning, over one loop.
-    const minutes = (23 * 60 + Math.floor((t / NIGHT_LOOP) * 7 * 60)) % (24 * 60);
-    const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String((Math.floor(minutes / 10) * 10) % 60).padStart(2, '0')}`;
-    const done = Array.from({ length: NIGHT_TICKETS }, (_, i) => lineCardAt(i, t).done);
-    const key = `${time}${done.join()}`;
-    if (key === shown.current) {
+    // Eleven at night to six in the morning, ten minutes at a time.
+    const steps = Math.min(42, Math.floor((t / DAWN) * 42));
+    const minutes = (23 * 60 + steps * 10) % (24 * 60);
+    const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+    if (time === shown.current) {
       return;
     }
-    shown.current = key;
+    shown.current = time;
     const ctx = (texture.image as HTMLCanvasElement).getContext('2d');
     if (!ctx) {
       return;
     }
-    const { width: w, height: h } = ctx.canvas;
-    ctx.fillStyle = '#0b0d12';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#ffd88a';
-    ctx.beginPath();
-    ctx.arc(38, 46, 17, 0, Math.PI * 2);
+    const dawn = steps === 42;
+    const w = width;
+    const h = height;
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const sky = ctx.createLinearGradient(0, 0, w, 0);
+    sky.addColorStop(0, '#0b0f1d');
+    sky.addColorStop(1, dawn ? '#4a2f22' : '#111628');
+    ctx.fillStyle = sky;
+    roundRect(ctx, 0, 0, w, h, 16);
     ctx.fill();
-    ctx.fillStyle = '#0b0d12';
+    // The moon, a crescent cut from the sky.
+    ctx.fillStyle = dawn ? '#5b6380' : '#ffd88a';
     ctx.beginPath();
-    ctx.arc(48, 38, 15, 0, Math.PI * 2);
+    ctx.arc(40, h / 2, 19, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0b0f1d';
+    ctx.beginPath();
+    ctx.arc(50, h / 2 - 8, 16, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#ededeb';
     ctx.font = `600 44px ${monoFamily}`;
     ctx.textBaseline = 'middle';
-    ctx.fillText(time, 72, 49);
-    done.forEach((d, i) => {
-      ctx.fillStyle = d ? '#3fcf8e' : '#2a2e39';
-      roundRect(ctx, 22 + i * 72, 92, 62, 14, 7);
+    ctx.fillText(time, 76, h / 2 + 2);
+    // Who is on tonight: agents, no names.
+    ctx.fillStyle = dawn ? '#5b6380' : '#3fcf8e';
+    ctx.beginPath();
+    ctx.arc(244, h / 2, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#aab1c5';
+    ctx.font = `600 28px ${sansFamily}`;
+    ctx.fillText('2 agents', 260, h / 2 + 2);
+    const from = 420;
+    const to = 958;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#262d45';
+    ctx.beginPath();
+    ctx.moveTo(from, h / 2);
+    ctx.lineTo(to, h / 2);
+    ctx.stroke();
+    for (let hour = 0; hour <= 7; hour += 1) {
+      ctx.fillStyle = '#3a4362';
+      ctx.beginPath();
+      ctx.arc(from + ((to - from) * hour) / 7, h / 2, 5, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
+    const at = from + ((to - from) * steps) / 42;
+    const done = ctx.createLinearGradient(from, 0, to, 0);
+    done.addColorStop(0, '#5b6cff');
+    done.addColorStop(1, '#ffb547');
+    ctx.strokeStyle = done;
+    ctx.beginPath();
+    ctx.moveTo(from, h / 2);
+    ctx.lineTo(at, h / 2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(at, h / 2, 10, 0, Math.PI * 2);
+    ctx.fill();
+    drawGlyph(ctx, 'sun', 1004, h / 2, 22, dawn ? '#ffc24a' : '#3a4362');
     texture.needsUpdate = true;
   };
   return { texture, paint };
 }
 
-/**
- * The night shift: a small automated line. Tickets ride out of the to-do
- * hopper on a belt, stop under one of two agents, in Claude's and Codex's
- * colours, which come down and work on them, then ride on to the done tray.
- * By morning the tray is cleared and the next night's queue comes in.
- */
-function NightLine() {
-  const belt = useLineBeltTexture();
-  const hopper = useHopperTexture();
-  const { texture: screen, paint } = useLineScreen();
-  const cards = useRef<Array<Group | null>>([]);
-  const checks = useRef<Array<Mesh | null>>([]);
-  const heads = useRef<Array<Group | null>>([]);
-  const lights = useRef<Array<MeshBasicMaterial | null>>([]);
-  const beams = useRef<Array<Mesh | null>>([]);
-  const beacon = useRef<MeshBasicMaterial>(null);
-  const [L, , D] = LINE_BED;
+/** Soft light, a rounded rectangle: round a new card, over a source as it is scanned, over the morning lane at dawn. */
+function useNightHaloTexture() {
+  return useLabelTexture(
+    256,
+    160,
+    (ctx, w, h) => {
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 24;
+      ctx.fillStyle = 'rgb(255 255 255 / 0.55)';
+      roundRect(ctx, 30, 30, w - 60, h - 60, 14);
+      ctx.fill();
+    },
+    'night-halo'
+  );
+}
 
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime % NIGHT_LOOP;
-    belt.offset.x =
-      -((clock.elapsedTime * BELT_SPEED * belt.repeat.x) / (BELT_SPAN[1] - BELT_SPAN[0])) % 1;
-    const working = [0, 0];
-    cards.current.forEach((card, i) => {
-      if (!card) {
+/** A scan line: bright in the middle, fading out to either side. */
+function useNightBeamTexture() {
+  return useLabelTexture(
+    64,
+    8,
+    (ctx, w, h) => {
+      const gradient = ctx.createLinearGradient(0, 0, w, 0);
+      gradient.addColorStop(0, 'rgb(255 255 255 / 0)');
+      gradient.addColorStop(0.45, 'rgb(255 255 255 / 0.5)');
+      gradient.addColorStop(0.5, 'rgb(255 255 255 / 1)');
+      gradient.addColorStop(0.55, 'rgb(255 255 255 / 0.5)');
+      gradient.addColorStop(1, 'rgb(255 255 255 / 0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, w, h);
+    },
+    'night-beam'
+  );
+}
+
+/** Ready for me: a green tick. */
+function useNightCheckTexture() {
+  return useLabelTexture(
+    64,
+    64,
+    (ctx, w, h) => {
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, w / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 7;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(19, 33);
+      ctx.lineTo(28, 42);
+      ctx.lineTo(45, 23);
+      ctx.stroke();
+    },
+    'night-check'
+  );
+}
+
+/** The wedge, in side view extruded across: underside, back, and the face sloping down to the ledge. */
+function useBoardHousing() {
+  const geometry = useMemo(() => {
+    const d = BOARD_DEPTH / 2;
+    const shape = new Shape();
+    // Front to the left: once turned, the shape's x runs from the front of the desk to the back.
+    shape.moveTo(-d, BOARD_FOOT);
+    shape.lineTo(d, BOARD_FOOT);
+    shape.lineTo(d, BOARD_FOOT + BOARD_LEDGE + BOARD_RISE);
+    shape.lineTo(-d, BOARD_FOOT + BOARD_LEDGE);
+    shape.closePath();
+    const bevel = 0.03;
+    const across = BOARD_W - 2 * bevel;
+    const result = new ExtrudeGeometry(shape, {
+      depth: across,
+      bevelEnabled: true,
+      bevelThickness: bevel,
+      bevelSize: bevel,
+      bevelOffset: -bevel,
+      bevelSegments: 3,
+      curveSegments: 1,
+    });
+    result.translate(0, 0, -across / 2);
+    result.rotateY(Math.PI / 2);
+    return result;
+  }, []);
+  useResourceDisposal(geometry);
+  return geometry;
+}
+
+/**
+ * The night shift: a kanban board that runs itself while I sleep. Agents
+ * scan the code, the logs and the feedback; what they find comes out as a
+ * ticket, which moves itself from to do to doing, says what is being done
+ * with it, and ends in the morning lane, where it waits for me at six.
+ */
+function NightBoard({ still }: { still?: boolean }) {
+  const housing = useBoardHousing();
+  const face = useNightFaceTexture();
+  const { texture: bar, paint } = useNightBar();
+  const halo = useNightHaloTexture();
+  const beamTexture = useNightBeamTexture();
+  const check = useNightCheckTexture();
+  const cardGeometry = useMemo(() => new RoundedBoxGeometry(...NIGHT_CARD, 2, 0.012), []);
+  useResourceDisposal(cardGeometry);
+
+  const cards = useRef<Array<CardHandle | undefined>>([]);
+  const register = useCallback((index: number, handle: CardHandle) => {
+    cards.current[index] = handle;
+  }, []);
+  const sweeps = useRef<Array<Mesh | null>>([]);
+  const flashes = useRef<Array<MeshBasicMaterial | null>>([]);
+  const morning = useRef<MeshBasicMaterial>(null);
+  const spot = useMemo<Spot>(() => [0, 0, 0], []);
+  const lit = useMemo(() => ({ scanned: [0, 0, 0], sweep: [0, 0, 0], across: [0, 0, 0] }), []);
+  // Its own night, from when it arrives: the scene's clock starts over whenever the hero scrolls back in.
+  const night = useRef(0);
+
+  useFrame((_, delta) => {
+    const dt = still ? 0 : Math.min(delta, 0.1);
+    night.current = (night.current + dt) % NIGHT_S;
+    const t = (NIGHT_OPENS + night.current) % NIGHT_S;
+    paint(t);
+
+    const { scanned, sweep, across } = lit;
+    scanned.fill(0);
+    sweep.fill(0);
+    NIGHT_SCANS.forEach(([from, to, row]) => {
+      if (t >= from && t <= to) {
+        sweep[row] = within(t, from, to, 0.15);
+        across[row] = (t - from) / (to - from);
+      }
+    });
+
+    NIGHT_CARDS.forEach((card, i) => {
+      const handle = cards.current[i];
+      const group = handle?.group.current;
+      if (!handle || !group) {
         return;
       }
-      const at = lineCardAt(i, t);
-      card.position.set(at.x, at.y, 0);
-      card.scale.setScalar(Math.max(0.001, at.scale));
-      working[i % 2] = Math.max(working[i % 2], at.working);
-      checks.current[i]?.scale.setScalar(at.done ? 1 : 0.001);
+      group.visible = t >= card.born;
+      if (!group.visible) {
+        return;
+      }
+      follow(card.keys, t, spot);
+      group.position.set(spot[0], NIGHT_CARD[1] / 2 + 0.004 + spot[2], -spot[1]);
+      // Moving, it tips a little towards where it is going.
+      group.rotation.x = -(spot[2] / CARRY) * 0.04;
+      const leave = 1 - smoothstep(CLEAR_AT + i * 0.08, CLEAR_AT + i * 0.08 + 0.4, t);
+      group.scale.setScalar(
+        Math.max(0.001, (0.3 + 0.7 * overshoot((t - card.born) / 0.4)) * leave)
+      );
+      const status = cardStatus(card, t);
+      handle.paint(status);
+      // Just found: a soft light round it, and a flash on the source it came out of.
+      const fresh = Math.exp(-(t - card.born) * 2.2);
+      const glow = handle.halo.current;
+      if (glow) {
+        glow.opacity = fresh * 0.6;
+        glow.visible = fresh > 0.02;
+      }
+      scanned[card.row] = Math.max(scanned[card.row], Math.exp(-(t - card.born) * 5) * 0.8);
+      const track = handle.track.current;
+      if (track) {
+        const progress = card.work
+          ? Math.min(1, Math.max(0, (t - card.work[0]) / (card.work[1] - card.work[0])))
+          : 0;
+        track.visible = progress > 0;
+        track.scale.x = Math.max(0.001, progress);
+      }
+      const spinner = handle.spinner.current;
+      if (spinner) {
+        spinner.visible = status.mode === 'working';
+        spinner.rotation.z = -t * 7;
+      }
+      const tick = handle.tick.current;
+      if (tick) {
+        tick.visible = card.ready !== undefined && t >= card.ready;
+        tick.scale.setScalar(card.ready !== undefined ? overshoot((t - card.ready) / 0.3) : 1);
+      }
     });
-    heads.current.forEach((head, a) => {
-      if (head) {
-        head.position.y = HEAD_Y - working[a] * HEAD_DROP;
+
+    // A source being scanned: a line of light sweeps across it, left to right.
+    sweeps.current.forEach((mesh, row) => {
+      if (!mesh) {
+        return;
       }
-      const light = lights.current[a];
-      if (light) {
-        light.opacity = 0.45 + 0.55 * working[a];
-      }
-      const beam = beams.current[a];
-      if (beam) {
-        beam.visible = working[a] > 0.05;
-        beam.scale.set(1, Math.max(0.001, working[a]), 1);
+      mesh.visible = sweep[row] > 0.01;
+      mesh.position.x = LANES[0].u + (across[row] * 2 - 1) * SWEEP;
+      (mesh.material as MeshBasicMaterial).opacity = sweep[row] * 0.85;
+      scanned[row] = Math.max(scanned[row], sweep[row] * 0.16);
+    });
+    flashes.current.forEach((flash, row) => {
+      if (flash) {
+        flash.opacity = scanned[row];
       }
     });
-    if (beacon.current) {
-      const busy = working[0] + working[1] > 0.05;
-      beacon.current.opacity = busy ? 0.55 + 0.45 * Math.sin(clock.elapsedTime * 10) : 0.35;
+    if (morning.current) {
+      morning.current.opacity =
+        0.2 * smoothstep(DAWN - 0.4, DAWN + 0.6, t) * (1 - smoothstep(CLEAR_AT, CLEAR_AT + 0.6, t));
     }
-    paint(t);
   });
 
+  const lanesMiddle = -(LANE_TOP + LANE_BOTTOM) / 2;
   return (
     <>
-      {/* The bed is heavy, so the line stands back up on its own; the gantry is light. */}
-      <CuboidCollider args={[L / 2, LINE_BED[1] / 2, D / 2]} density={4} />
-      <CuboidCollider
-        args={[(HOPPER[1] - HOPPER[0]) / 2, 0.11, D / 2]}
-        position={[(HOPPER[0] + HOPPER[1]) / 2, LINE_TOP + 0.11, 0]}
-        density={0.5}
-      />
-      {/* The gantry as one block, posts to beam over the agents' heads, so nothing slips under it. */}
-      <CuboidCollider
-        args={[BEAM[0] / 2, (GANTRY_Y + BEAM[1] / 2 - LINE_TOP) / 2, (D / 2 + 0.11) / 2]}
-        position={[0, (GANTRY_Y + BEAM[1] / 2 + LINE_TOP) / 2, (0.11 - D / 2) / 2]}
-        density={0.2}
-      />
-      {/* The mast, the night clock tilted back on it, and the beacon. */}
-      <CuboidCollider
-        args={[0.03, 0.1, 0.03]}
-        position={[0, GANTRY_Y + 0.12, -D / 2 + 0.04]}
-        density={0.1}
-      />
-      <CuboidCollider
-        args={[0.28, 0.125, 0.025]}
-        position={[
-          0,
-          GANTRY_Y + 0.22 + 0.12 * Math.cos(0.75),
-          -D / 2 + 0.04 - 0.12 * Math.sin(0.75),
-        ]}
-        rotation={[-0.75, 0, 0]}
-        density={0.1}
-      />
-      <CuboidCollider
-        args={[0.03, 0.08, 0.03]}
-        position={[BEAM[0] / 2 - 0.03, GANTRY_Y + BEAM[1] / 2 + 0.08, -D / 2 + 0.04]}
-        density={0.1}
-      />
-      <RoundedBox args={LINE_BED} radius={0.035} smoothness={3} castShadow receiveShadow>
-        <meshStandardMaterial color={LINE_FRAME} roughness={0.4} metalness={0.35} />
-      </RoundedBox>
-      {/* An accent stripe down the front, and dark feet. */}
-      <mesh position={[0, -0.02, D / 2 + 0.001]}>
-        <planeGeometry args={[L - 0.1, 0.035]} />
+      <ConvexHullCollider args={[BOARD_HULL]} density={1.4} />
+      <mesh geometry={housing} castShadow receiveShadow>
+        <meshStandardMaterial color={BOARD_FRAME} roughness={0.4} metalness={0.35} />
+      </mesh>
+      {/* An accent stripe along the ledge. */}
+      <mesh position={[0, BOARD_FOOT + BOARD_LEDGE / 2, BOARD_DEPTH / 2 + 0.002]}>
+        <planeGeometry args={[BOARD_W - 0.16, 0.022]} />
         <meshBasicMaterial color={ACCENT} toneMapped={false} />
       </mesh>
-      {[-1, 1].map((sx) =>
-        [-1, 1].map((sz) => (
-          <mesh
-            key={`${sx}${sz}`}
-            position={[sx * (L / 2 - 0.1), -LINE_BED[1] / 2 - 0.03, sz * (D / 2 - 0.08)]}
-          >
-            <boxGeometry args={[0.1, 0.06, 0.1]} />
-            <meshStandardMaterial color={LINE_DARK} roughness={0.6} />
-          </mesh>
-        ))
-      )}
-      {/* The belt, with a roller at each end. */}
-      <mesh
-        position={[(BELT_SPAN[0] + BELT_SPAN[1]) / 2, LINE_TOP + 0.002, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
+      {/* Everything on the face, in the face's own space: across, out of it, and down it. */}
+      <group
+        position={[0, BOARD_FOOT + BOARD_LEDGE, BOARD_DEPTH / 2]}
+        rotation={[Math.PI / 2 - BOARD_LEAN, 0, 0]}
       >
-        <planeGeometry args={[BELT_SPAN[1] - BELT_SPAN[0], D - 0.12]} />
-        <meshStandardMaterial map={belt} roughness={0.85} />
-      </mesh>
-      {BELT_SPAN.map((x) => (
-        <mesh key={x} position={[x, LINE_TOP, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.025, 0.025, D - 0.1, 12]} />
-          <meshStandardMaterial color="#9a9da6" metalness={0.6} roughness={0.3} />
-        </mesh>
-      ))}
-      {[-1, 1].map((sz) => (
-        <mesh key={sz} position={[0, LINE_TOP + 0.02, sz * (D / 2 - 0.03)]} castShadow>
-          <boxGeometry args={[L - 0.08, 0.04, 0.04]} />
-          <meshStandardMaterial color={LINE_TRIM} roughness={0.35} metalness={0.4} />
-        </mesh>
-      ))}
-
-      {/* The to-do hopper, cards slide out from under it. */}
-      <RoundedBox
-        args={[HOPPER[1] - HOPPER[0], 0.22, D]}
-        radius={0.03}
-        smoothness={3}
-        position={[(HOPPER[0] + HOPPER[1]) / 2, LINE_TOP + 0.11, 0]}
-        castShadow
-        receiveShadow
-      >
-        <meshStandardMaterial color={LINE_TRIM} roughness={0.4} metalness={0.25} />
-      </RoundedBox>
-      <mesh
-        position={[(HOPPER[0] + HOPPER[1]) / 2, LINE_TOP + 0.222, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
-        <planeGeometry args={[0.28, 0.28]} />
-        <meshBasicMaterial map={hopper} toneMapped={false} />
-      </mesh>
-      {/* The done tray: a low lip round the end of the bed. */}
-      {[
-        { at: [TRAY[1] - 0.01, 0.02, 0], size: [0.02, 0.04, D - 0.1] },
-        {
-          at: [(TRAY[0] + TRAY[1]) / 2, 0.02, D / 2 - 0.05],
-          size: [TRAY[1] - TRAY[0], 0.04, 0.02],
-        },
-        {
-          at: [(TRAY[0] + TRAY[1]) / 2, 0.02, -D / 2 + 0.05],
-          size: [TRAY[1] - TRAY[0], 0.04, 0.02],
-        },
-      ].map(({ at, size }) => (
-        <mesh key={at.join()} position={[at[0], LINE_TOP + at[1], at[2]]} castShadow>
-          <boxGeometry args={size as [number, number, number]} />
-          <meshStandardMaterial color="#3fcf8e" roughness={0.4} />
-        </mesh>
-      ))}
-
-      {/* The gantry: a post at each end of the beam, the night clock on a mast behind, and a beacon. */}
-      {[-1, 1].map((sx) => (
         <mesh
-          key={sx}
-          position={[sx * (BEAM[0] / 2 - 0.03), (LINE_TOP + GANTRY_Y) / 2, -D / 2 + 0.04]}
-          castShadow
+          position={[0, 0.003, -(BOARD_LIP + FACE_H / 2)]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          receiveShadow
         >
-          <boxGeometry args={[0.06, GANTRY_Y - LINE_TOP, 0.06]} />
-          <meshStandardMaterial color={LINE_FRAME} roughness={0.4} metalness={0.35} />
+          <planeGeometry args={[FACE_W, FACE_H]} />
+          <meshStandardMaterial map={face} roughness={0.8} />
         </mesh>
-      ))}
-      <RoundedBox
-        args={[BEAM[0], BEAM[1], D / 2 + 0.04]}
-        radius={0.025}
-        smoothness={3}
-        position={[0, GANTRY_Y, -D / 4 + 0.02]}
-        castShadow
-      >
-        <meshStandardMaterial color={LINE_TRIM} roughness={0.35} metalness={0.3} />
-      </RoundedBox>
-      <mesh position={[0, GANTRY_Y + 0.12, -D / 2 + 0.04]} castShadow>
-        <boxGeometry args={[0.05, 0.2, 0.05]} />
-        <meshStandardMaterial color={LINE_FRAME} roughness={0.4} metalness={0.35} />
-      </mesh>
-      <group position={[0, GANTRY_Y + 0.22, -D / 2 + 0.04]} rotation={[-0.75, 0, 0]}>
-        <mesh position={[0, 0.12, 0]} castShadow>
-          <boxGeometry args={[0.56, 0.25, 0.035]} />
-          <meshStandardMaterial color={LINE_DARK} roughness={0.4} />
+        <mesh position={[0, 0.005, -(BAR_V[0] + BAR_V[1]) / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[BAR_W, BAR_V[1] - BAR_V[0]]} />
+          <meshBasicMaterial map={bar} transparent toneMapped={false} />
         </mesh>
-        <mesh position={[0, 0.12, 0.019]}>
-          <planeGeometry args={[0.52, 0.21]} />
-          <meshBasicMaterial map={screen} toneMapped={false} />
-        </mesh>
-      </group>
-      <group position={[BEAM[0] / 2 - 0.03, GANTRY_Y + BEAM[1] / 2, -D / 2 + 0.04]}>
-        <mesh position={[0, 0.05, 0]}>
-          <cylinderGeometry args={[0.03, 0.03, 0.1, 14]} />
-          <meshBasicMaterial color="#3fcf8e" toneMapped={false} />
-        </mesh>
-        <mesh position={[0, 0.13, 0]}>
-          <cylinderGeometry args={[0.03, 0.03, 0.06, 14]} />
-          <meshBasicMaterial ref={beacon} color={ACCENT} transparent toneMapped={false} />
-        </mesh>
-      </group>
-
-      {/* The two agents hanging from the beam, each lit in its own colour. */}
-      {AGENT_COLORS.map((color, a) => (
-        <group key={color.getHexString()} position={[STATIONS[a], 0, 0]}>
-          <mesh position={[0, (GANTRY_Y + HEAD_Y) / 2, 0]}>
-            <cylinderGeometry args={[0.018, 0.018, GANTRY_Y - HEAD_Y, 8]} />
-            <meshStandardMaterial color="#9a9da6" metalness={0.6} roughness={0.3} />
-          </mesh>
-          <group
-            ref={(head) => {
-              heads.current[a] = head;
-            }}
-            position={[0, HEAD_Y, 0]}
-          >
-            <RoundedBox args={[0.2, 0.1, 0.2]} radius={0.03} smoothness={2} castShadow>
-              <meshStandardMaterial color={color} roughness={0.45} metalness={0.1} />
-            </RoundedBox>
-            <mesh position={[0, -0.051, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <circleGeometry args={[0.07, 20]} />
+        {SOURCES.map(({ title }, row) => (
+          <group key={title}>
+            <mesh position={[LANES[0].u, 0.006, -ROWS[row]]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[SOURCE[0] * 1.25, SOURCE[1] * 1.4]} />
               <meshBasicMaterial
-                ref={(light) => {
-                  lights.current[a] = light;
+                ref={(material) => {
+                  flashes.current[row] = material;
                 }}
-                color={color}
+                map={halo}
+                color={SCAN_LIGHT}
                 transparent
+                opacity={0}
+                depthWrite={false}
+                blending={AdditiveBlending}
                 toneMapped={false}
-                side={DoubleSide}
               />
             </mesh>
-            {/* The light it works by, down onto the ticket. */}
-            <group position={[0, -0.051, 0]}>
-              <mesh
-                ref={(beam) => {
-                  beams.current[a] = beam;
-                }}
-                position={[0, -0.09, 0]}
-                visible={false}
-              >
-                <coneGeometry args={[0.13, 0.18, 20, 1, true]} />
-                <meshBasicMaterial
-                  color={color}
-                  transparent
-                  opacity={0.3}
-                  depthWrite={false}
-                  blending={AdditiveBlending}
-                  side={DoubleSide}
-                  toneMapped={false}
-                />
-              </mesh>
-            </group>
-          </group>
-        </group>
-      ))}
-
-      {/* The night's tickets. */}
-      {ticketPool.slice(0, NIGHT_TICKETS).map(({ code, color }, i) => (
-        <group
-          key={code}
-          ref={(card) => {
-            cards.current[i] = card;
-          }}
-          scale={0.001}
-        >
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={CARD} />
-            <meshStandardMaterial color={PAPER} roughness={0.85} />
-          </mesh>
-          <mesh
-            position={[-CARD[0] / 2 + 0.03, CARD[1] / 2 + 0.001, 0]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
-            <planeGeometry args={[0.025, CARD[2] - 0.04]} />
-            <meshBasicMaterial color={color} toneMapped={false} />
-          </mesh>
-          {[0.035, -0.01].map((z, line) => (
-            <mesh key={z} position={[0.0, CARD[1] / 2 + 0.001, z]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[line === 0 ? 0.13 : 0.09, 0.014]} />
-              <meshBasicMaterial color="#c9c5bb" toneMapped={false} />
+            <mesh
+              ref={(mesh) => {
+                sweeps.current[row] = mesh;
+              }}
+              position={[LANES[0].u, 0.012, -ROWS[row]]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              visible={false}
+            >
+              <planeGeometry args={[0.05, SOURCE[1] - 0.02]} />
+              <meshBasicMaterial
+                map={beamTexture}
+                color={SCAN_LIGHT}
+                transparent
+                opacity={0}
+                depthWrite={false}
+                blending={AdditiveBlending}
+                toneMapped={false}
+              />
             </mesh>
-          ))}
-          <mesh
-            ref={(check) => {
-              checks.current[i] = check;
-            }}
-            position={[CARD[0] / 2 - 0.045, CARD[1] / 2 + 0.002, -0.04]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
-            <circleGeometry args={[0.028, 16]} />
-            <meshBasicMaterial color="#3fcf8e" toneMapped={false} />
-          </mesh>
-        </group>
-      ))}
+          </group>
+        ))}
+        <mesh position={[LANES[3].u, 0.006, lanesMiddle]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[LANES[3].w * 1.25, (LANE_TOP - LANE_BOTTOM) * 1.15]} />
+          <meshBasicMaterial
+            ref={morning}
+            map={halo}
+            color="#ffb547"
+            transparent
+            opacity={0}
+            depthWrite={false}
+            blending={AdditiveBlending}
+            toneMapped={false}
+          />
+        </mesh>
+        {NIGHT_CARDS.map((card, i) => (
+          <NightCardMesh
+            key={card.code}
+            index={i}
+            geometry={cardGeometry}
+            halo={halo}
+            check={check}
+            register={register}
+          />
+        ))}
+      </group>
     </>
   );
 }
 
-export function PropMesh({ item }: { item: PropItem }) {
+/** `still`: frozen where its loop starts, for its still (only the night board moves through a story). */
+export function PropMesh({ item, still }: { item: PropItem; still?: boolean }) {
   switch (item.info) {
     case 'oss':
       return <OpenSourceMark />;
@@ -2479,14 +3294,14 @@ export function PropMesh({ item }: { item: PropItem }) {
       return <RaspberryPi />;
     case 'sport':
       return <Treadmill />;
-    case 'portrait':
-      return <Portrait />;
+    case 'strategy':
+      return <StrategyBoard />;
     case 'robot':
       return <Robot />;
     case 'flags':
       return <BilingualBubbles />;
     case 'night':
-      return <NightLine />;
+      return <NightBoard still={still} />;
     default:
       return <Mountain />;
   }

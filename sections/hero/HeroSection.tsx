@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { FiArrowDown, FiDownload, FiSmartphone } from 'react-icons/fi';
+import {
+  FiArrowDown,
+  FiCheckCircle,
+  FiDownload,
+  FiGlobe,
+  FiMapPin,
+  FiSmartphone,
+} from 'react-icons/fi';
 import { useInView } from 'react-intersection-observer';
-import { heroNameId, links, sectionIds } from '@config/links';
+import { gamehubId, heroNameId, links, sectionIds } from '@config/links';
 import { useLanguage } from '@hooks/useLanguage';
 import { useMediaQuery } from '@hooks/useMediaQuery';
 import { usePrefersReducedMotion } from '@hooks/usePrefersReducedMotion';
@@ -12,11 +19,15 @@ import DeskCallout from './DeskCallout';
 import DeskLabels from './DeskLabels';
 import DeskTray from './DeskTray';
 import PhoneHero from './phone/PhoneHero';
+import PhotoLightbox from './PhotoLightbox';
 import { EXTRAS, type ExtraId, type InfoId, uidOf } from './playground/items';
 import { type Anchor, type DeskLabel } from './playground/Playground';
 import PlaygroundFallback from './PlaygroundFallback';
 import { probeGraphics, SETTINGS, useQuality } from './quality';
 import { useDeviceTilt } from './useDeviceTilt';
+
+/** Where I am, my permit, my languages: in the order of `strings.hero.facts`. */
+const factIcons = [FiMapPin, FiCheckCircle, FiGlobe];
 
 const loadPlayground = () => import('./playground/Playground');
 /** Room the hints take at the bottom of the desk: labels and story cards keep above them. */
@@ -25,6 +36,9 @@ const BOTTOM_INSET = 56;
 const RISE_CARD_DELAY = 900;
 /** The fixed header's height, and a little air under it, on wide screens where the desk runs under it. */
 const HEADER_CLEARANCE = 76;
+/** About how long how I work takes to drop in and settle. */
+const TRAY_AFTER_MS = 1600;
+const PHOTO_SRC = '/assets/about/profile.webp';
 const Playground = dynamic(loadPlayground, { ssr: false });
 
 /**
@@ -65,10 +79,11 @@ export default function HeroSection() {
     uid: string;
     rising?: boolean;
   } | null>(null);
-  const [shipped, setShipped] = useState<string | null>(null);
   // Off on every visit: the robot only drives after the pointer once asked to.
   const [robotFollow, setRobotFollow] = useState(false);
   const toggleRobotFollow = useCallback(() => setRobotFollow((on) => !on), []);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const closePhoto = useCallback(() => setPhotoOpen(false), []);
 
   // The desk opens on how I work alone; the rest of me waits in the tray until asked for.
   const [extras, setExtras] = useState<ExtraId[]>([]);
@@ -126,7 +141,28 @@ export default function HeroSection() {
   const mount = useIdleMount(canRender);
   const tilt = useDeviceTilt(coarse && canRender);
   const onReady = useCallback(() => setLoaded(true), []);
-  const onShipped = useCallback((code: string) => setShipped(code), []);
+  // The tray's own 3D starts once how I work has landed: building it mid-fall drops frames.
+  // Tidying up drops it in again, so until the tray is up, each new drop starts the wait over.
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!loaded || settled) {
+      return undefined;
+    }
+    let idle = 0;
+    const id = window.setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        idle = window.requestIdleCallback(() => setSettled(true), { timeout: 1000 });
+      } else {
+        setSettled(true);
+      }
+    }, TRAY_AFTER_MS);
+    return () => {
+      window.clearTimeout(id);
+      if (idle && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idle);
+      }
+    };
+  }, [loaded, settled, deskKey]);
   const onSelect = useCallback(
     (info: InfoId, uid: string) =>
       setSelection((current) => (current?.uid === uid ? current : { info, uid })),
@@ -188,15 +224,14 @@ export default function HeroSection() {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!shipped) {
-      return undefined;
-    }
-    const id = setTimeout(() => setShipped(null), 4000);
-    return () => clearTimeout(id);
-  }, [shipped]);
-
   const selected = selection ? strings.hero.objects[selection.info] : null;
+  const [firstName, ...rest] = strings.hero.eyebrow.split(' ');
+  const lastName = rest.join(' ');
+  // Two stories lead further down the page.
+  const storyLinks: Partial<Record<InfoId, { label: string; href: string }>> = {
+    night: { label: strings.hero.nightShiftLink, href: `#${sectionIds.board}` },
+    strategy: { label: strings.hero.strategyLink, href: `#${gamehubId}` },
+  };
   const showFallback = roomy && (webgl === false || reducedMotion);
 
   const actions = (
@@ -227,34 +262,68 @@ export default function HeroSection() {
     <section
       id={sectionIds.playground}
       ref={ref}
-      className="relative flex flex-col overflow-hidden bg-dots max-sm:pb-8 sm:min-h-[100svh] lg:block lg:h-[100svh] lg:min-h-[640px]"
+      className="relative flex flex-col overflow-hidden bg-dots max-sm:pb-12 sm:min-h-[100svh] lg:block lg:h-[100svh] lg:min-h-[640px]"
     >
       <div className="relative z-10 px-4 pt-20 sm:px-6 sm:pt-24 lg:pointer-events-none lg:absolute lg:inset-0 lg:flex lg:items-center lg:pt-0">
         <div className="mx-auto w-full max-w-7xl">
           <div ref={introRef} className="max-w-xl animate-fade-up">
             <p
               id={heroNameId}
-              className="flex items-center gap-3 text-base font-medium tracking-tight text-ink sm:text-lg"
+              className="flex items-center gap-3 text-base font-medium tracking-tight text-ink sm:gap-3.5 sm:text-lg"
             >
-              {/* My portrait waits in the desk's tray: my face sits by my name from the start. */}
-              <Image
-                src="/assets/about/profile.webp"
-                alt=""
-                width={40}
-                height={40}
-                priority
-                className="size-8 rounded-full object-cover ring-1 ring-line-strong sm:size-10"
-              />
-              {strings.hero.eyebrow}
+              {/* My face by my name, which fills its height on two lines: a click shows it at its own size. */}
+              <button
+                type="button"
+                onClick={() => setPhotoOpen(true)}
+                aria-label={strings.hero.viewPhoto}
+                className="shrink-0 cursor-zoom-in rounded-full transition hover:ring-2 hover:ring-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:pointer-events-auto"
+              >
+                <Image
+                  src={PHOTO_SRC}
+                  alt=""
+                  width={112}
+                  height={112}
+                  priority
+                  className="size-11 rounded-full object-cover object-[50%_15%] ring-1 ring-line-strong sm:size-[52px]"
+                />
+              </button>
+              <span className="flex flex-col leading-[1.15]">
+                <span>{firstName}</span>
+                <span>{lastName}</span>
+              </span>
             </p>
+            {photoOpen && (
+              <PhotoLightbox
+                src={PHOTO_SRC}
+                alt={strings.hero.eyebrow}
+                closeLabel={strings.hero.closeInfo}
+                onClose={closePhoto}
+              />
+            )}
             <h1 className="mt-3 text-[2.75rem] font-semibold leading-none tracking-tight sm:mt-4 sm:text-6xl lg:text-7xl">
               {strings.hero.role}
               <span className="text-accent">.</span>
             </h1>
             <p className="mt-4 text-pretty text-base text-muted sm:mt-5 sm:text-xl">
               {strings.hero.tagline}
-              <span className="max-sm:hidden"> {strings.hero.taglineMore}</span>
+              <span className="max-sm:hidden">
+                {' '}
+                {strings.hero.taglineMore}{' '}
+                <span className="font-medium text-ink/90">{strings.hero.taglineClaim}</span>
+              </span>
             </p>
+            {/* What a recruiter checks first, in plain text rather than behind the tray. */}
+            <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted sm:mt-4">
+              {strings.hero.facts.map((fact, index) => {
+                const Icon = factIcons[index % factIcons.length];
+                return (
+                  <li key={fact} className="flex items-center gap-1.5">
+                    <Icon aria-hidden className="shrink-0 text-accent" />
+                    {fact}
+                  </li>
+                );
+              })}
+            </ul>
             {/* Phones: how I work comes first, on its turntable, then the buttons. */}
             <PhoneHero>{actions}</PhoneHero>
             <div className="max-sm:hidden">{actions}</div>
@@ -266,7 +335,7 @@ export default function HeroSection() {
                 strings={strings.hero.more}
                 stories={strings.hero.objects}
                 still={showFallback}
-                live={canRender && loaded && SETTINGS.tray[quality].live}
+                live={canRender && settled && SETTINGS.tray[quality].live}
                 active={inView}
                 onPreview={setPreview}
                 onHover={onTrayHover}
@@ -309,7 +378,6 @@ export default function HeroSection() {
               open={trayHover || preview !== null}
               onLabels={onLabels}
               spotlight={spotlight}
-              onShipped={onShipped}
               onSelect={onSelect}
               onMiss={closeInfo}
               robotFollow={robotFollow}
@@ -351,11 +419,7 @@ export default function HeroSection() {
                   }
                 : undefined
             }
-            link={
-              selection.info === 'night'
-                ? { label: strings.hero.nightShiftLink, href: `#${sectionIds.board}` }
-                : undefined
-            }
+            link={storyLinks[selection.info]}
             docked={false}
             // Clear of the fixed header on wide screens, where the desk runs under it.
             topInset={wide ? HEADER_CLEARANCE : 12}
@@ -392,15 +456,6 @@ export default function HeroSection() {
                   {tilt.on ? strings.hero.tiltOn : strings.hero.tiltOff}
                 </button>
               )}
-              <p
-                aria-live="polite"
-                className={cx(
-                  'max-w-md font-mono text-[11px] leading-relaxed text-ok sm:text-xs',
-                  !shipped && 'sr-only'
-                )}
-              >
-                {shipped ? strings.hero.shipped(shipped) : ''}
-              </p>
               {/* Read out whatever the visual callout shows. */}
               <p aria-live="polite" className="sr-only">
                 {selected ? `${selected.title}. ${selected.body}` : ''}

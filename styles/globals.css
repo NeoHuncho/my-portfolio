@@ -67,6 +67,25 @@ body {
   background-size: 22px 22px;
 }
 
+/*
+ * Phones: each section after the hero opens under a firmer rule, with a
+ * stroke of the accent where its heading starts and a little light fading
+ * down from it, so that scrolling past, where one ends and the next begins
+ * shows at a glance. The rule is drawn over the section's own border, which
+ * keeps its place.
+ */
+@media (width < 40rem) {
+  .section-start {
+    border-top-color: transparent;
+    background:
+      linear-gradient(var(--color-accent), var(--color-accent)) 1rem 0 / 2rem 1px no-repeat
+        border-box,
+      linear-gradient(var(--color-line-strong), var(--color-line-strong)) 0 0 / 100% 1px no-repeat
+        border-box,
+      linear-gradient(to bottom, rgb(255 255 255 / 0.03), transparent 16rem) border-box;
+  }
+}
+
 .content-auto {
   content-visibility: auto;
   contain-intrinsic-size: auto 900px;
@@ -155,4 +174,9 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* A modal that holds the page still while it is open, without touching the body's own style. */
+html:has(dialog[data-scroll-lock][open]) {
+  overflow: hidden;
 }

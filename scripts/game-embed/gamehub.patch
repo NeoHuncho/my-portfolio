@@ -1,3 +1,215 @@
+diff --git a/components/game/alto/alto-game.tsx b/components/game/alto/alto-game.tsx
+index 63b5576..f7de968 100644
+--- a/components/game/alto/alto-game.tsx
++++ b/components/game/alto/alto-game.tsx
+@@ -45,12 +45,16 @@ export default function AltoGameView({
+   volume,
+   sound,
+   onExit,
++  onAgain,
+ }: {
+   initial: AltoGame;
+   setup: AltoSetup;
+   volume: number;
+   sound?: ReactNode;
+   onExit: () => void;
++  /** Portfolio embed (scripts/game-embed): SoloGame opens the new match, so the page's other
++   *  frames open it too. */
++  onAgain?: (next: AltoGame) => void;
+ }) {
+   const [g, setG] = useState(initial);
+   const latest = useRef(g);
+@@ -105,8 +109,14 @@ export default function AltoGameView({
+       });
+   };
+   const again = () => {
++    const next = newAltoMatch(setup);
++    if (onAgain) {
++      store(next);
++      onAgain(next);
++      return;
++    }
+     recorded.current = false;
+-    commit(newAltoMatch(setup));
++    commit(next);
+   };
+   const move = (m: AltoMove) => {
+     const next = play(latest.current, m, 0);
+diff --git a/components/game/arena/arena-entry.tsx b/components/game/arena/arena-entry.tsx
+index c481c0d..a11eedb 100644
+--- a/components/game/arena/arena-entry.tsx
++++ b/components/game/arena/arena-entry.tsx
+@@ -18,6 +18,9 @@ export type ArenaChoice = {
+   /** Versus: draft the decks instead of picking one. */
+   draft?: boolean;
+   quest?: 'new' | 'continue';
++  /** Portfolio embed (scripts/game-embed): Versus restarts so far (Again), counted by SoloGame
++   *  so the page's other frames restart too. */
++  again?: number;
+ };
+ 
+ export default function ArenaEntry({
+@@ -26,21 +29,26 @@ export default function ArenaEntry({
+   music,
+   sound,
+   onExit,
++  onAgain,
+ }: {
+   choice: ArenaChoice;
+   volume: number;
+   music: number;
+   sound: ReactNode;
+   onExit: () => void;
++  /** Portfolio embed: Again asks SoloGame, which raises `choice.again`. */
++  onAgain?: () => void;
+ }) {
+   if (choice.quest)
+     return (
+       <QuestSolo
++        key={choice.again ?? 0}
+         resume={choice.quest === 'continue'}
+         volume={volume}
+         music={music}
+         sound={sound}
+         onExit={onExit}
++        onAgain={onAgain}
+       />
+     );
+   return (
+@@ -53,6 +61,8 @@ export default function ArenaEntry({
+       music={music}
+       sound={sound}
+       onExit={onExit}
++      again={choice.again}
++      onAgain={onAgain}
+     />
+   );
+ }
+diff --git a/components/game/arena/arena-game.tsx b/components/game/arena/arena-game.tsx
+index 53dc994..f2ccf3f 100644
+--- a/components/game/arena/arena-game.tsx
++++ b/components/game/arena/arena-game.tsx
+@@ -157,7 +157,14 @@ export default function ArenaGame({
+   setup,
+   onFinish,
+   leaveNote,
++  again: restarts = 0,
++  onAgain,
+ }: {
++  /** Portfolio embed (scripts/game-embed): restarts asked so far; each new one restarts the
++   *  battle here, whichever frame of the page asked. */
++  again?: number;
++  /** Portfolio embed: Again asks SoloGame to count a restart instead of restarting here. */
++  onAgain?: () => void;
+   difficulty?: Difficulty;
+   mode?: Mode;
+   /** Decks and boosts for a battle on this device (Versus decks, Quest). */
+@@ -789,11 +796,18 @@ export default function ArenaGame({
+       )
+       .filter((_, seat) => seat % 2 === s)
+       .join(' & ');
+-  const again = () => {
++  const restart = () => {
+     session.again();
+     setSelected(null);
+     setShowResults(false);
+   };
++  const again = () => (onAgain ? onAgain() : restart());
++  const restarted = useRef(restarts);
++  useEffect(() => {
++    if (restarts <= restarted.current) return;
++    restarted.current = restarts;
++    restart();
++  });
+ 
+   return (
+     <div
+diff --git a/components/game/arena/assets.ts b/components/game/arena/assets.ts
+index e96791e..7f24f6f 100644
+--- a/components/game/arena/assets.ts
++++ b/components/game/arena/assets.ts
+@@ -1,4 +1,6 @@
+ import manifest from '@/lib/games/arena/assets.json';
++// Portfolio embed (scripts/game-embed): its frames open Arena together.
++import { embedded } from '@/embed/config';
+ 
+ /**
+  * Arena's downloads: high-resolution textures, the GLB models and the card
+@@ -90,7 +92,7 @@ function getFile(
+       onBytes(file.bytes, false);
+       return blob;
+     });
+-  const job = (async () => {
++  const job = oneAtATime(cache, file.path, async () => {
+     const hit = cache ? await cache.match(file.path).catch(() => null) : null;
+     if (hit) {
+       const blob = await hit.blob();
+@@ -118,7 +120,7 @@ function getFile(
+         )
+         .catch(() => {});
+     return blob;
+-  })();
++  });
+   inflight.set(file.path, job);
+   job.then(
+     () => inflight.delete(file.path),
+@@ -127,6 +129,17 @@ function getFile(
+   return job;
+ }
+ 
++/**
++ * Portfolio embed: the page's frames open Arena at the same time. Each file is fetched by one
++ * frame while the others wait for it to land in the shared cache, rather than every frame
++ * downloading all of it.
++ */
++function oneAtATime<T>(cache: Cache | null, path: string, job: () => Promise<T>) {
++  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
++  if (!embedded || !cache || !locks) return job();
++  return locks.request(`gamehub-arena-file:${path}`, job) as Promise<T>;
++}
++
+ /** Load every file, reporting bytes as they arrive. Returns blobs by path. */
+ export async function loadFiles(
+   files: AssetFile[],
+diff --git a/components/game/arena/quest-solo.tsx b/components/game/arena/quest-solo.tsx
+index b2d2d8f..a9c647b 100644
+--- a/components/game/arena/quest-solo.tsx
++++ b/components/game/arena/quest-solo.tsx
+@@ -30,7 +30,11 @@ export default function QuestSolo({
+   music,
+   sound,
+   onExit,
++  onAgain,
+ }: {
++  /** Portfolio embed (scripts/game-embed): New quest asks SoloGame, which opens a new run in
++   *  every frame of the page. */
++  onAgain?: () => void;
+   /** Continue the saved run instead of starting a new one. */
+   resume: boolean;
+   volume: number;
+@@ -86,13 +90,15 @@ export default function QuestSolo({
+         act={act}
+         onLeave={onExit}
+         onNewRun={() =>
+-          setQ(
+-            newQuest(
+-              crypto.getRandomValues(new Uint32Array(1))[0],
+-              1,
+-              loadUnlocked(),
+-            ),
+-          )
++          onAgain
++            ? onAgain()
++            : setQ(
++                newQuest(
++                  crypto.getRandomValues(new Uint32Array(1))[0],
++                  1,
++                  loadUnlocked(),
++                ),
++              )
+         }
+         rules={() => setRules(true)}
+         sound={sound}
 diff --git a/components/game/game-navigation.tsx b/components/game/game-navigation.tsx
 index ccd9461..c5b18c1 100644
 --- a/components/game/game-navigation.tsx
@@ -32,8 +244,81 @@ index ccd9461..c5b18c1 100644
        </button>
        {round ? (
          <GameProgress round label={round}>
+diff --git a/components/game/library-showcase.tsx b/components/game/library-showcase.tsx
+index 37664db..b2c09c6 100644
+--- a/components/game/library-showcase.tsx
++++ b/components/game/library-showcase.tsx
+@@ -8,6 +8,8 @@ import { boxCover } from '@/lib/games/box-covers';
+ import type { LibraryGame } from '@/lib/games/library-fixtures';
+ import { reelFor, reelSource } from '@/lib/games/library-reels';
+ import { isHumanOnlyGame } from '@/lib/games/player-policy';
++// Portfolio embed (scripts/game-embed): the footage loads once the library is on screen.
++import { useFootageReady } from '@/embed/reels';
+ 
+ /** How long a game without footage holds the stage. */
+ const STILL_MS = 7000;
+@@ -65,6 +67,7 @@ export function Showcase({
+   const ready = tall !== null && reduced !== null;
+   // The lightest cut that still covers the stage on this screen and device.
+   const tier = useReelTier(stage, tall ? 'tall' : 'wide');
++  const footage = useFootageReady(section);
+   const moving = reduced === false && onScreen;
+   const turning = games.length > 1 && moving && !hovered && !focused;
+   const playing = playingKey === `${gameId}-${tall}`;
+@@ -278,7 +281,7 @@ export function Showcase({
+             />
+           </span>
+         )}
+-        {reel && filmed && ready && tier && !reduced && (
++        {reel && filmed && ready && tier && !reduced && footage && (
+           <video
+             key={`${game.id}-${tall}`}
+             ref={video}
+diff --git a/components/game/rota/rota-solo.tsx b/components/game/rota/rota-solo.tsx
+index 7e7bccf..7f7b50f 100644
+--- a/components/game/rota/rota-solo.tsx
++++ b/components/game/rota/rota-solo.tsx
+@@ -42,9 +42,13 @@ const lessons = [
+ export default function RotaSolo({
+   choice,
+   onExit,
++  onMatch,
+ }: {
+   choice: RotaChoice;
+   onExit: () => void;
++  /** Portfolio embed (scripts/game-embed): practice's real match opens through SoloGame,
++   *  shared by the page's frames. */
++  onMatch?: () => void;
+ }) {
+   const [g, setG] = useState<RotaGame>(() => (choice.resume && readRotaSave()) || fresh(choice));
+   const [volume, setVolume] = useState(() => readAudioLevel(VOLUME));
+@@ -124,6 +128,7 @@ export default function RotaSolo({
+           {lesson === lessons.length - 1 ? (
+             <button
+               onClick={() => {
++                if (onMatch) return onMatch();
+                 setLesson(-1);
+                 setG(fresh({ ...choice, learn: false }));
+               }}
+@@ -135,6 +140,7 @@ export default function RotaSolo({
+           )}
+           <button
+             onClick={() => {
++              if (onMatch) return onMatch();
+               setLesson(-1);
+               setG(fresh({ ...choice, learn: false }));
+             }}
+@@ -152,7 +158,7 @@ export default function RotaSolo({
+         seat={0}
+         onMove={move}
+         onLeave={exit}
+-        onAgain={() => setG(fresh({ ...choice, learn: false }))}
++        onAgain={() => (onMatch ? onMatch() : setG(fresh({ ...choice, learn: false })))}
+         volume={volume}
+         onVolume={(v) => {
+           setVolume(v);
 diff --git a/components/game/rota/rota-table.tsx b/components/game/rota/rota-table.tsx
-index a4f4bc2..fb5a6da 100644
+index b395460..180dea3 100644
 --- a/components/game/rota/rota-table.tsx
 +++ b/components/game/rota/rota-table.tsx
 @@ -463,6 +463,7 @@ export function RotaTable({
@@ -53,7 +338,7 @@ index a4f4bc2..fb5a6da 100644
    volume: number;
    onVolume: (v: number) => void;
    /** The table admin's Table button, when played at a table. */
-@@ -743,6 +746,7 @@ export function RotaTable({
+@@ -744,6 +747,7 @@ export function RotaTable({
          name="Rota"
          round={over ? 'Final' : `Round ${g.round} of ${g.rounds}`}
          onBack={onLeave}
@@ -61,62 +346,156 @@ index a4f4bc2..fb5a6da 100644
          onOthers={g.seats.length > 1 ? () => setPanel('others') : undefined}
          menu={{
            theme: 'rota',
-diff --git a/components/game/rota/three/traffic.ts b/components/game/rota/three/traffic.ts
-index 95ced70..f949fd4 100644
---- a/components/game/rota/three/traffic.ts
-+++ b/components/game/rota/three/traffic.ts
-@@ -8,6 +8,17 @@ import {
-   type Spec,
- } from '@/lib/games/rota/traffic-sim';
- import type { Materials } from './materials';
-+// Portfolio embed (scripts/game-embed): the match opens rounds in, its traffic already about.
+diff --git a/components/game/solo.tsx b/components/game/solo.tsx
+index b903b41..36141fa 100644
+--- a/components/game/solo.tsx
++++ b/components/game/solo.tsx
+@@ -56,6 +56,11 @@ import {
+   type LibraryGame,
+ } from '@/lib/games/library-fixtures';
+ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
++// Portfolio embed (scripts/game-embed): the page's frames stay on the same screen, and every
++// Rota match is shared by them, the first one already under way.
 +import { embedded } from '@/embed/config';
-+
-+/** Simulated seconds of traffic run before the embed's first network shows
-+ *  its vehicles: long enough for street traffic to drive in from the edges
-+ *  and trains to leave their tunnels, as they would have while the rounds
-+ *  before were played. It runs a few milliseconds a frame (about a second
-+ *  in all), out of sight. A match that starts empty (Gamehub's own solo
-+ *  table) is left as it is. */
-+const EMBED_WARM_UP = 60;
-+const EMBED_WARM_UP_MS_PER_FRAME = 6;
- 
- /**
-  * The mill town's traffic, drawn: the motion is `TrafficSim`'s (lib), this
-@@ -50,6 +61,9 @@ export class Traffic {
-   private drawn = new Map<number, Drawn>();
-   private sizes = new Map<string, { length: number; width: number }>();
-   private livery: number;
-+  private first = true;
-+  /** Simulated seconds still to run before the traffic shows (embed). */
-+  private warm = 0;
- 
-   constructor(
-     private models: Map<string, THREE.Object3D>,
-@@ -73,6 +87,8 @@ export class Traffic {
- 
-   setNetwork(net: Net, stationHalf: (cell: number) => number) {
-     this.sim.setNetwork(net, stationHalf);
-+    if (embedded && this.first) this.warm = EMBED_WARM_UP;
-+    this.first = false;
++import { matchId, useEmbedNav, type NavScreen } from '@/embed/nav';
++import { EmbedRota, openingRota, type EmbedRotaState } from '@/embed/rota-embed';
+ // The 3D battle and three.js load only when Arena opens.
+ const ArenaGame = lazy(() => import('./arena/arena-entry'));
+ // Rota's table, engine and bots load only when a match opens.
+@@ -162,9 +167,11 @@ export default function SoloGame() {
+     [arena, setArena] = useState<
+       (import('./arena/arena-entry').ArenaChoice & { key: number }) | null
+     >(null),
+-    [rota, setRota] = useState<(RotaChoice & { key: number }) | null>(null),
++    [rota, setRota] = useState<EmbedRotaState | null>(openingRota),
+     [alto, setAlto] = useState<(AltoChoice & { key: number }) | null>(null),
+-    [diner, setDiner] = useState<(DinerChoice & { key: number }) | null>(null);
++    [diner, setDiner] = useState<(DinerChoice & { key: number }) | null>(null),
++    // Portfolio embed: which match of a trio game this is, the same in every frame playing it.
++    [trioMatch, setTrioMatch] = useState('');
+   // Leaving a saved match asks once and says it is saved; practice simply leaves.
+   const leaving = useLeaveDialog();
+   function leaveOwn() {
+@@ -427,6 +434,7 @@ export default function SoloGame() {
+       setup === id ? options : (g ?? {}),
+     );
+     store(next);
++    setTrioMatch(matchId());
+     setSetup(null);
+     setPanel(null);
+     setOrder([]);
+@@ -441,6 +449,7 @@ export default function SoloGame() {
    }
- 
-   private size(name: string) {
-@@ -159,6 +175,14 @@ export class Traffic {
+   function resume(game: Game) {
+     store(game);
++    setTrioMatch(matchId());
+     setSetup(null);
+     setOrder([]);
+     setPassed([]);
+@@ -462,6 +471,58 @@ export default function SoloGame() {
+     if (!game || game.tutorial || game.phase === 'over') home();
+     else leaving.ask(home);
    }
- 
-   tick(dt: number, moving: boolean) {
-+    if (this.warm > 0) {
-+      const until = performance.now() + EMBED_WARM_UP_MS_PER_FRAME;
-+      do {
-+        this.sim.tick(0.05, true);
-+        this.warm -= 0.05;
-+      } while (this.warm > 0 && performance.now() < until);
-+      if (this.warm > 0) return;
-+    }
-     this.sim.tick(dt, moving);
-     const live = new Set<number>();
-     for (const m of this.sim.movers) {
++  /** Portfolio embed: opens what another frame (or the page) asked for, closing what is open
++   *  without asking. */
++  function follow(screen: NavScreen) {
++    setSetup(null);
++    setPreview(null);
++    setOwnSetup(null);
++    setPanel(null);
++    setInspectorOpen(false);
++    setShowResults(false);
++    leaving.close(false);
++    setArena(null);
++    setRota(null);
++    setAlto(null);
++    setDiner(null);
++    setOpenOwn(null);
++    setOwnPractice(null);
++    if (screen.kind === 'trio') {
++      const { game, match } = screen.payload as { game: Game; match: string };
++      resume(game);
++      setTrioMatch(match);
++    } else home();
++    if (screen.kind === 'arena') setArena(screen.payload as NonNullable<typeof arena>);
++    else if (screen.kind === 'rota') setRota(screen.payload as EmbedRotaState);
++    else if (screen.kind === 'alto') setAlto(screen.payload as NonNullable<typeof alto>);
++    else if (screen.kind === 'diner') setDiner(screen.payload as NonNullable<typeof diner>);
++  }
++  useEmbedNav(
++    arena
++      ? {
++          kind: 'arena',
++          key: `arena:${arena.key}:${arena.again ?? 0}`,
++          game: 'arena',
++          payload: arena,
++        }
++      : rota
++        ? { kind: 'rota', key: `rota:${rota.key}`, game: 'rota', payload: rota }
++        : diner
++          ? { kind: 'diner', key: `diner:${diner.key}`, game: 'diner', payload: diner }
++          : alto
++            ? { kind: 'alto', key: `alto:${alto.key}`, game: 'alto', payload: alto }
++            : openOwn
++              ? { kind: 'own', key: `own:${openOwn}`, game: openOwn }
++              : g
++                ? {
++                    kind: 'trio',
++                    key: `trio:${g.id}:${trioMatch}`,
++                    game: g.id,
++                    payload: { game: g, match: trioMatch },
++                  }
++                : { kind: 'home', key: 'home', game: null },
++    follow,
++  );
+   useBoardLeave(!!(g || openOwn || arena || diner), (allow) => {
+     if (diner) {
+       window.dispatchEvent(new CustomEvent('diner-request-leave', { detail: { allow } }));
+@@ -659,10 +720,32 @@ export default function SoloGame() {
+             music={ambience}
+             onExit={() => setArena(null)}
+             sound={soundSettings}
++            onAgain={
++              embedded
++                ? () =>
++                    setArena(
++                      (a) =>
++                        a && {
++                          ...a,
++                          again: (a.again ?? 0) + 1,
++                          // Quest's New quest: a new run, not the saved one.
++                          ...(a.quest ? { quest: 'new' as const } : {}),
++                        },
++                    )
++                : undefined
++            }
+           />
+         </Suspense>
+       </div>
+     );
++  if (rota && embedded)
++    return (
++      <EmbedRota
++        choice={rota}
++        onExit={() => setRota(null)}
++        onMatch={(choice) => setRota({ ...choice, key: Date.now() })}
++      />
++    );
+   if (rota)
+     return (
+       <div className="app at-table rota">
+@@ -714,6 +797,11 @@ export default function SoloGame() {
+           volume={volume}
+           sound={soundSettings}
+           onExit={() => setAlto(null)}
++          onAgain={
++            embedded
++              ? (game) => setAlto((a) => a && { ...a, game, key: Date.now() })
++              : undefined
++          }
+         />
+       </Suspense>
+     );
 diff --git a/components/game/use-board-leave.ts b/components/game/use-board-leave.ts
 index 23c493c..f32f605 100644
 --- a/components/game/use-board-leave.ts
@@ -138,16 +517,102 @@ index 23c493c..f32f605 100644
      allowed.current = false;
      // A history marker is not a security token; work on LAN HTTP too.
      const marker = `board-${Date.now()}-${++boardGuardSequence}`;
-diff --git a/lib/games/availability.ts b/lib/games/availability.ts
-index 6217ba1..e97f05c 100644
---- a/lib/games/availability.ts
-+++ b/lib/games/availability.ts
-@@ -1,4 +1,8 @@
-+// Portfolio embed (scripts/game-embed): only the games it ships, all playable offline.
+diff --git a/lib/games/library-fixtures.ts b/lib/games/library-fixtures.ts
+index 116f667..69be7c9 100644
+--- a/lib/games/library-fixtures.ts
++++ b/lib/games/library-fixtures.ts
+@@ -3,6 +3,9 @@ import { isHumanOnlyGame } from './player-policy.ts';
+ import type { GameId } from './trio/engine';
+ import { standaloneGames } from './standalone/registry.ts';
+ import type { StandaloneId } from './standalone/types.ts';
++// Portfolio embed (scripts/game-embed): only the games it ships, all playable offline, in its
++// own order.
++import { embedded, embeddedGames } from '@/embed/config';
+ 
+ /**
+  * Library presentation data for the games that ship. There are no placeholder
+@@ -189,7 +192,8 @@ export const standaloneLibraryGames: Record<StandaloneId, LibraryGame> = {
+   order: partyBoxes.miro,
+ };
+ 
+-export const libraryGames: LibraryGame[] = [
++export const libraryGames: LibraryGame[] = (
++  [
+   {
+     id: 'folio',
+     name: 'Puzzles',
+@@ -307,7 +311,8 @@ export const libraryGames: LibraryGame[] = [
+   standaloneLibraryGames.orin,
+   standaloneLibraryGames.miro,
+   standaloneLibraryGames.impostor,
+-];
++  ] satisfies LibraryGame[]
++).filter((g) => !embedded || embeddedGames.includes(g.id));
+ export const playableGame = (id: string) =>
+   libraryGames.find(
+     (g) => g.id === id && (g.gameId || g.standaloneId || g.href),
+@@ -325,7 +330,12 @@ export const gameByLibraryId = (id: string) =>
+  */
+ export type LibrarySection = { id: string; title: string; games: string[] };
+ const available = (ids: string[]) =>
+-  ids.filter((id) => libraryGames.some((g) => g.id === id));
++  ids
++    .filter((id) => libraryGames.some((g) => g.id === id))
++    // Portfolio embed (scripts/game-embed): its own order, the same in every frame.
++    .sort((a, b) =>
++      embedded ? embeddedGames.indexOf(a) - embeddedGames.indexOf(b) : 0,
++    );
+ const quickOrder = [
+   'arena',
+   'rota',
+diff --git a/lib/games/library-recent.ts b/lib/games/library-recent.ts
+index dc74e4c..3386737 100644
+--- a/lib/games/library-recent.ts
++++ b/lib/games/library-recent.ts
+@@ -1,3 +1,6 @@
++// Portfolio embed (scripts/game-embed): its frames keep its own order, the same in each.
++import { embedded } from '@/embed/config';
++
+ /**
+  * The library puts the games this browser played most recently first: the
+  * showcase, its row of covers and every shelf. A game counts as played when
+@@ -26,6 +29,7 @@ export function parseLastPlayed(raw: string | null | undefined): LastPlayed {
+ }
+ 
+ export function readLastPlayed(): LastPlayed {
++  if (embedded) return {};
+   try {
+     return parseLastPlayed(localStorage.getItem(KEY));
+   } catch {
+diff --git a/lib/games/library-reels.ts b/lib/games/library-reels.ts
+index 3bf7488..846a8d4 100644
+--- a/lib/games/library-reels.ts
++++ b/lib/games/library-reels.ts
+@@ -1,3 +1,6 @@
++// Portfolio embed (scripts/game-embed): footage of the games it ships, lighter cuts only.
 +import { embedded, embeddedGames } from '@/embed/config';
 +
- /** Unreleased games stay private to the development server and client. */
- export function isGameAvailable(id: string) {
-+  if (embedded) return embeddedGames.includes(id);
-   return id !== 'diner' || process.env.NODE_ENV === 'development';
+ /**
+  * Gameplay footage for the library: a short silent loop of each game playing
+  * itself with its interface hidden, recorded by `scripts/reels/record.mjs`.
+@@ -46,7 +49,8 @@ export function reelTier(
+       : need <= LONG_EDGE['720'] * 1.15
+         ? '720'
+         : 'full';
+-  return opts.power === 'low' && pick === 'full' ? '720' : pick;
++  // The portfolio's frames are scaled down: it ships no full-HD master.
++  return (opts.power === 'low' || embedded) && pick === 'full' ? '720' : pick;
  }
+ 
+ /** The file for one shape and cut of a reel. */
+@@ -89,7 +93,9 @@ const reel = (id: string): Reel => ({
+ });
+ 
+ export const reelFor = (id: string): Reel | undefined =>
+-  filmed.includes(id) ? reel(id) : undefined;
++  filmed.includes(id) && (!embedded || embeddedGames.includes(id))
++    ? reel(id)
++    : undefined;
+ 
+ /** Every served footage file, for the production asset allowlist. */
+ export const reelAssets = () =>

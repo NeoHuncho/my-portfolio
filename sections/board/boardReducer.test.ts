@@ -79,6 +79,15 @@ describe('boardReducer', () => {
     expect(state.tickets[id].prNumber).toBeGreaterThan(0);
   });
 
+  it('PRs opened in the demo follow the real ones, whatever the made-up tickets say', () => {
+    const real = boardTickets.filter((ticket) => !ticket.illustrative && ticket.pr);
+    const latest = Math.max(...real.map((ticket) => must(ticket.pr).number));
+    const { id } = firstDecision();
+    const accepted = boardReducer(initial(), { type: 'accept', id });
+    const state = boardReducer(accepted, { type: 'prReady', id });
+    expect(state.tickets[id].prNumber).toBe(Math.max(312, latest) + 1);
+  });
+
   it('only tickets being built can get a PR', () => {
     const { id } = firstDecision();
     const state = initial();

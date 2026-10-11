@@ -3,7 +3,7 @@ import { useThree } from '@react-three/fiber';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
 import { CanvasTexture, SRGBColorSpace } from 'three';
-import { textureScale, useQuality } from '../quality';
+import { textureScale, useDetailQuality } from '../quality';
 
 export const sansFamily = GeistSans.style.fontFamily;
 export const monoFamily = GeistMono.style.fontFamily;
@@ -35,7 +35,7 @@ export function useLabelTexture(width: number, height: number, draw: Draw, key: 
   // The scene renders on demand, so a repainted label has to ask for a frame.
   const invalidate = useThree((state) => state.invalidate);
   // Drawn at its base size, onto a canvas made sharper on devices that can take it.
-  const scale = textureScale(useQuality());
+  const scale = textureScale(useDetailQuality());
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);

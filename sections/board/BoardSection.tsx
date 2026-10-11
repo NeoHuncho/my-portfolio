@@ -1,16 +1,17 @@
 import { Fragment, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { type IconType } from 'react-icons';
 import {
-  FiActivity,
   FiArrowUpRight,
-  FiBarChart2,
   FiChevronDown,
+  FiGithub,
+  FiRefreshCw,
+  FiRotateCcw,
   FiTarget,
   FiUserCheck,
 } from 'react-icons/fi';
 import SectionHeading from '@components/SectionHeading';
 import SwipeRow from '@components/SwipeRow';
-import { type Ticket, trackMeta, trackOrder } from '@config/board';
+import { boardCompany, type Ticket, trackMeta, trackOrder } from '@config/board';
 import { boardTickets } from '@config/boardTickets';
 import { sectionIds } from '@config/links';
 import { useLanguage } from '@hooks/useLanguage';
@@ -30,7 +31,7 @@ const ticketsById: Record<string, Ticket> = Object.fromEntries(
   boardTickets.map((ticket) => [ticket.id, ticket])
 );
 
-const practiceIcons: IconType[] = [FiUserCheck, FiBarChart2, FiTarget, FiActivity];
+const practiceIcons: IconType[] = [FiUserCheck, FiRefreshCw, FiTarget, FiRotateCcw];
 
 /** What sits behind the board: how scheduled agent runs stay worth trusting. */
 function AgentPractices() {
@@ -197,7 +198,7 @@ export default function BoardSection() {
     <>
       <section
         id={sectionIds.board}
-        className="content-auto border-t border-line pb-4 pt-10 sm:pb-8 sm:pt-16"
+        className="section-start content-auto border-t border-line pb-12 pt-12 sm:pb-8 sm:pt-16"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <SectionHeading eyebrow={t.eyebrow} title={t.title} intro={t.intro} />
@@ -208,6 +209,18 @@ export default function BoardSection() {
               <div className="flex shrink-0 items-center gap-2.5">
                 <CompanyLogo />
                 <span className="hidden text-sm text-faint md:inline">{t.radar}</span>
+                <a
+                  href={boardCompany.issues}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t.onGitHub}
+                  title={t.onGitHub}
+                  className="inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-xs text-faint transition hover:bg-surface-3 hover:text-ink"
+                >
+                  <FiGithub aria-hidden />
+                  <span className="hidden xl:inline">{t.onGitHub}</span>
+                  <FiArrowUpRight aria-hidden className="max-xl:hidden" />
+                </a>
               </div>
               <div className="no-scrollbar -my-1 flex min-w-0 flex-1 gap-1 overflow-x-auto py-1 lg:justify-end">
                 {(['all', ...trackOrder] as const).map((track) => {

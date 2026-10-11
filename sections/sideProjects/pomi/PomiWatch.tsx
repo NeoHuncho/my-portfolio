@@ -138,7 +138,10 @@ function WatchFace({
   const accent = ACCENTS[timer.type];
   const running = timer.status === 'running';
   const intention = findIntention(state.selected[timer.type]);
-  const synced = capture.phase === 'done' && capture.source === 'app';
+  // A task added on the phone, by voice or typed, flashes on the face.
+  const synced =
+    (capture.phase === 'done' && capture.source === 'app') || state.draft.phase === 'done';
+  const added = state.tasks.find((task) => task.id === state.fresh);
 
   return (
     <>
@@ -175,7 +178,7 @@ function WatchFace({
             style={{ color: DONE_COLOR }}
           >
             <FiCheck aria-hidden="true" className="shrink-0" strokeWidth={3} />
-            <span className="truncate">{PHRASES[capture.phrase].task.title[locale]}</span>
+            <span className="truncate">{added?.title[locale]}</span>
           </p>
         ) : (
           <button
