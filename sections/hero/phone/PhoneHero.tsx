@@ -40,6 +40,8 @@ const STEP_MS = 7000;
 const TURN_PER_PX = 0.009;
 /** Taps this close to either side bring the piece on that side to the front. */
 const SIDE_TAP = 0.28;
+/** A swipe's speed as it lets go is the finger's over about this many milliseconds before. */
+const FLICK_WINDOW_MS = 100;
 /**
  * A shelf card's name and its line under it, in pixels: each kept to one
  * line, shrinking to fit no smaller than its floor, so every card stands as
@@ -146,7 +148,7 @@ function useIdleMount(enabled: boolean): boolean {
  * The hero on phones, straight after the intro, made of the desk's objects.
  * How I work stands on one turntable, my day shift, my agents and their
  * night shift together, with a step under it for each, from day to night:
- * swipe to turn it, tap to make the piece in front jump. Then the buttons
+ * swipe to turn it, or tap a piece on either side to bring it round. Then the buttons
  * (`children`), then the rest of me on a shelf you swipe along, each piece
  * turning on its own holder; tapping one spins it round to face you and
  * tells its story.
@@ -211,8 +213,15 @@ export default function PhoneHero({ children }: { children?: ReactNode }) {
       >,
     []
   );
-  const turn = useRef<TrioTurn>({ drag: 0, held: false, taps: 0 });
-  const drag = useRef<{ x: number; y: number; id: number; moved: boolean } | null>(null);
+  const turn = useRef<TrioTurn>({ drag: 0, held: false, flick: 0 });
+  const drag = useRef<{
+    x: number;
+    y: number;
+    id: number;
+    moved: boolean;
+    /** Where the finger has been lately, and when: how fast it goes as it lets go. */
+    trail: Array<{ x: number; t: number }>;
+  } | null>(null);
 
   const touched = () => {
     setAuto(false);
@@ -226,7 +235,13 @@ export default function PhoneHero({ children }: { children?: ReactNode }) {
   const pick = (id: ShelfId) => setPicked((current) => ({ id, spins: current.spins + 1 }));
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    drag.current = { x: event.clientX, y: event.clientY, id: event.pointerId, moved: false };
+    drag.current = {
+      x: event.clientX,
+      y: event.clientY,
+      id: event.pointerId,
+      moved: false,
+      trail: [{ x: event.clientX, t: event.timeStamp }],
+    };
   };
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const { current } = drag;
@@ -247,40 +262,67 @@ export default function PhoneHero({ children }: { children?: ReactNode }) {
       current.moved = true;
       event.currentTarget.setPointerCapture(event.pointerId);
       turn.current.held = true;
+      // Any flick from the swipe before, not yet taken up, belongs to that one: this starts afresh.
+      turn.current.flick = 0;
       touched();
     }
     turn.current.drag += moveX * TURN_PER_PX;
     current.x = event.clientX;
+    current.trail.push({ x: event.clientX, t: event.timeStamp });
+    if (current.trail.length > 12) {
+      current.trail.shift();
+    }
   };
   useEffect(() => {
     if (!live) {
       drag.current = null;
       turn.current.held = false;
       turn.current.drag = 0;
+      turn.current.flick = 0;
     }
   }, [live]);
-  // A cancelled touch (the page took it for a scroll) only lets go: it is never a tap.
+  // A cancelled touch (the page took it for a scroll) only lets go, with no flick: it is never a tap.
   const onPointerCancel = () => {
     drag.current = null;
     turn.current.held = false;
   };
+  // Capture lost without a pointer up (the canvas went, say): let go all the same. Only the
+  // stage's own: a touch starts captured by whatever is under the finger, and that capture,
+  // handed over to the stage as the swipe takes hold, is lost there and bubbles up here too.
+  const onLostPointerCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onPointerCancel();
+    }
+  };
   const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     const { current } = drag;
     drag.current = null;
+    if (current?.moved) {
+      // Measured over the last few moves, not the last one alone, which can be a twitch; a finger
+      // that stopped before it let go has nothing left in the window, and no flick.
+      const recent = [...current.trail, { x: event.clientX, t: event.timeStamp }].filter(
+        (point) => event.timeStamp - point.t <= FLICK_WINDOW_MS
+      );
+      const first = recent[0];
+      const took = event.timeStamp - first.t;
+      turn.current.flick =
+        recent.length > 1
+          ? ((event.clientX - first.x) / Math.max(took, 16)) * 1000 * TURN_PER_PX
+          : 0;
+    }
     turn.current.held = false;
     if (!current || current.moved) {
       return;
     }
-    // A tap: on either side, the piece there comes to the front; in the middle, the front one jumps.
-    touched();
+    // A tap on either side brings the piece there to the front.
     const box = event.currentTarget.getBoundingClientRect();
     const across = (event.clientX - box.left) / box.width;
     if (across < SIDE_TAP) {
+      touched();
       pickStep(step - 1);
     } else if (across > 1 - SIDE_TAP) {
+      touched();
       pickStep(step + 1);
-    } else {
-      turn.current.taps += 1;
     }
   };
 
@@ -313,8 +355,7 @@ export default function PhoneHero({ children }: { children?: ReactNode }) {
         onPointerMove={live ? onPointerMove : undefined}
         onPointerUp={live ? onPointerUp : undefined}
         onPointerCancel={live ? onPointerCancel : undefined}
-        // Capture lost without a pointer up (the canvas went, say): let go all the same.
-        onLostPointerCapture={live ? onPointerCancel : undefined}
+        onLostPointerCapture={live ? onLostPointerCapture : undefined}
         className="relative -mx-4 mt-1 h-[min(64vw,256px)] touch-pan-y select-none"
       >
         {TINTS.map((tint, i) => (

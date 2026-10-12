@@ -1,3 +1,24 @@
+/* Portfolio embed: the frames never scroll. A wheel or swipe over a frame scrolls the page.
+   Every game's screen fits both frames; the library fits once its shelves go: the showcase's
+   rail already lists every game, and its screen is the Play button. On phones the rail's
+   covers close up so all of them fit beside the footage, with no arrow to scroll it. */
+html,
+body {
+  overflow: hidden;
+}
+.gamehub-embed .lib-sections {
+  display: none;
+}
+@media (max-width: 699px) {
+  .gamehub-embed .show-rail {
+    gap: 4px;
+    overflow: hidden;
+  }
+  .gamehub-embed .show-rail-next {
+    display: none;
+  }
+}
+
 /* Portfolio embed: nothing that links to Gamehub pages the portfolio does not serve
    (online tables, the sound lab); the library's brand is a label, not a link. */
 .gamehub-embed :is(.sound-lab-link, .lib-friends) {

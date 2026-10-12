@@ -78,7 +78,7 @@ export function stillOf<Place extends keyof Stills>(
   return STILLS[place][id] as StaticImageData;
 }
 
-/** The desk tray's pieces, in its order: each starts its turn from its own angle, as its still shows it. */
+/** The desk tray's pieces, in its order. */
 const TRAY_ORDER: ExhibitId[] = [
   'robot',
   'sport',
@@ -89,20 +89,23 @@ const TRAY_ORDER: ExhibitId[] = [
   'mountain',
   'flags',
 ];
-// The search key starts with its slash reading the right way round.
-export const thumbPhase = (id: ExhibitId) =>
-  id === 'keys' ? 0 : Math.max(0, TRAY_ORDER.indexOf(id)) * 0.9;
-
-/** The shelf's pieces each start their turn from their own angle too, as their stills show them. */
-export const shelfPhase = (id: ExhibitId) =>
-  Math.max(0, (SHELF as readonly ExhibitId[]).indexOf(id)) * 1.1;
+/**
+ * Every tray and shelf piece faces the viewer at first, in its still and as
+ * its 3D takes over; then each starts its turn this many seconds after the
+ * one before it, in their order, so no two ever turn in step.
+ */
+const TURN_STAGGER_S = 0.7;
+export const thumbDelay = (id: ExhibitId) =>
+  (Math.max(0, TRAY_ORDER.indexOf(id)) + 1) * TURN_STAGGER_S;
+export const shelfDelay = (id: ExhibitId) =>
+  (Math.max(0, (SHELF as readonly ExhibitId[]).indexOf(id)) + 1) * TURN_STAGGER_S;
 
 /** The stage's turntable: how far a drag has turned it since the last frame, whether it is held, and any spin to add. */
 export type Turn = { drag: number; held: boolean; flick: number };
 
 /**
  * The phone's turntable of how I work: how far a drag has turned it since
- * the last frame, whether it is held, and how many taps it has had, each
- * answered with a hop.
+ * the last frame, whether it is held, and how fast the finger was turning it
+ * when it let go, in radians a second.
  */
-export type TrioTurn = { drag: number; held: boolean; taps: number };
+export type TrioTurn = { drag: number; held: boolean; flick: number };

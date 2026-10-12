@@ -33,7 +33,7 @@ const ticketsById: Record<string, Ticket> = Object.fromEntries(
 
 const practiceIcons: IconType[] = [FiUserCheck, FiRefreshCw, FiTarget, FiRotateCcw];
 
-/** What sits behind the board: how scheduled agent runs stay worth trusting. */
+/** What sits behind the board: how I keep scheduled agent runs in check. */
 function AgentPractices() {
   const { strings } = useLanguage();
   const p = strings.board.practices;

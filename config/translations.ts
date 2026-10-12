@@ -275,11 +275,11 @@ export const translations: Record<Locale, TranslationStrings> = {
     hero: {
       eyebrow: 'William Guinaudie',
       viewPhoto: 'See my photo',
-      role: 'AI Engineer',
+      role: 'Full-stack Engineer',
       tagline:
-        'Agentic engineering: I build products with AI agents, and the workflows that keep them reliable.',
-      taglineMore: 'They take on the legwork.',
-      taglineClaim: 'I make the calls and stand behind what ships.',
+        'I build software with AI agents, and the setup that lets them work well in a real codebase.',
+      taglineMore: 'They plan and code alongside me.',
+      taglineClaim: 'My job is getting the plans right and deciding what’s worth building.',
       facts: ['Lausanne, Switzerland', 'Swiss work permit', 'English and French, both native'],
       primaryCta: 'See my experience',
       secondaryCta: 'Download CV',
@@ -296,8 +296,8 @@ export const translations: Record<Locale, TranslationStrings> = {
         label: 'How I work with AI agents',
         steps: { ticket: 'Day shift', agents: 'Claude Code + Codex', night: 'Night shift' },
         headline: {
-          ticket: 'I make the calls',
-          agents: 'Agents do the legwork',
+          ticket: 'I make the decisions',
+          agents: 'Agents write the code',
           night: 'Agents explore overnight',
         },
         turnHint: 'Swipe to turn it',
@@ -319,7 +319,7 @@ export const translations: Record<Locale, TranslationStrings> = {
           flags: { title: 'EN · FR', body: 'Both native' },
           robot: { title: 'Automation', body: 'At home too' },
           sport: { title: 'Walk and talk', body: 'Dictating at 4.5 km/h' },
-          oss: { title: 'Open source', body: 'Fork, fix, publish' },
+          oss: { title: 'Open source', body: 'My own forks' },
           server: { title: 'Homelab', body: 'Self-hosted' },
           keys: { title: 'Shortcuts', body: 'Press / to search' },
           strategy: { title: 'Strategy games', body: 'One more turn' },
@@ -389,7 +389,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     board: {
       eyebrow: '03 · How I work',
-      title: 'Agents do the legwork. I make the calls.',
+      title: 'Agents bring me plans, and I choose which ones get built.',
       intro:
         'Scheduled agent runs turn feedback, errors and the codebase into tickets with a plan. I make the decisions and own every change that ships. Below, a replay of the radar on Pomi, my side project. Try it.',
       radar: 'Daily radar',
@@ -428,7 +428,7 @@ export const translations: Record<Locale, TranslationStrings> = {
       genericReply:
         'Noted: the agent looks into it on its next run and replies here. The ticket waits for your decision.',
       practices: {
-        title: 'What makes unattended agent runs worth trusting',
+        title: 'How I keep unattended agent runs in check',
         items: [
           {
             title: 'Ownership',
@@ -535,7 +535,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     experience: {
       eyebrow: '02 · Experience',
-      title: 'Five years of shipping products, front to back.',
+      title: 'Five years building web and mobile products.',
       present: 'Now',
       fullTime: 'Full time',
       built: 'What I built',
@@ -550,9 +550,9 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     sideProjects: {
       eyebrow: '04 · Side projects',
-      title: 'Things I built. Open source.',
+      title: 'Open-source projects I built for my own use.',
       intro:
-        'Built for my own use, not as side businesses. This is where I put AI inside the product itself.',
+        'They are personal tools, not side businesses, and they are where I put AI inside the product itself.',
       stars: (count) => `${count}+ stars`,
       source: 'Source code',
       more: 'More projects',
@@ -563,7 +563,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     footer: {
       title: 'Building a team that works with AI agents?',
-      body: 'I am open to AI engineering roles in Switzerland, and happy to talk about how your team could work with agents.',
+      body: 'I am open to full-stack and AI engineering roles in Switzerland, and happy to talk about how your team could work with agents.',
       email: 'Email me',
       builtWith: 'Built with Next.js, React Three Fiber and Rapier.',
     },
@@ -615,15 +615,15 @@ export const translations: Record<Locale, TranslationStrings> = {
     hero: {
       eyebrow: 'William Guinaudie',
       viewPhoto: 'Voir ma photo',
-      role: 'AI Engineer',
+      role: 'Développeur full-stack',
       tagline:
-        'Ingénierie agentique : je construis des produits avec des agents IA, et les workflows qui les rendent fiables.',
-      taglineMore: 'Ils abattent le gros du travail.',
-      taglineClaim: 'Moi, je tranche et j’assume ce qui part en production.',
+        'Je développe avec des agents IA, et l’outillage qui les rend fiables sur une vraie codebase.',
+      taglineMore: 'Ils planifient et codent avec moi.',
+      taglineClaim: 'Mon travail, c’est d’avoir les bons plans et de choisir quoi construire.',
       facts: [
         'Lausanne, Suisse',
         'Permis de travail suisse',
-        'Français et anglais, langues maternelles',
+        'Bilingue français-anglais',
       ],
       primaryCta: 'Voir mon expérience',
       secondaryCta: 'Télécharger le CV',
@@ -642,7 +642,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         turnHint: 'Fais-le tourner',
         headline: {
           ticket: 'Je prends les décisions',
-          agents: 'Les agents font le gros du travail',
+          agents: 'Les agents écrivent le code',
           night: 'La nuit, les agents explorent',
         },
         caption: {
@@ -663,7 +663,7 @@ export const translations: Record<Locale, TranslationStrings> = {
           flags: { title: 'FR · EN', body: 'Deux langues maternelles' },
           robot: { title: 'Automatisation', body: 'À la maison aussi' },
           sport: { title: 'Marcher et parler', body: 'Je dicte à 4,5 km/h' },
-          oss: { title: 'Open source', body: 'Forker, corriger, publier' },
+          oss: { title: 'Open source', body: 'Mes propres forks' },
           server: { title: 'Homelab', body: 'Auto-hébergé' },
           keys: { title: 'Raccourcis', body: 'Appuie sur / pour chercher' },
           strategy: { title: 'Jeux de stratégie', body: 'Encore un tour' },
@@ -733,7 +733,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     board: {
       eyebrow: '03 · Ma méthode',
-      title: 'Les agents font le gros du travail. Je décide.',
+      title: 'Les agents me proposent des plans, et je choisis ceux qu’on construit.',
       intro:
         'Des runs d’agents planifiés transforment les retours, les erreurs et la codebase en tickets avec un plan. Je prends les décisions et je réponds de chaque changement livré. Ci-dessous, le radar de Pomi, mon projet perso, rejoué. Essaie.',
       radar: 'Radar quotidien',
@@ -773,7 +773,7 @@ export const translations: Record<Locale, TranslationStrings> = {
       genericReply:
         'Noté : l’agent s’en occupe à son prochain run et répond ici. Le ticket attend ta décision.',
       practices: {
-        title: 'Ce qui rend les runs d’agents autonomes dignes de confiance',
+        title: 'Comment je garde la main sur les runs d’agents autonomes',
         items: [
           {
             title: 'Maîtrise',
@@ -881,7 +881,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     experience: {
       eyebrow: '02 · Expérience',
-      title: 'Cinq ans à livrer des produits, du front au back.',
+      title: 'Cinq ans à construire des produits web et mobiles.',
       present: 'Actuel',
       fullTime: 'Temps plein',
       built: "Ce que j'ai construit",
@@ -896,9 +896,9 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     sideProjects: {
       eyebrow: '04 · Projets perso',
-      title: 'Ce que j’ai construit. En open source.',
+      title: 'Des projets open source, construits pour mon propre usage.',
       intro:
-        'Construits pour mon propre usage, pas comme des side business. C’est là que je mets l’IA dans le produit lui-même.',
+        'Ce sont des outils perso, pas des side business, et c’est là que je mets l’IA dans le produit lui-même.',
       stars: (count) => `${count}+ étoiles`,
       source: 'Code source',
       more: 'Autres projets',
@@ -909,7 +909,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     footer: {
       title: 'Tu montes une équipe qui travaille avec des agents IA ?',
-      body: 'Je suis ouvert à des postes d’AI Engineer en Suisse, et partant pour parler de la façon dont ton équipe pourrait travailler avec des agents.',
+      body: 'Je suis ouvert à des postes de développeur full-stack ou IA en Suisse, et partant pour parler de la façon dont ton équipe pourrait travailler avec des agents.',
       email: 'Écris-moi',
       builtWith: 'Construit avec Next.js, React Three Fiber et Rapier.',
     },

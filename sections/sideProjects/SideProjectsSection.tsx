@@ -72,12 +72,12 @@ function ProjectInfo({ project, split = false }: { project: FeaturedProject; spl
               className="rounded-xl"
             />
           ) : (
+            // GameHub's own mark, as its library bar shows it: a serif g on walnut.
             <span
-              className="grid size-10 place-items-center rounded-xl font-mono text-sm font-bold text-bg"
-              style={{ background: project.accent }}
+              className="grid size-10 place-items-center rounded-xl bg-[#6b4a2f] font-[Georgia,serif] text-[26px] font-bold leading-none text-[#fff4dd] shadow-[inset_0_-3px_0_#4a3220]"
               aria-hidden
             >
-              GH
+              g
             </span>
           )}
           <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">{project.name}</h3>

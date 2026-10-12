@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import Image from 'next/image';
+import Image, { type StaticImageData } from 'next/image';
 import { FiX } from 'react-icons/fi';
 
 type PhotoLightboxProps = {
-  src: string;
+  src: StaticImageData;
   alt: string;
   closeLabel: string;
   onClose: () => void;
@@ -45,8 +45,6 @@ export default function PhotoLightbox({ src, alt, closeLabel, onClose }: PhotoLi
         <Image
           src={src}
           alt={alt}
-          width={1122}
-          height={1402}
           sizes="440px"
           className="h-auto w-[min(440px,80vw,calc(70svh*1122/1402))] rounded-2xl shadow-2xl ring-1 ring-line-strong"
         />

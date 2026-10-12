@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import {
@@ -15,6 +15,10 @@ import { useLanguage } from '@hooks/useLanguage';
 import { useMediaQuery } from '@hooks/useMediaQuery';
 import { usePrefersReducedMotion } from '@hooks/usePrefersReducedMotion';
 import { cx } from '@lib/cx';
+// Static imports give the photos content-hashed URLs: the year-long image cache never serves an old one.
+// The avatar is the same photo with more background above my hair, for the round crop.
+import avatar from '@public/assets/about/profile-avatar.webp';
+import photo from '@public/assets/about/profile.webp';
 import DeskCallout from './DeskCallout';
 import DeskLabels from './DeskLabels';
 import DeskTray from './DeskTray';
@@ -25,7 +29,13 @@ import { type Anchor, type DeskLabel } from './playground/Playground';
 import PlaygroundFallback from './PlaygroundFallback';
 import { probeGraphics, SETTINGS, useQuality } from './quality';
 import { useDeviceTilt } from './useDeviceTilt';
+import type { Locale } from '@config/translations';
 
+/**
+ * How wide each language's title is at 1em, with a little room to spare: the
+ * title is sized to fill its column on one line, up to the usual cap.
+ */
+const TITLE_EMS: Record<Locale, number> = { en: 8.4, fr: 9.95 };
 /** Where I am, my permit, my languages: in the order of `strings.hero.facts`. */
 const factIcons = [FiMapPin, FiCheckCircle, FiGlobe];
 
@@ -38,7 +48,6 @@ const RISE_CARD_DELAY = 900;
 const HEADER_CLEARANCE = 76;
 /** About how long how I work takes to drop in and settle. */
 const TRAY_AFTER_MS = 1600;
-const PHOTO_SRC = '/assets/about/profile.webp';
 const Playground = dynamic(loadPlayground, { ssr: false });
 
 /**
@@ -227,8 +236,6 @@ export default function HeroSection() {
   }, [open]);
 
   const selected = selection ? strings.hero.objects[selection.info] : null;
-  const [firstName, ...rest] = strings.hero.eyebrow.split(' ');
-  const lastName = rest.join(' ');
   // Two stories lead further down the page.
   const storyLinks: Partial<Record<InfoId, { label: string; href: string }>> = {
     night: { label: strings.hero.nightShiftLink, href: `#${sectionIds.board}` },
@@ -273,7 +280,7 @@ export default function HeroSection() {
               id={heroNameId}
               className="flex items-center gap-3 text-base font-medium tracking-tight text-ink sm:gap-3.5 sm:text-lg"
             >
-              {/* My face by my name, which fills its height on two lines: a click shows it at its own size. */}
+              {/* My face by my name: a click shows it at its own size. */}
               <button
                 type="button"
                 onClick={() => setPhotoOpen(true)}
@@ -281,28 +288,28 @@ export default function HeroSection() {
                 className="shrink-0 cursor-zoom-in rounded-full transition hover:ring-2 hover:ring-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:pointer-events-auto"
               >
                 <Image
-                  src={PHOTO_SRC}
+                  src={avatar}
                   alt=""
                   width={112}
                   height={112}
                   priority
-                  className="size-11 rounded-full object-cover object-[50%_15%] ring-1 ring-line-strong sm:size-[52px]"
+                  className="size-11 rounded-full object-cover object-[50%_21%] ring-1 ring-line-strong sm:size-[52px]"
                 />
               </button>
-              <span className="flex flex-col leading-[1.15]">
-                <span>{firstName}</span>
-                <span>{lastName}</span>
-              </span>
+              <span className="whitespace-nowrap">{strings.hero.eyebrow}</span>
             </p>
             {photoOpen && (
               <PhotoLightbox
-                src={PHOTO_SRC}
+                src={photo}
                 alt={strings.hero.eyebrow}
                 closeLabel={strings.hero.closeInfo}
                 onClose={closePhoto}
               />
             )}
-            <h1 className="mt-3 text-[2.75rem] font-semibold leading-none tracking-tight sm:mt-4 sm:text-6xl lg:text-7xl">
+            <h1
+              style={{ '--title-em': TITLE_EMS[locale] } as CSSProperties}
+              className="mt-3 whitespace-nowrap text-[length:min(2.75rem,calc((100vw_-_2rem)_/_var(--title-em)))] font-semibold leading-none tracking-tight sm:mt-4 sm:text-[length:min(3.75rem,calc(min(36rem,100vw_-_3rem)_/_var(--title-em)))] lg:text-[length:min(4.5rem,calc(36rem_/_var(--title-em)))]"
+            >
               {strings.hero.role}
               <span className="text-accent">.</span>
             </h1>

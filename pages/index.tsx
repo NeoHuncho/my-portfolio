@@ -8,15 +8,15 @@ const BoardSection = dynamic(() => import('@sections/board/BoardSection'));
 const SideProjectsSection = dynamic(() => import('@sections/sideProjects/SideProjectsSection'));
 
 const description =
-  'William Guinaudie, AI Engineer. I build products and the AI workflows around them: agents do the legwork, I make the engineering calls, review the code and ship it.';
+  'William Guinaudie, full-stack engineer in Lausanne. I build software with AI agents, and my job is getting the plans right and deciding what’s worth building.';
 
 export default function Home() {
   return (
     <>
       <Head>
-        <title>William Guinaudie · AI Engineer</title>
+        <title>William Guinaudie · Full-stack Engineer</title>
         <meta name="description" content={description} />
-        <meta property="og:title" content="William Guinaudie · AI Engineer" />
+        <meta property="og:title" content="William Guinaudie · Full-stack Engineer" />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
       </Head>

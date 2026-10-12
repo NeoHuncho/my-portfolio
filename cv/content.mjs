@@ -6,14 +6,14 @@ export const content = {
     lang: 'en',
     file: 'CV_EN_William_Guinaudie',
     title: 'William Guinaudie · CV',
-    role: 'AI Engineer · Full-stack Developer',
+    role: 'Full-stack Developer · AI Engineer',
     tagline:
-      'Agentic engineering: I build products with AI agents, and the workflows that keep them reliable. Agents do the legwork; I make the engineering calls, review the code and ship it.',
+      'I build software with AI agents, and the setup that lets them work well in a real codebase. They plan and code alongside me; my job is getting the plans right and deciding what’s worth building.',
     facts: [
       ['Based in', 'Lausanne, Switzerland'],
       ['Nationality', 'British and French'],
       ['Work permit', 'Swiss work permit held'],
-      ['Phone', '+33 6 35 94 82 91', 'tel:+33635948291'],
+      ['Phone', '+41 78 210 18 12', 'tel:+41782101812'],
       ['Email', 'william.guinaudie@gmail.com', 'mailto:william.guinaudie@gmail.com'],
       ['Languages', 'English and French, both native'],
       ['Portfolio', 'williamguinaudie.com', 'https://www.williamguinaudie.com/?lang=en'],
@@ -24,7 +24,7 @@ export const content = {
     qrCaption: 'The interactive version, with a playable replay of my agent radar on Pomi.',
     how: {
       eyebrow: 'How I work',
-      title: 'Agents do the legwork. I make the calls.',
+      title: 'Agents bring me plans, and I choose which ones get built.',
       me: 'Me',
       steps: [
         {
@@ -38,7 +38,7 @@ export const content = {
           who: 'Agent + CI',
           body: 'An agent implements it on its own branch; CI checks it.',
         },
-        { name: 'Ship', who: 'me', body: 'I review every pull request, then merge and ship.' },
+        { name: 'Ship', who: 'me', body: 'I review the changes, then merge and ship.' },
       ],
     },
     sections: {
@@ -55,7 +55,7 @@ export const content = {
         when: '03.2026 – now',
         length: 'Current role',
         city: 'Lausanne, CH',
-        role: 'AI Engineer · Full-stack Developer',
+        role: 'Full-stack Developer · AI Engineer',
         company: 'Apptitude',
         link: 'https://apptitude.ch/',
         sector: 'Digital agency',
@@ -251,14 +251,14 @@ export const content = {
     lang: 'fr',
     file: 'CV_FR_William_Guinaudie',
     title: 'William Guinaudie · CV',
-    role: 'AI Engineer · Développeur Full-stack',
+    role: 'Développeur Full-stack · Développeur IA',
     tagline:
-      'Ingénierie agentique : je construis des produits avec des agents IA, et les workflows qui les rendent fiables. Ils font le gros du travail ; je décide, je relis le code et je livre.',
+      'Je développe avec des agents IA, et l’outillage qui les rend fiables sur une vraie codebase. Ils planifient et codent avec moi ; mon travail, c’est d’avoir les bons plans et de choisir quoi construire.',
     facts: [
       ['Lieu', 'Lausanne, Suisse'],
       ['Nationalité', 'Française et britannique'],
       ['Permis', 'Permis de travail suisse'],
-      ['Téléphone', '+33 6 35 94 82 91', 'tel:+33635948291'],
+      ['Téléphone', '+41 78 210 18 12', 'tel:+41782101812'],
       ['E-mail', 'william.guinaudie@gmail.com', 'mailto:william.guinaudie@gmail.com'],
       ['Langues', 'Français et anglais, langues maternelles'],
       ['Portfolio', 'williamguinaudie.com', 'https://www.williamguinaudie.com/?lang=fr'],
@@ -269,7 +269,7 @@ export const content = {
     qrCaption: 'La version interactive, avec une version jouable de mon radar d’agents sur Pomi.',
     how: {
       eyebrow: 'Ma méthode',
-      title: 'Les agents font le gros du travail. Je décide.',
+      title: 'Les agents me proposent des plans, et je choisis ceux qu’on construit.',
       me: 'Moi',
       steps: [
         {
@@ -283,7 +283,7 @@ export const content = {
           who: 'Agent + CI',
           body: 'Un agent implémente sur sa propre branche ; la CI vérifie.',
         },
-        { name: 'Livrer', who: 'me', body: 'Je relis chaque pull request, puis je merge.' },
+        { name: 'Livrer', who: 'me', body: 'Je relis les changements, puis je merge.' },
       ],
     },
     sections: {
@@ -300,7 +300,7 @@ export const content = {
         when: '03.2026 – auj.',
         length: 'Poste actuel',
         city: 'Lausanne, CH',
-        role: 'AI Engineer · Développeur Full-stack',
+        role: 'Développeur Full-stack · Développeur IA',
         company: 'Apptitude',
         link: 'https://apptitude.ch/',
         sector: 'Agence digitale',

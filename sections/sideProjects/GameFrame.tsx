@@ -81,7 +81,9 @@ export default function GameFrame({ src, title, poster, width, height, device }:
                 'absolute left-0 top-0 origin-top-left border-0 transition-opacity duration-500',
                 loaded ? 'opacity-100' : 'opacity-0'
               )}
-              style={{ width, height, transform: `scale(${scale})` }}
+              // Light inside, as Gamehub opens on its own site: the page's dark scheme would
+              // otherwise reach the frame as the system's.
+              style={{ width, height, transform: `scale(${scale})`, colorScheme: 'light' }}
             />
           )}
           {!loaded && (

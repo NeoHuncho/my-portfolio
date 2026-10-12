@@ -1,7 +1,7 @@
 import { type ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useLanguage } from '@hooks/useLanguage';
-import { type ExhibitId, SHELF, shelfPhase, SHIFTS, thumbPhase } from '../phone/exhibitIds';
+import { type ExhibitId, SHELF, SHIFTS } from '../phone/exhibitIds';
 import { HolderScene, StageScene, ThumbScene, TrioScene } from '../phone/exhibits';
 
 /**
@@ -30,7 +30,7 @@ const TRAY: ExhibitId[] = [
 const STILLS: Array<{ id: ExhibitId; place: 'stage' | 'shelf' | 'tray' }> = [
   ...SHIFTS.map((id) => ({ id, place: 'stage' as const })),
   ...SHELF.map((id) => ({ id, place: 'shelf' as const })),
-  // The desk's tray, each piece at the angle its 3D starts turning from.
+  // The desk's tray, each piece facing the viewer, as its 3D starts.
   ...TRAY.map((id) => ({ id, place: 'tray' as const })),
 ];
 
@@ -42,10 +42,10 @@ function Still({ id, place }: { id: ExhibitId; place: 'stage' | 'shelf' | 'tray'
     return <StageScene id={id} still />;
   }
   if (place === 'tray') {
-    return <ThumbScene id={id} phase={thumbPhase(id)} still />;
+    return <ThumbScene id={id} still />;
   }
   // The shelf opens with its first piece picked, its plinth lit up.
-  return <HolderScene id={id} phase={shelfPhase(id)} picked={id === SHELF[0]} still />;
+  return <HolderScene id={id} picked={id === SHELF[0]} still />;
 }
 
 /**

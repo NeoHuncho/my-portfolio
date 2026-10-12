@@ -14,9 +14,9 @@ import { Cell, CellLayer, CellRegistry, type CellScenes } from './Cells';
 import {
   type ExhibitId,
   SHELF,
-  shelfPhase,
+  shelfDelay,
   type ShelfId,
-  thumbPhase,
+  thumbDelay,
   type TrioTurn,
 } from './exhibitIds';
 import { HolderScene, ThumbScene, TrioScene } from './exhibits';
@@ -234,7 +234,7 @@ export function ShelfShow({
                 id={id}
                 picked={picked.id === id}
                 spins={picked.id === id ? picked.spins : 0}
-                phase={shelfPhase(id)}
+                delay={shelfDelay(id)}
               />
             </Cell>
           ))}
@@ -274,7 +274,7 @@ export function TrayShow<Id extends ExhibitId>({
                 id={id}
                 hovered={hovered === id}
                 added={added.includes(id)}
-                phase={thumbPhase(id)}
+                delay={thumbDelay(id)}
               />
             </Cell>
           ))}

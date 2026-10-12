@@ -8,9 +8,13 @@
     <link rel="icon" type="image/svg+xml" href="/games/app/favicon-QINsBke0.svg" />
     <script>
       try {
+        // Light, as Gamehub's own site opens, unless the visitor picked dark in a frame: never the
+        // portfolio's dark page, which an iframe would otherwise take for the system's look.
         var t = localStorage.getItem('gamehub.theme.v1');
-        if (t !== 'light' && t !== 'dark')
-          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if (t !== 'light' && t !== 'dark') {
+          t = 'light';
+          localStorage.setItem('gamehub.theme.v1', t);
+        }
         document.documentElement.dataset.theme = t;
       } catch (e) {}
     </script>

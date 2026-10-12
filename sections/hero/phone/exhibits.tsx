@@ -387,7 +387,8 @@ const HOLDER_BOB = 0.035;
 const HOLDER_BOB_RATE = 2.6;
 
 /**
- * One of the shelf's holders, turning slowly. Picked, its plinth lights up;
+ * One of the shelf's holders, facing the viewer, then after `delay` turning
+ * slowly. Picked, its plinth lights up;
  * tapped, it spins round, once more for every tap, and comes to rest facing
  * the viewer, swaying and bobbing gently round its front for as long as its
  * story is the one told. Another piece picked, it picks up its turn again.
@@ -396,20 +397,22 @@ export function HolderScene({
   id,
   picked,
   spins = 0,
-  phase = 0,
+  delay = 0,
   still,
 }: {
   id: ExhibitId;
   picked?: boolean;
   /** Taps so far: each new one spins it round. */
   spins?: number;
-  phase?: number;
+  /** Seconds it faces the viewer before it starts to turn. */
+  delay?: number;
   still?: boolean;
 }) {
   const spinner = useRef<Group>(null);
   const state = useRef({
-    angle: phase,
-    vel: HOLDER_SPIN,
+    angle: 0,
+    vel: 0,
+    time: 0,
     goal: null as number | null,
     /** Come to rest on its front since the last tap. */
     arrived: false,
@@ -437,6 +440,7 @@ export function HolderScene({
       return;
     }
     const s = state.current;
+    s.time += dt;
     if (facing && s.goal !== null) {
       if (!s.arrived && Math.abs(s.goal - s.angle) < 0.08 && Math.abs(s.vel) < 0.6) {
         s.arrived = true;
@@ -453,7 +457,7 @@ export function HolderScene({
       s.goal = null;
       s.arrived = false;
       s.settled += (0 - s.settled) * (1 - Math.exp(-dt * 4));
-      s.vel += (HOLDER_SPIN - s.vel) * (1 - Math.exp(-dt * 2.2));
+      s.vel += ((s.time < delay ? 0 : HOLDER_SPIN) - s.vel) * (1 - Math.exp(-dt * 2.2));
     }
     s.angle += s.vel * dt;
     s.bob += dt * HOLDER_BOB_RATE;
@@ -465,7 +469,7 @@ export function HolderScene({
       <ViewCamera position={[0, 2.1, 5.5]} target={0.36} />
       <Lights />
       <Plinth radius={1.25} height={0.26} glow={picked ? 1 : 0.55} />
-      <group ref={spinner} rotation={[0, phase, 0]}>
+      <group ref={spinner}>
         <Fit radius={1.15} height={1.5} lean={HOLDER_LEAN[id]}>
           <ShownSmall.Provider value>
             <Exhibit id={id} still={still} />
@@ -496,8 +500,9 @@ const THUMB_POSE: Partial<Record<ExhibitId, { lean: number; size: number }>> = {
 };
 
 /**
- * One piece in the desk's tray, small: just the piece turning over a soft
- * shadow, framed with room round it so nothing is cut off. Pointed at, it
+ * One piece in the desk's tray, small: just the piece over a soft shadow,
+ * framed with room round it so nothing is cut off, facing the viewer and
+ * after `delay` turning. Pointed at, it
  * turns on round to face the viewer, the way it was already going, stops
  * there and bobs gently; let go, it picks up its turn again. Once on the
  * desk, it faces the viewer and stands still.
@@ -506,21 +511,23 @@ export function ThumbScene({
   id,
   hovered,
   added,
-  phase = 0,
+  delay = 0,
   still,
 }: {
   id: ExhibitId;
   hovered?: boolean;
   /** Already on the desk. */
   added?: boolean;
-  phase?: number;
+  /** Seconds it faces the viewer before it starts to turn. */
+  delay?: number;
   /** Frozen where it starts, for its still. */
   still?: boolean;
 }) {
   const spinner = useRef<Group>(null);
   const state = useRef({
-    angle: phase,
-    vel: THUMB_SPIN,
+    angle: 0,
+    vel: 0,
+    time: 0,
     grow: 0,
     bob: 0,
     goal: null as number | null,
@@ -537,6 +544,7 @@ export function ThumbScene({
     }
     const dt = Math.min(delta, 0.05);
     const s = state.current;
+    s.time += dt;
     const facing = hovered || added;
     // On the desk already, it stands still: no growing, no bob.
     s.grow += ((hovered && !added ? 1 : 0) - s.grow) * (1 - Math.exp(-dt * 8));
@@ -548,7 +556,7 @@ export function ThumbScene({
       s.angle += s.vel * dt;
     } else {
       s.goal = null;
-      s.vel += (THUMB_SPIN - s.vel) * (1 - Math.exp(-dt * 2.5));
+      s.vel += ((s.time < delay ? 0 : THUMB_SPIN) - s.vel) * (1 - Math.exp(-dt * 2.5));
       s.angle += s.vel * dt;
     }
     // The bob comes in as it settles to the front, and goes as it lets go.
@@ -567,7 +575,7 @@ export function ThumbScene({
         <meshBasicMaterial map={shadow} transparent depthWrite={false} toneMapped={false} />
       </mesh>
       <group rotation={[pose?.lean ?? 0, 0, 0]} position={[0, pose ? 0.3 : 0, 0]}>
-        <group ref={spinner} rotation={[0, phase, 0]}>
+        <group ref={spinner}>
           <Fit
             radius={1.08 * (pose?.size ?? 1)}
             height={1.45 * (pose?.size ?? 1)}
@@ -589,9 +597,16 @@ const TRIO_STEP = (Math.PI * 2) / SHIFTS.length;
 /** How hard the turntable springs to the piece it settles on, and how much it is damped. */
 const SETTLE_STIFFNESS = 28;
 const SETTLE_DAMPING = 0.95;
-/** Let go, it turns at most this fast (radians a second), and a flick reaches at most this much further. */
-const MAX_SPIN = 4;
-const FLICK_REACH = TRIO_STEP * 0.55;
+/** Let go, it turns at most this fast, in radians a second. */
+const MAX_SPIN = 6;
+/**
+ * Let go faster than this (radians a second, about 150px a second of finger),
+ * it goes on to the next piece the way it was flicked, however short the
+ * swipe; slower, it settles on the piece nearest the front.
+ */
+const FLICK_SPEED = 1.3;
+/** Left alone, it sways a little either way, so it reads as something to turn. */
+const IDLE_SWAY = 0.06;
 /**
  * How much each piece turns with the table as it goes round: a little, so it
  * still feels round. Smooth all the way round, so a piece passing behind
@@ -599,16 +614,13 @@ const FLICK_REACH = TRIO_STEP * 0.55;
  * radian with it, the one in front not at all.
  */
 const FOLLOW = 0.53;
-/** A tapped piece jumps this high and turns round once, over this long. */
-const HOP_HEIGHT = 0.42;
-const HOP_SECONDS = 0.7;
 
 /**
  * How I work, on one turntable: my day shift, my agents and their night
  * shift a third of a turn apart, the one in front facing the camera and the
  * other two behind it on either side. A sideways drag turns it, and on
  * letting go it settles on the piece nearest the front, or the next one along
- * after a flick. A tap makes the piece in front jump and spin.
+ * after a flick.
  */
 export function TrioScene({
   step,
@@ -625,18 +637,14 @@ export function TrioScene({
 }) {
   const table = useRef<Group>(null);
   const stands = useRef<Array<Group | null>>([]);
-  const pieces = useRef<Array<Group | null>>([]);
   const state = useRef({
     angle: -step * TRIO_STEP,
     vel: 0,
     goal: -step * TRIO_STEP,
     held: false,
-    taps: 0,
-    hopAt: -Infinity,
-    hopOf: step,
+    /** How much of the idle sway shows: none while held, back in gently after. */
+    sway: 1,
     time: 0,
-    /** The piece in front when the swipe began. */
-    from: step,
   });
 
   // Picked from the steps underneath: turn the short way round to it.
@@ -664,24 +672,28 @@ export function TrioScene({
       input.drag = 0;
     }
     if (input?.held || moved !== 0) {
-      if (!s.held) {
-        s.from = Math.round(-s.angle / TRIO_STEP);
-      }
       s.held = true;
       s.angle += moved;
-      s.vel += (moved / dt - s.vel) * 0.5;
     }
     if (!input?.held) {
       if (s.held) {
-        // Let go: settle on the piece it is heading for, a flick carrying it one further,
-        // but never more than one piece on from where the swipe began, and calmly.
+        // Let go: it carries on at the finger's speed, onto the next piece the way it was
+        // flicked, or the one nearest the front after a slow drag, wherever the drag took it.
         s.held = false;
-        s.vel = Math.max(-MAX_SPIN, Math.min(MAX_SPIN, s.vel));
-        const flick = Math.max(-FLICK_REACH, Math.min(FLICK_REACH, s.vel * 0.12));
-        const nearest = Math.round(-(s.angle + flick) / TRIO_STEP);
-        const turns = Math.max(s.from - 1, Math.min(s.from + 1, nearest));
-        s.goal = -turns * TRIO_STEP;
-        onStep?.(((turns % SHIFTS.length) + SHIFTS.length) % SHIFTS.length);
+        s.vel = Math.max(-MAX_SPIN, Math.min(MAX_SPIN, input?.flick ?? 0));
+        if (input) {
+          input.flick = 0;
+        }
+        // Which piece is in front, part way between two as it may be.
+        const at = -s.angle / TRIO_STEP;
+        let next = Math.round(at);
+        if (s.vel < -FLICK_SPEED) {
+          next = Math.floor(at) + 1;
+        } else if (s.vel > FLICK_SPEED) {
+          next = Math.ceil(at) - 1;
+        }
+        s.goal = -next * TRIO_STEP;
+        onStep?.(((next % SHIFTS.length) + SHIFTS.length) % SHIFTS.length);
       }
       const spring =
         (s.goal - s.angle) * SETTLE_STIFFNESS -
@@ -689,30 +701,15 @@ export function TrioScene({
       s.vel += spring * dt;
       s.angle += s.vel * dt;
     }
-    if (input && input.taps !== s.taps) {
-      s.taps = input.taps;
-      s.hopAt = s.time;
-      // Whichever piece is in front right now, even halfway through a turn.
-      const front = Math.round(-s.angle / TRIO_STEP);
-      s.hopOf = ((front % SHIFTS.length) + SHIFTS.length) % SHIFTS.length;
-    }
-    // Left alone, it sways a little, so it reads as something to turn.
-    const angle = s.angle + (s.held ? 0 : Math.sin(s.time * 0.7) * 0.06);
+    // The sway goes as soon as it is held, so it never fights the finger, and comes back slowly.
+    s.sway += ((s.held ? 0 : 1) - s.sway) * (1 - Math.exp(-dt * (s.held ? 12 : 1.5)));
+    const angle = s.angle + Math.sin(s.time * 0.7) * IDLE_SWAY * s.sway;
     table.current.rotation.y = angle;
     // Each piece keeps its front to the viewer as it goes round, turning only a little with the table.
     stands.current.forEach((stand, i) => {
       if (stand) {
         stand.rotation.y = -angle + Math.sin(i * TRIO_STEP + angle) * FOLLOW;
       }
-    });
-    pieces.current.forEach((piece, i) => {
-      if (!piece) {
-        return;
-      }
-      const t = (s.time - s.hopAt) / HOP_SECONDS;
-      const hopping = i === s.hopOf && t >= 0 && t < 1;
-      piece.position.y = hopping ? Math.sin(Math.PI * t) * HOP_HEIGHT : 0;
-      piece.rotation.y = hopping ? (1 - (1 - t) ** 3) * Math.PI * 2 : 0;
     });
   });
 
@@ -734,18 +731,12 @@ export function TrioScene({
               position={[Math.sin(at) * TRIO_RADIUS, 0, Math.cos(at) * TRIO_RADIUS]}
               rotation={[0, Math.sin(at - step * TRIO_STEP) * FOLLOW + step * TRIO_STEP, 0]}
             >
-              <group
-                ref={(piece) => {
-                  pieces.current[i] = piece;
-                }}
-              >
-                {/* The agents' dock lies flat: a little wider, so it holds its own beside the others. */}
-                <Fit radius={id === 'agents' ? 1.12 : 1} height={1.4} upright={id === 'agents'}>
-                  <ShownSmall.Provider value>
-                    <Exhibit id={id} still={still} />
-                  </ShownSmall.Provider>
-                </Fit>
-              </group>
+              {/* The agents' dock lies flat: a little wider, so it holds its own beside the others. */}
+              <Fit radius={id === 'agents' ? 1.12 : 1} height={1.4} upright={id === 'agents'}>
+                <ShownSmall.Provider value>
+                  <Exhibit id={id} still={still} />
+                </ShownSmall.Provider>
+              </Fit>
             </group>
           );
         })}

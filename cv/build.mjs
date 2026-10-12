@@ -19,7 +19,7 @@ const fonts = {
   sans: dataUri(join(geist, 'geist-sans/Geist-Variable.woff2'), 'font/woff2'),
   mono: dataUri(join(geist, 'geist-mono/GeistMono-Variable.woff2'), 'font/woff2'),
 };
-const photo = dataUri(join(root, 'public/assets/about/profile.webp'), 'image/webp');
+const photo = dataUri(join(root, 'public/assets/about/profile-avatar.webp'), 'image/webp');
 const qr = (lang) => readFileSync(join(here, `assets/qr-${lang}.svg`), 'utf8');
 // The site serves the CVs from public/cv/.
 const site = join(root, 'public/cv');
@@ -122,7 +122,7 @@ a.out::after { content: '↗'; font-family: 'Geist Mono', monospace; font-size: 
 h1 { margin-top: 2.2mm; font-size: 31pt; line-height: 1; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); }
 h1 .dot { color: var(--accent); }
 .tagline { margin-top: 3mm; max-width: 142mm; font-size: 9.6pt; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
-.photo { width: 29mm; height: 30mm; object-fit: cover; object-position: 50% 15%; border-radius: 2mm; display: block; }
+.photo { width: 29mm; height: 30mm; object-fit: cover; object-position: 50% 23%; border-radius: 2mm; display: block; }
 
 /* Swiss personal details, in three columns, with the QR code to the site */
 .facts { display: grid; grid-template-columns: 1fr 1.08fr 1.12fr 40mm; column-gap: 5mm; border-top: 0.6pt solid var(--ink); border-bottom: 0.5pt solid var(--line); padding: 2.6mm 0 2.4mm; }
