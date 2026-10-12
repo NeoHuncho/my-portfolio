@@ -40,24 +40,27 @@ export const experiences: Experience[] = [
     id: 'apptitude',
     company: 'Apptitude',
     role: {
-      en: 'Full-stack Developer · AI Engineer',
-      fr: 'Développeur Full-stack · Développeur IA',
+      en: 'Full-stack Developer',
+      fr: 'Développeur Full-stack',
     },
     from: { en: 'Mar 2026', fr: 'mars 2026' },
     to: null,
     city: { en: 'Lausanne, Switzerland', fr: 'Lausanne, Suisse' },
     sector: { en: 'Digital agency', fr: 'Agence digitale' },
     summary: {
-      en: 'Client projects, mainly a Swiss financial-planning platform used by wealth advisors, built front to back in an Nx monorepo.',
-      fr: 'Des projets clients, surtout une plateforme suisse de planification financière pour conseillers en patrimoine, du front au back dans un monorepo Nx.',
+      en: 'Client projects, mainly a Swiss financial-planning platform used by wealth advisors, built front to back in an Nx monorepo by a team of two developers.',
+      fr: 'Des projets clients, surtout une plateforme suisse de planification financière pour conseillers en patrimoine, du front au back dans un monorepo Nx, à deux développeurs.',
     },
     metrics: [
-      { value: '110+', label: { en: 'merged PRs in 6 months', fr: 'PR mergées en 6 mois' } },
+      {
+        value: 'LPP · 3a · 3b',
+        label: { en: 'Swiss retirement planning', fr: 'planification de la retraite' },
+      },
       {
         value: 'Agents',
         label: {
-          en: 'I built most of the repo’s agent tooling',
-          fr: 'j’ai construit l’essentiel de l’outillage agents du repo',
+          en: 'guides and tooling I set up in the repo',
+          fr: 'guides et outillage mis en place dans le repo',
         },
       },
       {
@@ -67,8 +70,8 @@ export const experiences: Experience[] = [
     ],
     built: [
       {
-        en: 'Retirement planning across the Swiss three-pillar system: pillar 2 buy-back potential and affiliation details per pension plan, pillar 3a and 3b withdrawals, and several scenarios compared side by side.',
-        fr: 'Planification de la retraite sur les trois piliers suisses : potentiel de rachat du 2e pilier et détail des affiliations par plan de prévoyance, retraits des piliers 3a et 3b, et plusieurs scénarios comparés côte à côte.',
+        en: 'Retirement planning across the Swiss three-pillar system: pillar 2 (LPP) buy-back potential and affiliation details per pension plan, pillar 3a and 3b withdrawals, and several scenarios compared side by side.',
+        fr: 'Planification de la retraite sur les trois piliers suisses : potentiel de rachat LPP (2e pilier) et détail des affiliations par plan de prévoyance, retraits des piliers 3a et 3b, et plusieurs scénarios comparés côte à côte.',
       },
       {
         en: 'Balance sheet and operating account for self-employed clients: depreciation, cash flow, interest and equity.',
@@ -148,7 +151,10 @@ export const experiences: Experience[] = [
       fr: "Frontend et backend d'une plateforme de leasing de vélos utilisée par les salariés, les employeurs, les magasins et l'équipe flotte.",
     },
     metrics: [
-      { value: '580+', label: { en: 'pull requests', fr: 'pull requests' } },
+      {
+        value: '3',
+        label: { en: 'modules owned', fr: 'modules en responsabilité' },
+      },
       {
         value: '#1',
         label: {
@@ -174,10 +180,10 @@ export const experiences: Experience[] = [
     ],
     ai: [
       {
-        title: { en: 'Where I started with AI', fr: "Mes débuts avec l'IA" },
+        title: { en: 'Coding agents, early on', fr: 'Les agents de code, tôt' },
         body: {
-          en: 'I started using AI at Zenride: GitHub Copilot first, then Claude Code with Claude 3.5 Sonnet, and Opus 4 when it came out. Human in the loop all the way: I steered every change and reviewed every line.',
-          fr: "J'ai commencé l'IA chez Zenride : d'abord GitHub Copilot, puis Claude Code avec Claude 3.5 Sonnet, et Opus 4 à sa sortie. Humain dans la boucle de bout en bout : je pilotais chaque changement et relisais chaque ligne.",
+          en: 'I adopted AI coding tools early at Zenride: GitHub Copilot first, then Claude Code. Human in the loop all the way: I steered every change and reviewed every line.',
+          fr: "J'ai adopté tôt les outils de code IA chez Zenride : d'abord GitHub Copilot, puis Claude Code. Humain dans la boucle de bout en bout : je pilotais chaque changement et relisais chaque ligne.",
         },
       },
       {
@@ -224,7 +230,7 @@ export const experiences: Experience[] = [
   {
     id: 'cagette',
     company: 'Cagette & Paprika',
-    role: { en: 'Full-stack Developer', fr: 'Développeur Full-stack' },
+    role: { en: 'Junior Full-stack Developer', fr: 'Développeur Full-stack Junior' },
     from: { en: '2021', fr: '2021' },
     to: { en: '2023', fr: '2023' },
     city: { en: 'Lille, France', fr: 'Lille, France' },

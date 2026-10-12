@@ -268,7 +268,7 @@ export const translations: Record<Locale, TranslationStrings> = {
       role: 'Full-stack Engineer',
       tagline:
         'I build software with AI agents, and the setup that lets them work well in a real codebase.',
-      facts: ['Lausanne, Switzerland', 'Swiss work permit', 'English and French, both native'],
+      facts: ['Lausanne, Switzerland', 'Swiss B permit', 'English and French, both native'],
       primaryCta: 'See my experience',
       secondaryCta: 'Download CV',
       closeInfo: 'Close',
@@ -303,7 +303,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         addAll: 'Add everything',
         tidy: 'Tidy up',
         items: {
-          mountain: { title: 'Switzerland', body: 'Work permit ✓' },
+          mountain: { title: 'Switzerland', body: 'B permit ✓' },
           flags: { title: 'EN · FR', body: 'Both native' },
           robot: { title: 'Automation', body: 'At home too' },
           sport: { title: 'Walk and talk', body: 'Dictating at 4.5 km/h' },
@@ -314,9 +314,9 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         caption: {
           flags:
-            'Dual British and French citizen, native in both languages: I work as well in English as in French.',
+            'Dual British and French citizen, native in both languages: I work as well in English as in French. German: school level (A2).',
           mountain:
-            'My favourite place is the mountains, so Switzerland worked out suspiciously well. Swiss work permit: already sorted.',
+            'My favourite place is the mountains, so Switzerland worked out suspiciously well. Swiss B permit: already sorted.',
           sport:
             'I love to move. At my standing desk I walk on a walking pad and dictate much of what I write.',
           robot:
@@ -355,7 +355,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         mountain: {
           title: 'Switzerland',
-          body: 'For someone whose favourite place is the mountains, ending up in Switzerland worked out suspiciously well. Swiss work permit: already sorted.',
+          body: 'For someone whose favourite place is the mountains, ending up in Switzerland worked out suspiciously well. Swiss B permit: already sorted.',
         },
         robot: {
           title: 'Automation, at home too',
@@ -367,7 +367,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         flags: {
           title: 'British and French',
-          body: 'I am a dual British and French citizen, and both languages are native to me: I work just as well in English as in French.',
+          body: 'I am a dual British and French citizen, and both languages are native to me: I work just as well in English as in French. My German is school level (A2).',
         },
         strategy: {
           title: 'Strategy games',
@@ -601,7 +601,7 @@ export const translations: Record<Locale, TranslationStrings> = {
       role: 'Développeur full-stack',
       tagline:
         'Je développe avec des agents IA, et l’outillage qui les rend fiables sur une vraie codebase.',
-      facts: ['Lausanne, Suisse', 'Permis de travail suisse', 'Bilingue français-anglais'],
+      facts: ['Lausanne, Suisse', 'Permis B', 'Bilingue français-anglais'],
       primaryCta: 'Voir mon expérience',
       secondaryCta: 'Télécharger le CV',
       closeInfo: 'Fermer',
@@ -636,7 +636,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         addAll: 'Tout ajouter',
         tidy: 'Ranger',
         items: {
-          mountain: { title: 'Suisse', body: 'Permis de travail ✓' },
+          mountain: { title: 'Suisse', body: 'Permis B ✓' },
           flags: { title: 'FR · EN', body: 'Deux langues maternelles' },
           robot: { title: 'Automatisation', body: 'À la maison aussi' },
           sport: { title: 'Marcher et parler', body: 'Je dicte à 4,5 km/h' },
@@ -647,9 +647,9 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         caption: {
           flags:
-            'Double nationalité française et britannique, deux langues maternelles : je travaille aussi bien en français qu’en anglais.',
+            'Double nationalité française et britannique, deux langues maternelles : je travaille aussi bien en français qu’en anglais. Allemand : niveau scolaire (A2).',
           mountain:
-            'Quand on préfère la montagne à tout, finir en Suisse tombe étrangement bien. Permis de travail suisse : déjà en poche.',
+            'Quand on préfère la montagne à tout, finir en Suisse tombe étrangement bien. Permis B : déjà en poche.',
           sport:
             'J’adore bouger. À mon bureau debout, je marche sur un tapis et je dicte une bonne partie de ce que j’écris.',
           robot:
@@ -688,7 +688,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         mountain: {
           title: 'La Suisse',
-          body: 'Quand on préfère la montagne à tout le reste, finir en Suisse, ça tombe étrangement bien. Permis de travail suisse : déjà en poche.',
+          body: 'Quand on préfère la montagne à tout le reste, finir en Suisse, ça tombe étrangement bien. Permis B : déjà en poche.',
         },
         robot: {
           title: 'L’automatisation, à la maison aussi',
@@ -700,7 +700,7 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         flags: {
           title: 'Franco-britannique',
-          body: 'J’ai la double nationalité française et britannique, et les deux langues sont maternelles pour moi : je travaille aussi bien en français qu’en anglais.',
+          body: 'J’ai la double nationalité française et britannique, et les deux langues sont maternelles pour moi : je travaille aussi bien en français qu’en anglais. Mon allemand est de niveau scolaire (A2).',
         },
         strategy: {
           title: 'Les jeux de stratégie',
