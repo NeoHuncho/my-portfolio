@@ -4,7 +4,6 @@ import {
   Suspense,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -101,21 +100,6 @@ function WarmUp({
 const HANDOVER_MS = 1000;
 
 /**
- * Sets whatever moves on its own going again, from where it stopped: time
- * spent not drawing (held for the handover, or scrolled away) never shows
- * as a jump in the pieces' own animations.
- */
-function Moving({ fps }: { fps: number }) {
-  const clock = useThree((state) => state.clock);
-  useLayoutEffect(() => {
-    if (clock.running) {
-      clock.oldTime = performance.now();
-    }
-  }, [clock]);
-  return <Ticker fps={fps} />;
-}
-
-/**
  * A transparent canvas filling whatever it is put in. It sits in the page
  * with what it draws, so the two scroll together, and never takes a touch:
  * the page underneath handles those. It fades in over the still under it
@@ -178,7 +162,8 @@ function Layer({
             {/* The desk's objects, standing still: no physics, so their colliders are left out. */}
             {children}
             <WarmUp cells={cells} onCompiled={() => setCompiled(true)} onReady={onWarm} />
-            {active && moving && <Moving fps={fps} />}
+            {/* It goes on from where it stopped: see Ticker. */}
+            {active && moving && <Ticker fps={fps} />}
           </Suspense>
         </CellRegistry.Provider>
       </Canvas>

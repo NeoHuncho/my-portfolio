@@ -4,12 +4,13 @@ import { type RefObject, useEffect, useState, useSyncExternalStore } from 'react
  * How much the hero's 3D asks of this device. A first guess comes from the
  * graphics chip and the machine, before anything is drawn. While the 3D runs,
  * frames that keep coming late step it down, for good; frames that keep coming
- * right on time step it up, as far as the device's ceiling (`ultra`, up to 4K
- * of pixels, only on strong computers; phones and tablets stop at `high`).
+ * right on time step it up, one step at most. Even `high` stays well short of
+ * what a strong computer could draw: the desk is meant to sit lightly on any
+ * machine, not to keep its fans going.
  */
-export type Quality = 'low' | 'medium' | 'high' | 'ultra';
+export type Quality = 'low' | 'medium' | 'high';
 
-const ORDER: Quality[] = ['low', 'medium', 'high', 'ultra'];
+const ORDER: Quality[] = ['low', 'medium', 'high'];
 
 /** Drawn in software: no real graphics chip at all. */
 const SOFTWARE = /swiftshader|llvmpipe|softpipe|software|basic render/i;
@@ -104,14 +105,10 @@ export function probeGraphics(): Probe {
   ['pointerdown', 'pointermove', 'wheel', 'keydown', 'scroll', 'touchstart'].forEach((type) =>
     window.addEventListener(type, heard, { passive: true, capture: true })
   );
-  // A computer that starts at `high` may earn `ultra`; anything else may earn one step.
-  if (current === 'high') {
-    ceiling = isTouch() ? 'high' : 'ultra';
-  } else {
-    ceiling = current === 'low' ? 'medium' : 'high';
-    if (isTouch() || !webgl || SOFTWARE.test(renderer)) {
-      ceiling = current;
-    }
+  // Anything below `high` may earn one step, on a computer.
+  ceiling = current === 'low' ? 'medium' : 'high';
+  if (isTouch() || !webgl || SOFTWARE.test(renderer)) {
+    ceiling = current;
   }
   probed = { webgl, quality: current };
   listeners.forEach((listener) => listener());
@@ -227,15 +224,16 @@ export function watchFrame(now: number) {
 }
 
 /**
- * How many pixels a canvas may draw, at most, by quality: `ultra` goes up to
- * 4K, the rest to 1440p, 1080p and 720p. Phones and tablets get less again:
- * their screens are small and dense enough that the difference does not show.
+ * How many pixels a canvas may draw, at most, by quality: about 1200p, 1000p
+ * and 800p on a 16:10 screen. Below a Retina screen's own sharpness on
+ * purpose: what the graphics chip spends grows with every pixel, and the
+ * desk's edges are smoothed anyway. Phones and tablets get less again: their
+ * screens are small and dense enough that the difference does not show.
  */
 const PIXEL_BUDGET: Record<Quality, number> = {
-  ultra: 3840 * 2160,
-  high: 2560 * 1440,
-  medium: 1920 * 1080,
-  low: 1280 * 720,
+  high: 1920 * 1200,
+  medium: 1600 * 1000,
+  low: 1280 * 800,
 };
 
 /**
@@ -303,45 +301,39 @@ export function useBudgetDpr(
 
 /** How much sharper the desk's drawn screens and labels are made than their base size. */
 export function textureScale(quality: Quality): number {
-  if (quality === 'ultra') {
-    return 2;
-  }
   return quality === 'high' ? 1.5 : 1;
 }
 
 /**
  * What each canvas draws at, by quality: how sharp (device pixels per CSS
- * pixel, at most), how often things that move on their own are redrawn, and
- * the desk's shadow detail. Interaction (dragging, throwing) always runs at
- * the screen's own rate.
+ * pixel, at most), how many frames a second it draws, and the desk's shadow
+ * detail. Never more than 60 frames a second, whatever the screen's own rate,
+ * dragging and throwing included: a 120 Hz screen would double the work for a
+ * difference few would see. Shadows redrawn every other frame lag what casts
+ * them by a frame, which nobody sees.
  */
 export const SETTINGS = {
   desk: {
-    // As fast as the screen goes (120 Hz and up), as sharp as the screen is, up to 4K.
-    ultra: { dpr: 3, fps: 240, shadowMap: 4096, shadowEvery: 1 },
-    high: { dpr: 2, fps: 60, shadowMap: 2048, shadowEvery: 1 },
     // Things that move on their own glide: never fewer than 60 frames a second on a computer worth `medium`.
-    medium: { dpr: 1.5, fps: 60, shadowMap: 1024, shadowEvery: 1 },
+    high: { dpr: 1.5, fps: 60, shadowMap: 2048, shadowEvery: 1 },
+    medium: { dpr: 1.25, fps: 60, shadowMap: 1024, shadowEvery: 2 },
     low: { dpr: 1, fps: 30, shadowMap: 512, shadowEvery: 2 },
   },
-  /** The desk's tray of pieces: at low quality, still pictures only. */
+  /** The desk's tray of small pieces, turning slowly: at low quality, still pictures only. */
   tray: {
-    ultra: { dpr: 3, fps: 240, live: true },
-    high: { dpr: 2, fps: 60, live: true },
-    medium: { dpr: 1.5, fps: 60, live: true },
+    high: { dpr: 1.5, fps: 30, live: true },
+    medium: { dpr: 1.25, fps: 30, live: true },
     low: { dpr: 1, fps: 30, live: false },
   },
   /** The phone's turntable, which follows a finger. */
   stage: {
-    ultra: { dpr: 3, fps: 240 },
-    high: { dpr: 2.5, fps: 60 },
-    medium: { dpr: 2, fps: 60 },
+    high: { dpr: 2, fps: 60 },
+    medium: { dpr: 1.75, fps: 60 },
     low: { dpr: 1.5, fps: 30 },
   },
-  /** The phone's shelf of small pieces. */
+  /** The phone's shelf of small pieces, which follows the shelf's swipes. */
   shelf: {
-    ultra: { dpr: 3, fps: 240 },
-    high: { dpr: 2, fps: 60 },
+    high: { dpr: 1.75, fps: 60 },
     medium: { dpr: 1.5, fps: 30 },
     low: { dpr: 1.25, fps: 30 },
   },

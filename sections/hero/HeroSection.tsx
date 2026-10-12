@@ -68,7 +68,9 @@ export default function HeroSection() {
   const coarse = useMediaQuery('(pointer: coarse)');
   const wide = useMediaQuery('(min-width: 1024px)');
   const roomy = useMediaQuery('(min-width: 640px)');
-  const { ref, inView } = useInView({ initialInView: true });
+  // On screen, for the 3D to draw: a strip left under the header (or just below it, as when a
+  // link scrolls to the next section) does not count, and the whole desk stops drawing.
+  const { ref, inView } = useInView({ initialInView: true, rootMargin: '-120px 0px 0px 0px' });
   const quality = useQuality();
 
   const [webgl, setWebgl] = useState<boolean | null>(null);
@@ -440,10 +442,10 @@ export default function HeroSection() {
                   aria-pressed={tilt.on}
                   onClick={tilt.toggle}
                   className={cx(
-                    'pointer-events-auto mr-auto inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] backdrop-blur-md transition active:scale-95',
+                    'pointer-events-auto mr-auto inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] transition active:scale-95',
                     tilt.on
-                      ? 'border-accent/60 bg-accent/15 text-ink'
-                      : 'border-line-strong bg-bg/60 text-muted'
+                      ? 'border-accent/60 bg-bg/90 text-ink'
+                      : 'border-line-strong bg-bg/90 text-muted'
                   )}
                 >
                   <FiSmartphone

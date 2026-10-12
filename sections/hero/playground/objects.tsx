@@ -1177,9 +1177,63 @@ const drawSwissFlag: FlagDraw = (ctx, w, h) => {
 };
 
 /**
+ * Where a point of the flag's cloth is, in GLSL: the plane's point `p` (its
+ * middle at the origin), `t` seconds in. Waves run from the pole to the free
+ * end and grow as they go; where it ripples, the cloth bunches up a little so
+ * it keeps its length.
+ */
+const FLAG_CLOTH = /* glsl */ `
+  uniform float flagTime;
+  uniform vec2 flagSize;
+  vec3 flagAt(vec2 p) {
+    float t = flagTime;
+    // Gusts come and go: the flag stands out further and flaps harder, then eases.
+    float gust = 0.75 + 0.25 * sin(t * 0.7) * sin(t * 0.31 + 1.0);
+    // 0 at the pole, 1 at the free end; 0 along the top, 1 along the bottom.
+    float along = p.x / flagSize.x + 0.5;
+    float down = 0.5 - p.y / flagSize.y;
+    float wave = along * sin(along * 7.5 - t * 6.5 + down * 1.4);
+    float flutter = along * along * sin(along * 15.0 - t * 11.0 + down * 3.0);
+    return vec3(
+      along * flagSize.x * (1.0 - 0.05 * abs(wave)),
+      p.y - flagSize.y / 2.0 - along * along * flagSize.y * 0.12 * (1.1 - gust),
+      flagSize.x * gust * (0.09 * wave + 0.025 * flutter)
+    );
+  }
+`;
+
+/** Bends a material's plane into the flag's cloth, its light following. */
+function clothShader(uniforms: Record<string, { value: unknown }>) {
+  return (shader: { uniforms: Record<string, unknown>; vertexShader: string }) => {
+    Object.assign(shader.uniforms, uniforms);
+    shader.vertexShader = shader.vertexShader
+      .replace('void main() {', `${FLAG_CLOTH}\nvoid main() {`)
+      // The cloth's own slope, from two points beside this one.
+      .replace(
+        '#include <beginnormal_vertex>',
+        `vec2 flagStep = flagSize / vec2(24.0, 8.0);
+        vec3 flagHere = flagAt(position.xy);
+        vec3 objectNormal = normalize(cross(
+          flagAt(position.xy + vec2(flagStep.x, 0.0)) - flagHere,
+          flagAt(position.xy + vec2(0.0, flagStep.y)) - flagHere
+        ));
+        #ifdef USE_TANGENT
+        vec3 objectTangent = vec3( tangent.xyz );
+        #endif`
+      )
+      .replace(
+        '#include <begin_vertex>',
+        'vec3 transformed = flagHere;\n#ifdef USE_ALPHAHASH\nvPosition = vec3( position );\n#endif'
+      );
+  };
+}
+
+/**
  * A flag hanging from a pole at x = 0 and flying out towards +x, its top edge
- * at y = 0, rippling in the wind: waves run from the pole to the free end and
- * grow as they go, and the cloth gathers a little where it bunches up.
+ * at y = 0, rippling in the wind. The cloth moves on the graphics chip: only
+ * the time changes each frame, not a shape rebuilt and sent over again. It
+ * casts no shadow, too small to miss: a shadow that waved with it would need
+ * a shadow shader of its own, compiled on the frame it first came in.
  */
 function WavingFlag({
   draw,
@@ -1193,43 +1247,31 @@ function WavingFlag({
   height: number;
 }) {
   const geometry = useMemo(() => new PlaneGeometry(width, height, 24, 8), [width, height]);
-  const rest = useMemo(
-    () => Float32Array.from(geometry.getAttribute('position').array as Float32Array),
-    [geometry]
-  );
   const texture = useLabelTexture(Math.round(width * 400), Math.round(height * 400), draw, name);
+  const { material, uniforms } = useMemo(() => {
+    const shared = {
+      flagTime: { value: 0 },
+      flagSize: { value: new Vector2(width, height) },
+    };
+    const cloth = new MeshStandardMaterial({ map: texture, roughness: 0.8, side: DoubleSide });
+    cloth.onBeforeCompile = clothShader(shared);
+    cloth.customProgramCacheKey = () => 'flag-cloth';
+    return { material: cloth, uniforms: shared };
+  }, [texture, width, height]);
   useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    const positions = geometry.getAttribute('position') as BufferAttribute;
-    // Gusts come and go: the flag stands out further and flaps harder, then eases.
-    const gust = 0.75 + 0.25 * Math.sin(t * 0.7) * Math.sin(t * 0.31 + 1);
-    for (let i = 0; i < positions.count; i += 1) {
-      const x = rest[i * 3];
-      const y = rest[i * 3 + 1];
-      // 0 at the pole, 1 at the free end; 0 along the top, 1 along the bottom.
-      const along = x / width + 0.5;
-      const down = 0.5 - y / height;
-      const wave = along * Math.sin(along * 7.5 - t * 6.5 + down * 1.4);
-      const flutter = along * along * Math.sin(along * 15 - t * 11 + down * 3);
-      const z = width * gust * (0.09 * wave + 0.025 * flutter);
-      positions.setXYZ(
-        i,
-        // Where it ripples it bunches up a little, so the cloth keeps its length.
-        along * width * (1 - 0.05 * Math.abs(wave)),
-        y - height / 2 - along * along * height * 0.12 * (1.1 - gust),
-        z
-      );
-    }
-    positions.needsUpdate = true;
-    geometry.computeVertexNormals();
+    uniforms.flagTime.value = clock.elapsedTime;
   });
 
   useResourceDisposal(geometry);
+  useResourceDisposal(material);
 
   return (
-    <mesh geometry={geometry} castShadow>
-      <meshStandardMaterial map={texture} roughness={0.8} side={DoubleSide} />
-    </mesh>
+    <mesh
+      geometry={geometry}
+      material={material}
+      // The cloth is moved where it is drawn, so its resting box says nothing of where it is.
+      frustumCulled={false}
+    />
   );
 }
 

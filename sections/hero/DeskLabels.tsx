@@ -42,12 +42,20 @@ export default function DeskLabels({
   const labelRefs = useRef(new Map<string, HTMLButtonElement>());
   const hiddenRef = useRef(hidden);
   const offRef = useRef(off);
+  /**
+   * What each label was last given, and the heights it is placed by, read only
+   * when they change: the desk calls on every frame it draws, and a style
+   * written or a height read each time made the page redo its layout as often.
+   */
+  const written = useRef(new Map<string, { transform: string; shown: boolean }>());
+  const heights = useRef({ layer: 0, labels: new Map<string, number>() });
   useLayoutEffect(() => {
     hiddenRef.current = hidden;
   }, [hidden]);
   // Going at once, not on the next frame the desk happens to draw.
   useLayoutEffect(() => {
     offRef.current = off;
+    written.current.clear();
     if (off) {
       labelRefs.current.forEach((label) => {
         label.style.opacity = '0';
@@ -57,18 +65,44 @@ export default function DeskLabels({
   }, [off]);
 
   useEffect(() => {
+    const layer = layerRef.current;
+    const measure = () => {
+      heights.current.layer = layer?.clientHeight ?? 0;
+      labelRefs.current.forEach((label, uid) =>
+        heights.current.labels.set(uid, label.offsetHeight)
+      );
+    };
+    measure();
+    if (!layer || typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(layer);
+    labelRefs.current.forEach((label) => observer.observe(label));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     sinkRef.current = (labels) => {
-      const height = layerRef.current?.clientHeight ?? 0;
+      const height = heights.current.layer;
       labels.forEach(({ uid, x, front, lifted }) => {
         const label = labelRefs.current.get(uid);
         if (!label) {
           return;
         }
-        const y = Math.min(front + GAP, height - bottomInset - label.offsetHeight);
-        label.style.transform = `translate3d(${x}px, ${y}px, 0) translateX(-50%)`;
+        const own = heights.current.labels.get(uid) ?? 0;
+        const y = Math.min(front + GAP, height - bottomInset - own);
+        const transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translateX(-50%)`;
         const shown = !offRef.current && !lifted && hiddenRef.current !== uid;
-        label.style.opacity = shown ? '1' : '0';
-        label.style.visibility = shown ? 'visible' : 'hidden';
+        const last = written.current.get(uid);
+        if (last?.transform !== transform) {
+          label.style.transform = transform;
+        }
+        if (last?.shown !== shown) {
+          label.style.opacity = shown ? '1' : '0';
+          label.style.visibility = shown ? 'visible' : 'hidden';
+        }
+        written.current.set(uid, { transform, shown });
       });
     };
     return () => {
@@ -96,7 +130,7 @@ export default function DeskLabels({
             className={cx(
               // Visibility goes at the end of the fade, so a label fades out instead of vanishing.
               'pointer-events-auto absolute left-0 top-0 flex flex-col items-center whitespace-nowrap rounded-xl px-3 py-1.5 text-center transition-[opacity,visibility,background-color] duration-300',
-              'hover:bg-surface/70 hover:backdrop-blur-sm'
+              'hover:bg-surface/90'
             )}
           >
             <span className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted">

@@ -2755,9 +2755,10 @@ export default function Playground({
       shadows="percentage"
       // As sharp as the device can take, within its quality's budget of pixels: see SETTINGS.
       dpr={dpr}
-      // Physics runs on its own loop and asks for a frame while something moves;
-      // the animated props add a steady tick on top, only while the hero is on screen.
-      frameloop={active && warm ? 'demand' : 'never'}
+      // Drawn by the tick alone, only while the hero is on screen: physics, the pipes and the
+      // labels ask for frames on every screen refresh while something moves, 120 times a
+      // second on many laptops, and none of them may draw it faster than its quality's rate.
+      frameloop="never"
       camera={{ position: CAMERA_POSITION, fov: FOV, near: 0.1, far: 80 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       // No text selection or callout on a long press: that is how things are picked up.
@@ -2765,7 +2766,7 @@ export default function Playground({
       onPointerMissed={onMiss}
       aria-hidden
     >
-      {/* It draws by itself: only once the desk is warm, like the rest. */}
+      {/* Its only draws: once the desk is warm, while it is on screen. */}
       {active && warm && <Ticker fps={fps} />}
       <ShadowCadence every={shadowEvery} />
       <ambientLight intensity={0.75} />

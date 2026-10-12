@@ -14,7 +14,7 @@ import { type PipeDrive } from './pipe';
 import { useDetailQuality } from '../quality';
 
 /** Puffs per hatch: a low sheet of cool vapour, warmed only where it leaves the iris. */
-const PARTICLES = { low: 36, medium: 64, high: 96, ultra: 128 };
+const PARTICLES = { low: 36, medium: 64, high: 96 };
 /** The longest puff lives this long after the vent stops, in seconds. */
 export const VAPOUR_TAIL_S = 1.3;
 /** One puff in this many curls straight up out of the mouth instead of rolling across the desk. */

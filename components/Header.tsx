@@ -188,11 +188,9 @@ function Header() {
     <header
       className={cx(
         'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
-        // Phones get a near-opaque bar instead of the blur: re-blurring what scrolls under it,
-        // every frame, cost more than it showed on a small, dark page.
-        scrolled || menuOpen
-          ? 'border-b border-line bg-bg/95 sm:bg-bg/80 sm:backdrop-blur-xl'
-          : 'border-b border-transparent'
+        // A near-opaque bar, not a blur: re-blurring what moves under it (the desk draws 60
+        // times a second) cost the graphics chip every frame, for little that showed on a dark page.
+        scrolled || menuOpen ? 'border-b border-line bg-bg/95' : 'border-b border-transparent'
       )}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">

@@ -358,8 +358,8 @@ export default function DeskCallout({
           style={nav ? { touchAction: 'pan-y' } : undefined}
           className={
             docked
-              ? 'pointer-events-auto relative rounded-xl border border-line-strong bg-surface/95 py-3 pl-4 pr-11 shadow-[0_18px_50px_-18px_rgb(0_0_0/0.8)] backdrop-blur-md'
-              : 'relative rounded-xl border border-line-strong bg-surface/95 py-3.5 pl-4 pr-10 shadow-[0_18px_50px_-18px_rgb(0_0_0/0.8)] backdrop-blur-md'
+              ? 'pointer-events-auto relative rounded-xl border border-line-strong bg-surface/95 py-3 pl-4 pr-11 shadow-[0_18px_50px_-18px_rgb(0_0_0/0.8)]'
+              : 'relative rounded-xl border border-line-strong bg-surface/95 py-3.5 pl-4 pr-10 shadow-[0_18px_50px_-18px_rgb(0_0_0/0.8)]'
           }
         >
           <span aria-hidden className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-accent" />

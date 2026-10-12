@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { advance, useFrame, useThree } from '@react-three/fiber';
 import { watchFrame } from './quality';
 
@@ -12,6 +12,9 @@ const SLACK_MS = 2;
  * every frame and 30 fps every other one. It draws straight away on the
  * screen frame it is due, never a frame late, and not twice in one frame
  * when something moving has already had it drawn, or is about to.
+ *
+ * A canvas whose own loop is off (`frameloop="never"`) draws only here, so
+ * nothing can draw it faster than `fps`, however often it asks.
  */
 export default function Ticker({ fps }: { fps: number }) {
   const get = useThree((state) => state.get);
@@ -19,6 +22,17 @@ export default function Ticker({ fps }: { fps: number }) {
   useFrame(() => {
     drawn.current = performance.now();
   });
+  // Whatever moves on its own goes on from where it stopped: time spent not drawing (scrolled
+  // away, or held for a handover) never shows as a jump in the pieces' own animations. With its
+  // own loop off, the canvas leaves its clock stopped, and a stopped clock never starts itself.
+  useLayoutEffect(() => {
+    const { clock } = get();
+    if (clock.running) {
+      clock.oldTime = performance.now();
+    } else {
+      clock.start();
+    }
+  }, [get]);
   useEffect(() => {
     const interval = 1000 / fps;
     let frame = 0;
@@ -36,7 +50,9 @@ export default function Ticker({ fps }: { fps: number }) {
       if (drawn.current >= now || state.internal.frames > 0) {
         return;
       }
-      advance(now, false, state);
+      // No time given: the canvas's clock keeps counting seconds. With its own loop off,
+      // the canvas would take a given time, in milliseconds, for its clock's reading.
+      advance(undefined as unknown as number, false, state);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
