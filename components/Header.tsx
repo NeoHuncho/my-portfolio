@@ -1,19 +1,8 @@
-import { memo, useEffect, useRef, useState } from 'react';
-import {
-  FiArrowUpRight,
-  FiChevronDown,
-  FiDownload,
-  FiGithub,
-  FiLinkedin,
-  FiMail,
-  FiMenu,
-  FiSearch,
-  FiX,
-} from 'react-icons/fi';
+import { memo, useEffect, useState } from 'react';
+import { FiDownload, FiGithub, FiLinkedin, FiMail, FiMenu, FiSearch, FiX } from 'react-icons/fi';
 import { openCommandPalette } from '@components/CommandPalette';
 import LogoMark from '@components/LogoMark';
 import { heroNameId, links, sectionIds } from '@config/links';
-import { siteVersions } from '@config/versions';
 import { useLanguage } from '@hooks/useLanguage';
 import { cx } from '@lib/cx';
 
@@ -22,107 +11,6 @@ const navItems = [
   { id: sectionIds.board, key: 'board' },
   { id: sectionIds.sideProjects, key: 'sideProjects' },
 ] as const;
-
-/** The version badge: opens a menu of frozen past builds of this site. */
-function VersionMenu() {
-  const { strings, locale } = useLanguage();
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
-    const onPointer = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-      }
-    };
-    window.addEventListener('pointerdown', onPointer);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('pointerdown', onPointer);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={root} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-controls="version-menu"
-        aria-label={strings.nav.versions}
-        className={cx(
-          'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[11px] transition',
-          open
-            ? 'border-accent text-accent'
-            : 'border-line-strong text-muted hover:border-accent hover:text-accent'
-        )}
-      >
-        v3
-        <FiChevronDown
-          aria-hidden
-          className={cx('size-3 transition-transform', open && 'rotate-180')}
-        />
-      </button>
-      {open && (
-        <div
-          id="version-menu"
-          className="animate-fade-up absolute left-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line-strong bg-surface p-1.5 shadow-2xl shadow-black/50"
-        >
-          <p className="px-2.5 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-            {strings.nav.versionsTitle}
-          </p>
-          <ul>
-            {siteVersions.map((version) => {
-              const content = (
-                <>
-                  <span className="w-11 font-mono text-xs text-ink">{version.label}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm text-ink">{version.title[locale]}</span>
-                    <span className="block font-mono text-[10px] text-faint">
-                      {version.year} · {version.stack}
-                    </span>
-                  </span>
-                </>
-              );
-              return (
-                <li key={version.label}>
-                  {version.path ? (
-                    <a
-                      href={version.path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition hover:bg-surface-3"
-                    >
-                      {content}
-                      <FiArrowUpRight aria-hidden className="text-faint" />
-                    </a>
-                  ) : (
-                    <div className="flex items-center gap-3 rounded-lg bg-surface-2 px-2.5 py-2">
-                      {content}
-                      <span className="font-mono text-[10px] text-accent">
-                        {strings.nav.current}
-                      </span>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function Header() {
   const { strings, locale, toggleLocale } = useLanguage();
@@ -203,7 +91,7 @@ function Header() {
           <span
             aria-hidden={!nameShown}
             className={cx(
-              // Folds away to nothing, so the version badge sits by the mark while the hero shows my name.
+              // Folds away to nothing while the hero shows my name.
               'hidden overflow-hidden whitespace-nowrap transition-all duration-300 ease-out sm:inline-block',
               nameShown ? 'ml-2.5 max-w-48 opacity-100' : 'ml-0 max-w-0 opacity-0'
             )}
@@ -211,7 +99,6 @@ function Header() {
             William Guinaudie
           </span>
         </a>
-        <VersionMenu />
 
         <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 lg:flex">
           {navItems.map((item) => (

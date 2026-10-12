@@ -39,7 +39,10 @@ export const experiences: Experience[] = [
   {
     id: 'apptitude',
     company: 'Apptitude',
-    role: { en: 'Full-stack Developer · AI Engineer', fr: 'Développeur Full-stack · Développeur IA' },
+    role: {
+      en: 'Full-stack Developer · AI Engineer',
+      fr: 'Développeur Full-stack · Développeur IA',
+    },
     from: { en: 'Mar 2026', fr: 'mars 2026' },
     to: null,
     city: { en: 'Lausanne, Switzerland', fr: 'Lausanne, Suisse' },

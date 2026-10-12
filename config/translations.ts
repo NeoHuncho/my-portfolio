@@ -17,9 +17,6 @@ export type TranslationStrings = {
     menu: string;
     close: string;
     cv: string;
-    versions: string;
-    versionsTitle: string;
-    current: string;
   };
   hero: {
     eyebrow: string;
@@ -236,7 +233,7 @@ export type TranslationStrings = {
     placeholder: string;
     close: string;
     groups: Record<
-      'recent' | 'navigate' | 'actions' | 'experience' | 'sideProjects' | 'links' | 'versions',
+      'recent' | 'navigate' | 'actions' | 'experience' | 'sideProjects' | 'links',
       string
     >;
     playground: string;
@@ -264,9 +261,6 @@ export const translations: Record<Locale, TranslationStrings> = {
       menu: 'Open menu',
       close: 'Close menu',
       cv: 'CV',
-      versions: 'Past versions of this site',
-      versionsTitle: 'This site over the years',
-      current: 'You are here',
     },
     hero: {
       eyebrow: 'William Guinaudie',
@@ -545,8 +539,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     sideProjects: {
       eyebrow: '04 · Side projects',
       title: 'Open-source projects I built for my own use.',
-      intro:
-        'They are personal tools, not side businesses, and they are where I put AI inside the product itself.',
+      intro: 'Personal tools, and the place where I try out AI inside the product itself.',
       stars: (count) => `${count}+ stars`,
       source: 'Source code',
       more: 'More projects',
@@ -577,7 +570,6 @@ export const translations: Record<Locale, TranslationStrings> = {
         experience: 'Experience',
         sideProjects: 'Side projects',
         links: 'Links',
-        versions: 'Past versions of this site',
       },
       playground: 'The desk at the top of the page',
       cv: 'Download CV',
@@ -602,9 +594,6 @@ export const translations: Record<Locale, TranslationStrings> = {
       menu: 'Ouvrir le menu',
       close: 'Fermer le menu',
       cv: 'CV',
-      versions: 'Anciennes versions du site',
-      versionsTitle: 'Ce site au fil des ans',
-      current: 'Tu es ici',
     },
     hero: {
       eyebrow: 'William Guinaudie',
@@ -885,8 +874,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     sideProjects: {
       eyebrow: '04 · Projets perso',
       title: 'Des projets open source, construits pour mon propre usage.',
-      intro:
-        'Ce sont des outils perso, pas des side business, et c’est là que je mets l’IA dans le produit lui-même.',
+      intro: 'Des outils perso, et l’endroit où je teste l’IA dans le produit lui-même.',
       stars: (count) => `${count}+ étoiles`,
       source: 'Code source',
       more: 'Autres projets',
@@ -917,7 +905,6 @@ export const translations: Record<Locale, TranslationStrings> = {
         experience: 'Expérience',
         sideProjects: 'Projets perso',
         links: 'Liens',
-        versions: 'Anciennes versions du site',
       },
       playground: 'Le bureau en haut de la page',
       cv: 'Télécharger le CV',

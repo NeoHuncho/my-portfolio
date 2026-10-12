@@ -13,8 +13,6 @@ Personal portfolio. Next.js 16 (Pages Router), React 19, Tailwind CSS 4, TypeScr
 - **Side projects**: a working Pomi demo with a synced watch, and one GameHub Rota match played on a
   desktop and a phone frame at once, with GameHub's library a tap away (a real build served from
   `public/games/`).
-- **Past versions**: the `v3` badge in the header opens frozen builds of the 2022 and 2025 versions
-  of this site, served from `public/versions/`.
 
 ## Scripts
 
@@ -23,7 +21,5 @@ Personal portfolio. Next.js 16 (Pages Router), React 19, Tailwind CSS 4, TypeScr
 - `test`: Prettier check, ESLint, typecheck and Jest
 - `typecheck`, `lint`, `lint:fix`, `prettier:check`, `prettier:write`, `format`, `jest`,
   `jest:watch`
-- `build:versions`: rebuilds the frozen past versions from git history into `public/versions/` (see
-  `scripts/build-versions.mjs`)
 - `build:games`: rebuilds the GameHub embeds into `public/games/` from a local GameHub checkout (see
   `scripts/build-games.mjs`)

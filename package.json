@@ -16,7 +16,6 @@
     "prettier:write": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format": "pnpm prettier:write && pnpm lint:fix",
     "test": "pnpm prettier:check && pnpm lint && pnpm typecheck && pnpm jest",
-    "build:versions": "node scripts/build-versions.mjs",
     "build:games": "node scripts/build-games.mjs"
   },
   "dependencies": {

@@ -16,19 +16,6 @@ module.exports = withBundleAnalyzer({
   productionBrowserSourceMaps: false,
   poweredByHeader: false,
   compress: true,
-  // Frozen past versions of the site live in public/versions/<id>/ as static exports.
-  rewrites: async () => [
-    { source: '/versions/:id', destination: '/versions/:id/index.html' },
-    { source: '/versions/:id/', destination: '/versions/:id/index.html' },
-    {
-      source: '/versions/:id/:page(about-me|my-projects)',
-      destination: '/versions/:id/:page/index.html',
-    },
-    {
-      source: '/versions/:id/:page(about-me|my-projects)/',
-      destination: '/versions/:id/:page/index.html',
-    },
-  ],
   // Immutable caching only for production: dev chunk URLs are not content-hashed.
   headers: async () =>
     process.env.NODE_ENV !== 'production'
@@ -36,15 +23,6 @@ module.exports = withBundleAnalyzer({
       : [
           {
             source: '/:all*(svg|jpg|jpeg|png|webp|avif|ico|woff|woff2)',
-            headers: [
-              {
-                key: 'Cache-Control',
-                value: 'public, max-age=31536000, immutable',
-              },
-            ],
-          },
-          {
-            source: '/versions/:id/_next/static/:path*',
             headers: [
               {
                 key: 'Cache-Control',

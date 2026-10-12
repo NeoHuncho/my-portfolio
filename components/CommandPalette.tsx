@@ -23,7 +23,6 @@ import {
   FiGithub,
   FiGlobe,
   FiGrid,
-  FiLayers,
   FiLinkedin,
   FiMail,
   FiMic,
@@ -36,7 +35,6 @@ import {
 import { experiences } from '@config/experience';
 import { links, sectionIds } from '@config/links';
 import { featuredProjects, smallProjects } from '@config/sideProjects';
-import { siteVersions } from '@config/versions';
 import { useLanguage } from '@hooks/useLanguage';
 import { usePrefersReducedMotion } from '@hooks/usePrefersReducedMotion';
 import { cx } from '@lib/cx';
@@ -51,8 +49,7 @@ export function openCommandPalette() {
   window.dispatchEvent(new CustomEvent(OPEN_COMMAND_PALETTE));
 }
 
-type GroupId =
-  'recent' | 'navigate' | 'actions' | 'experience' | 'sideProjects' | 'links' | 'versions';
+type GroupId = 'recent' | 'navigate' | 'actions' | 'experience' | 'sideProjects' | 'links';
 
 const groupOrder: GroupId[] = [
   'recent',
@@ -61,7 +58,6 @@ const groupOrder: GroupId[] = [
   'experience',
   'sideProjects',
   'links',
-  'versions',
 ];
 
 type Item = {
@@ -478,17 +474,6 @@ export default function CommandPalette() {
           href: repo,
         }));
       }),
-      ...siteVersions
-        .filter((version) => version.path)
-        .map<Item>((version) => ({
-          id: `version-${version.label}`,
-          group: 'versions',
-          label: `${version.label} · ${version.title[locale]}`,
-          subtitle: `${version.year} · ${version.stack}`,
-          keywords: 'version old ancien past history historique portfolio',
-          Icon: FiLayers,
-          href: version.path ?? undefined,
-        })),
     ];
     return list;
   }, [locale, smooth, strings, t, toggleLocale]);
