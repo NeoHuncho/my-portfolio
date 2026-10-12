@@ -315,11 +315,6 @@ export default function HeroSection() {
             </h1>
             <p className="mt-4 text-pretty text-base text-muted sm:mt-5 sm:text-xl">
               {strings.hero.tagline}
-              <span className="max-sm:hidden">
-                {' '}
-                {strings.hero.taglineMore}{' '}
-                <span className="font-medium text-ink/90">{strings.hero.taglineClaim}</span>
-              </span>
             </p>
             {/* What a recruiter checks first, in plain text rather than behind the tray. */}
             <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted sm:mt-4">

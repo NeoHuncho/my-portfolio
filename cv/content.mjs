@@ -8,7 +8,7 @@ export const content = {
     title: 'William Guinaudie · CV',
     role: 'Full-stack Developer · AI Engineer',
     tagline:
-      'I build software with AI agents, and the setup that lets them work well in a real codebase. They plan and code alongside me; my job is getting the plans right and deciding what’s worth building.',
+      'I build software with AI agents, and the setup that lets them work well in a real codebase.',
     facts: [
       ['Based in', 'Lausanne, Switzerland'],
       ['Nationality', 'British and French'],
@@ -253,7 +253,7 @@ export const content = {
     title: 'William Guinaudie · CV',
     role: 'Développeur Full-stack · Développeur IA',
     tagline:
-      'Je développe avec des agents IA, et l’outillage qui les rend fiables sur une vraie codebase. Ils planifient et codent avec moi ; mon travail, c’est d’avoir les bons plans et de choisir quoi construire.',
+      'Je développe avec des agents IA, et l’outillage qui les rend fiables sur une vraie codebase.',
     facts: [
       ['Lieu', 'Lausanne, Suisse'],
       ['Nationalité', 'Française et britannique'],

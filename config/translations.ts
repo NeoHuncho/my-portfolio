@@ -27,10 +27,6 @@ export type TranslationStrings = {
     viewPhoto: string;
     role: string;
     tagline: string;
-    /** Follows the tagline from `sm` up; phones show the first sentence only. */
-    taglineMore: string;
-    /** The line I stand by, set a touch brighter than the rest of the tagline. */
-    taglineClaim: string;
     /** What a recruiter checks first: where I am, my permit, my languages. */
     facts: string[];
     primaryCta: string;
@@ -278,8 +274,6 @@ export const translations: Record<Locale, TranslationStrings> = {
       role: 'Full-stack Engineer',
       tagline:
         'I build software with AI agents, and the setup that lets them work well in a real codebase.',
-      taglineMore: 'They plan and code alongside me.',
-      taglineClaim: 'My job is getting the plans right and deciding what’s worth building.',
       facts: ['Lausanne, Switzerland', 'Swiss work permit', 'English and French, both native'],
       primaryCta: 'See my experience',
       secondaryCta: 'Download CV',
@@ -618,13 +612,7 @@ export const translations: Record<Locale, TranslationStrings> = {
       role: 'Développeur full-stack',
       tagline:
         'Je développe avec des agents IA, et l’outillage qui les rend fiables sur une vraie codebase.',
-      taglineMore: 'Ils planifient et codent avec moi.',
-      taglineClaim: 'Mon travail, c’est d’avoir les bons plans et de choisir quoi construire.',
-      facts: [
-        'Lausanne, Suisse',
-        'Permis de travail suisse',
-        'Bilingue français-anglais',
-      ],
+      facts: ['Lausanne, Suisse', 'Permis de travail suisse', 'Bilingue français-anglais'],
       primaryCta: 'Voir mon expérience',
       secondaryCta: 'Télécharger le CV',
       closeInfo: 'Fermer',

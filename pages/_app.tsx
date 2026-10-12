@@ -6,6 +6,7 @@ import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
 import CommandPalette from '@components/CommandPalette';
 import Header from '@components/Header';
+import InPageLinks from '@components/InPageLinks';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import '../styles/globals.css';
 
@@ -26,6 +27,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <Component {...pageProps} />
           </main>
           <CommandPalette />
+          <InPageLinks />
         </LanguageProvider>
       </div>
       <Analytics />
