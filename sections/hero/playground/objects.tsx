@@ -144,6 +144,7 @@ const CODEX_GRADIENT: [string, string] = ['#b1a7ff', '#3941ff'];
 
 export function KeycapMesh({ item }: { item: KeycapItem }) {
   const width = 0.7;
+  const height = 0.42;
   const texture = useLabelTexture(
     256,
     256,
@@ -160,10 +161,18 @@ export function KeycapMesh({ item }: { item: KeycapItem }) {
 
   return (
     <>
-      <RoundedBox args={[width, 0.42, width]} radius={0.11} smoothness={3} castShadow receiveShadow>
+      {/* An explicit collider survives the hidden shader warm-up before this key arrives. */}
+      <CuboidCollider args={[width / 2, height / 2, width / 2]} />
+      <RoundedBox
+        args={[width, height, width]}
+        radius={0.11}
+        smoothness={3}
+        castShadow
+        receiveShadow
+      >
         <meshStandardMaterial color="#e9e7e2" roughness={0.55} />
       </RoundedBox>
-      <mesh position={[0, 0.212, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, height / 2 + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width - 0.16, width - 0.16]} />
         <meshBasicMaterial map={texture} transparent toneMapped={false} />
       </mesh>

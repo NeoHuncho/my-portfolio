@@ -2669,7 +2669,7 @@ function Scene({
             );
           case 'keycap':
             return (
-              <Grabbable key={item.uid} {...shared}>
+              <Grabbable key={item.uid} {...shared} colliders={false}>
                 <KeycapMesh item={item} />
               </Grabbable>
             );
