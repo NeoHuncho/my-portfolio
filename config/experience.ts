@@ -70,16 +70,16 @@ export const experiences: Experience[] = [
     ],
     built: [
       {
-        en: 'Retirement planning across the Swiss three-pillar system: pillar 2 (LPP) buy-back potential and affiliation details per pension plan, pillar 3a and 3b withdrawals, and several scenarios compared side by side.',
-        fr: 'Planification de la retraite sur les trois piliers suisses : potentiel de rachat LPP (2e pilier) et détail des affiliations par plan de prévoyance, retraits des piliers 3a et 3b, et plusieurs scénarios comparés côte à côte.',
+        en: 'Retirement planning across the three Swiss pillars: LPP buy-back potential per pension plan, 3a and 3b withdrawals, and scenarios compared side by side.',
+        fr: 'Planification de la retraite sur les trois piliers suisses : potentiel de rachat LPP par plan de prévoyance, retraits 3a et 3b, et scénarios comparés côte à côte.',
       },
       {
-        en: 'Balance sheet and operating account for self-employed clients: depreciation, cash flow, interest and equity.',
-        fr: "Bilan et compte d'exploitation pour les indépendants : amortissements, cash-flow, intérêts et fonds propres.",
+        en: 'Balance sheet and operating account for self-employed clients.',
+        fr: "Bilan et compte d'exploitation pour les indépendants.",
       },
       {
-        en: 'A report module with saved plan views and PDF export, and wealth dashboards on AG Grid and AG Charts, down to the debt ratio and net yield of each property.',
-        fr: 'Un module de rapports avec vues de plan enregistrées et export PDF, et des dashboards patrimoniaux sur AG Grid et AG Charts, jusqu’au taux d’endettement et au rendement net de chaque bien immobilier.',
+        en: 'Reports with saved views and PDF export, and wealth dashboards down to the debt ratio and net yield of each property.',
+        fr: 'Des rapports avec vues enregistrées et export PDF, et des dashboards patrimoniaux jusqu’au taux d’endettement et au rendement net de chaque bien.',
       },
     ],
     aiLead: {
@@ -93,31 +93,24 @@ export const experiences: Experience[] = [
           fr: 'Apprendre notre code aux agents',
         },
         body: {
-          en: 'No model has seen our in-house libraries, so I wrote guides in the repo that explain them to agents. Team feedback becomes rules along the way, from a bad call in a plan to a review comment, but only when it changes how the next agent works.',
-          fr: 'Aucun modèle ne connaît nos librairies maison : j’ai écrit dans le repo des guides qui les expliquent aux agents. Les retours de l’équipe y deviennent des règles au fil de l’eau, d’un mauvais choix dans un plan à un commentaire de relecture, mais seulement quand ils changent le travail du prochain agent.',
+          en: 'I wrote guides in the repo that explain our in-house libraries to agents. Team feedback becomes a rule only when it changes how the next agent works.',
+          fr: 'J’ai écrit dans le repo des guides qui expliquent nos librairies maison aux agents. Un retour de l’équipe devient une règle seulement s’il change le travail du prochain agent.',
         },
       },
       {
         title: { en: 'Several agents in parallel', fr: 'Plusieurs agents en parallèle' },
         body: {
-          en: 'Each agent works in its own copy of the repo (a git worktree), with its own local environment and its own copy of the database. Several agents can then each take a task from start to finish, QA included, without getting in each other’s way.',
-          fr: 'Chaque agent travaille dans sa propre copie du repo (un worktree git), avec son environnement local et sa propre copie de la base de données. Plusieurs agents peuvent ainsi mener chacun une tâche de bout en bout, QA comprise, sans se gêner.',
+          en: 'Each agent works in its own git worktree, with its own local environment and database copy, so several can each take a task from start to finish, QA included.',
+          fr: 'Chaque agent travaille dans son propre worktree git, avec son environnement local et sa copie de la base, pour que plusieurs mènent chacun une tâche de bout en bout, QA comprise.',
         },
       },
       {
         title: { en: 'A radar for agent runs', fr: "Un radar pour les runs d'agents" },
         body: {
-          en: 'Scheduled agents go through the codebase looking for performance, security, bugs and code quality, and report to one dashboard, the radar. Each finding comes with a plan; I decide what gets done.',
-          fr: 'Des agents planifiés passent la codebase en revue (performance, sécurité, bugs, qualité du code) et remontent dans un dashboard, le radar. Chaque point arrive avec un plan ; je décide de la suite.',
+          en: 'Scheduled agents check the codebase for performance, security, bugs and code quality, and bring each finding to one dashboard with a plan. I decide what gets done.',
+          fr: 'Des agents planifiés passent la codebase en revue (performance, sécurité, bugs, qualité du code) et remontent chaque point dans un dashboard, avec un plan. Je décide de la suite.',
         },
         linkToBoard: true,
-      },
-      {
-        title: { en: 'Experiments', fr: 'Expérimentations' },
-        body: {
-          en: 'Long-running agent audits, multi-agent orchestration, and evals and observability for agent runs.',
-          fr: 'Audits longs menés par des agents, orchestration multi-agents, évaluation et observabilité des runs.',
-        },
       },
     ],
     stack: [
@@ -182,22 +175,22 @@ export const experiences: Experience[] = [
       {
         title: { en: 'Coding agents, early on', fr: 'Les agents de code, tôt' },
         body: {
-          en: 'I adopted AI coding tools early at Zenride: GitHub Copilot first, then Claude Code. Human in the loop all the way: I steered every change and reviewed every line.',
-          fr: "J'ai adopté tôt les outils de code IA chez Zenride : d'abord GitHub Copilot, puis Claude Code. Humain dans la boucle de bout en bout : je pilotais chaque changement et relisais chaque ligne.",
+          en: 'At Zenride I adopted GitHub Copilot early, then Claude Code, with a human in the loop: I steered every change and reviewed every line.',
+          fr: "Chez Zenride, j'ai adopté tôt GitHub Copilot, puis Claude Code, avec un humain dans la boucle : je pilotais chaque changement et relisais chaque ligne.",
         },
       },
       {
         title: { en: 'My first custom AI rules', fr: 'Mes premières règles IA maison' },
         body: {
-          en: 'Zenride is also where I first wrote custom rules and instructions for AI: for the automated AI reviews on pull requests, and for my everyday agent runs.',
-          fr: 'C’est aussi chez Zenride que j’ai écrit mes premières règles et instructions IA maison : pour les relectures IA automatiques des pull requests, et pour mes runs d’agents du quotidien.',
+          en: 'At Zenride I wrote my first custom AI rules, for the automated reviews on pull requests and for my everyday agent runs.',
+          fr: 'Chez Zenride, j’ai écrit mes premières règles IA maison, pour les relectures automatiques des pull requests et pour mes runs d’agents du quotidien.',
         },
       },
       {
         title: { en: 'Codebase audits', fr: 'Audits de la codebase' },
         body: {
-          en: 'I ran AI audits of the codebase to understand quickly how its more sensitive parts worked, across a large codebase and database.',
-          fr: 'Des audits de la codebase avec l’IA pour comprendre vite le fonctionnement de ses parties les plus sensibles, sur une grosse codebase et sa base de données.',
+          en: 'AI audits helped me understand the sensitive parts of a large codebase and database quickly.',
+          fr: 'Des audits avec l’IA m’ont aidé à comprendre vite les parties sensibles d’une grosse codebase et de sa base de données.',
         },
       },
     ],

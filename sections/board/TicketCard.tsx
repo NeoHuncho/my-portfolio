@@ -158,25 +158,12 @@ type DecisionCardProps = {
   onDecide: (id: string, kind: DecisionKind) => void;
 };
 
-/** The two lines a decision card shows on its face. Everything else lives in the details drawer. */
-export function keyLines(
-  ticket: Ticket,
-  card: { problem: string; today: string; change: string; fix: string }
-) {
-  return ticket.track === 'bug'
-    ? [
-        { label: card.problem, text: ticket.goal },
-        { label: card.fix, text: ticket.change },
-      ]
-    : [
-        { label: card.today, text: ticket.today },
-        { label: card.change, text: ticket.change },
-      ];
-}
-
+/**
+ * A decision card's face: the plan in a line, and the decision. Today, the change, the effort
+ * and the agent's open question live in the details drawer; Accept asks the question too.
+ */
 function DecisionCardView({ ticket, state, onOpen, onDecide }: DecisionCardProps) {
   const { strings, locale } = useLanguage();
-  const { card } = strings.board;
 
   return (
     <article className="animate-ticket-in flex flex-col rounded-2xl border border-line-strong bg-surface p-4 transition hover:border-faint sm:p-5">
@@ -217,20 +204,7 @@ function DecisionCardView({ ticket, state, onOpen, onDecide }: DecisionCardProps
         </p>
       )}
 
-      <dl className="mt-4 grid gap-3 text-[13px] leading-relaxed sm:grid-cols-2 sm:gap-5">
-        {/* Phones get the change only: the tldr already says what is wrong. */}
-        {keyLines(ticket, card).map((row, index) => (
-          <div key={row.label} className={cx(index === 0 && 'hidden sm:block')}>
-            <dt className="text-[11px] font-medium text-faint">{row.label}</dt>
-            <dd className="mt-0.5 text-muted">
-              <RichText text={row.text[locale]} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-
-      <OpenQuestion ticket={ticket} className="mt-4" />
-      <AskedQuestion ticket={ticket} state={state} className="mt-2" />
+      <AskedQuestion ticket={ticket} state={state} className="mt-4" />
 
       <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-5">
         <button
@@ -257,9 +231,6 @@ function DecisionCardView({ ticket, state, onOpen, onDecide }: DecisionCardProps
           <FiX aria-hidden />
           {strings.board.reject}
         </button>
-        <span className="ml-auto text-[11px] text-faint">
-          {card.effort} {ticket.effort}
-        </span>
       </div>
     </article>
   );

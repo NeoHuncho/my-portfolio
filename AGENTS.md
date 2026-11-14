@@ -46,8 +46,9 @@ disagree, ask rather than guess.
   "Fork, fix, publish", "My job is getting the plans right…", "The technical choices stay mine…", "I
   understand everything that ships", « Les agents font le gros du travail. Moi, je tranche. »
 - Nothing defensive (no "not side businesses", no reassuring closing claim). Keep the tone relaxed.
-- Concise, especially on desktop and landscape: little wording, only what matters. Desk explanations
-  run about two lines.
+- Épuré: the whole site keeps text to a minimum, especially on desktop and landscape. One or two
+  short sentences per block, only what matters; detail goes behind a click (drawer, story card) or
+  goes. Desk explanations run about two lines.
 - No filler labels or captions: no column subtitles, eyebrows such as "On my desk", "Live demo"
   badges or "Tap/click anything" hints. Labels that explain the page's structure are fine.
 - Every explanatory body stands alone: it names its subject and never relies on the title above it.
@@ -129,29 +130,41 @@ disagree, ask rather than guess.
   generic "AI & workflow" bullet list.
 - Zenride's notes: early adoption (GitHub Copilot, then Claude Code), human in the loop, first
   custom AI rules, AI audits of the codebase.
-- Apptitude's notes are readable sentences, not condensed: teaching agents the codebase (guides in
-  the repo; team feedback becomes rules, selectively, only when it changes the next agent's work),
-  several agents in parallel (a worktree per agent with its own local environment, database copy
-  included, for full-cycle work including QA), and the radar, which names its domains (performance,
-  security, bugs, code quality) and has a prominent button to the board beside it.
+- Apptitude's notes are short readable sentences (one or two each), three of them: teaching agents
+  the codebase (guides in the repo; team feedback becomes rules, selectively, only when it changes
+  the next agent's work), several agents in parallel (a worktree per agent with its own local
+  environment, database copy included, for full-cycle work including QA), and the radar, which
+  names its domains (performance, security, bugs, code quality) and has a prominent button to the
+  board beside it. No "Experiments" note.
 - Apptitude's "built" list stays concrete and impressive (retirement planning across the Swiss
   pillars, the self-employed balance sheet, reports with PDF export). No animated e-card, no "quick
   actions".
 
 ### Board ("How I work")
 
-- It replays Pomi's real radar: real issue and PR numbers with links, a header with Pomi's logo
-  linking to its GitHub issues. Made-up tickets carry the "Example" tag (`illustrative: true`).
-- Practices, in this order: Ownership (names VibeWise, which reasons through the plan first, and
-  Geoffrey Litt's explain-diff, which ends with a quiz on the PR), Feedback loop, Scoring (effort
-  and evidence), Retrospectives (Matt Pocock's retro skill, for going back over past runs).
+- It must read at first glance. It replays Pomi's real radar: real issue and PR numbers with links,
+  a header with Pomi's logo linking to its GitHub issues. Made-up tickets carry the "Example" tag
+  (`illustrative: true`). Title and intro carry one idea each: "I decide what the agents build." /
+  « Je décide de ce que les agents construisent. », then "A replay of the board from Pomi, my side
+  project." / « Une reproduction du tableau de Pomi, mon projet perso. » No radar jargon or list of
+  sources up there: the board shows them.
+- Three columns read left to right as a flow, named without pronouns: "To decide" · "To review" ·
+  "Released" / « À décider » · « À relire » · « En production ». A decision card's face shows only
+  its id, source, title, one line and the Accept / Ask / Reject buttons (plus a dependency ticket's
+  version jump, and the visitor's question with the agent's reply once asked); today, the change,
+  the effort and the agent's open question live in the details drawer (Accept asks the question
+  too).
+- Practices, in this order, one short line each: Ownership (names VibeWise, which reasons through
+  the plan first, and Geoffrey Litt's explain-diff, which ends with a quiz on the PR), Feedback
+  loop, Scoring (effort and evidence), Retrospectives (Matt Pocock's retro skill, for going back
+  over past runs).
 - "Ask" means the owner asks the agent before deciding; the agent's own question is answered as part
   of Accept.
 
 ### Side projects and "More about me"
 
-- Side-projects intro: "Personal tools, and the place where I try out AI inside the product itself."
-  / « Des outils perso, et l’endroit où je teste l’IA dans le produit lui-même. »
+- Side-projects heading: the section label and the title, "Open-source projects I built." / « Des
+  projets open source que j’ai développés. », with no intro line under it.
 - Pomi copy never calls AI "optional". Pomi has no website: link to its GitHub releases. In the Pomi
   demo, intentions are life areas (Work, Side projects, Learning, Personal, Admin), never project
   names, task-level labels or vague words like "Focus"; the composer reads "Tap to add a task", new
@@ -167,9 +180,9 @@ disagree, ask rather than guess.
   `public/games/app/play-*.css`), open in light mode like GameHub's site (the portfolio's dark
   `color-scheme` must not leak in), are captioned "GameHub · desktop" / "GameHub · phone", and the
   phone frame is as tall as the desktop frame.
-- "More about me" order (`EXTRAS` in `items.ts`, `SHELF` on phones): Automation, Walk and talk, Open
-  source, Homelab, Shortcuts (desk only), Strategy games, then Switzerland and EN · FR last, since
-  the facts line already says them.
+- "More about me" order (`EXTRAS` in `items.ts`, `SHELF` and `TRAY_ORDER` in `exhibitIds.ts`):
+  Homelab, Open source, Switzerland, EN · FR, then Automation, Walk and talk, Shortcuts (desk
+  only), Strategy games.
 - Walk and talk: a walking pad and dictation; he dictates much of what he writes, not only prompts.
   Modern and energetic, never a need.
 - Open source: he runs his own forks of several projects, tailored to his needs.
@@ -249,7 +262,7 @@ disagree, ask rather than guess.
   divider with a short orange stroke, more space). Desk objects are big enough to tap.
 - No "How I work" heading or tabs in the hero (in the nav, "How I work" means the board). The intro
   flows into one turntable holding the trio, a sun → Claude → moon timeline, the caption, the CTAs,
-  then a horizontal "More about me" shelf, which opens on the robot.
+  then a horizontal "More about me" shelf, which opens on its first piece, the homelab.
 - Turntable: any flick (over about 150 px/s) goes to the next piece, and a long drag follows the
   finger past one piece. Side taps bring a side piece round; a tap on the front piece does nothing.
   Only the stage's own lost pointer capture counts as a release (a child's bubbled

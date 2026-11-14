@@ -267,7 +267,7 @@ export default function BoardSection() {
             {/* Columns: side by side from `lg`, stacked from `sm`, one swipe apart on phones. */}
             <SwipeRow
               label={t.eyebrow}
-              className="p-3 max-sm:items-start sm:grid sm:gap-3 sm:p-4 lg:grid-cols-[2fr_1fr_1fr]"
+              className="p-3 max-sm:items-start sm:grid sm:gap-3 sm:p-4 lg:grid-cols-[1.3fr_1fr_1fr]"
               itemWidth="max-sm:w-[88%]"
               bleed="max-sm:scroll-px-3"
               dotsClassName="pb-3"

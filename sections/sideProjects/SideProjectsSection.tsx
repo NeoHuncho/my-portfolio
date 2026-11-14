@@ -132,7 +132,7 @@ function ProjectInfo({ project, split = false }: { project: FeaturedProject; spl
   );
 }
 
-/** How AI fits into the project, in the same accent box as the experience entries. Phones skip the specifics and swipe between boxes. */
+/** How AI fits into the project, in the same accent box as the experience entries. Phones swipe between boxes. */
 function Callouts({ callouts, columns = false }: { callouts?: Callout[]; columns?: boolean }) {
   const { strings, locale } = useLanguage();
   if (!callouts?.length) {
@@ -153,16 +153,6 @@ function Callouts({ callouts, columns = false }: { callouts?: Callout[]; columns
               {callout.title[locale]}
             </p>
             <p className="mt-1.5 text-[13px] leading-relaxed text-ink/80">{callout.body[locale]}</p>
-            {callout.points && (
-              <ul className="mt-2 space-y-1.5 max-sm:hidden">
-                {callout.points.map((point) => (
-                  <li key={point.en} className="flex gap-2.5 text-[13px] leading-snug text-ink/80">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-accent" aria-hidden />
-                    {point[locale]}
-                  </li>
-                ))}
-              </ul>
-            )}
             {callout.linkToBoard && (
               <a
                 href={`#${sectionIds.board}`}
@@ -274,7 +264,7 @@ export default function SideProjectsSection() {
       className="section-start border-t border-line pb-12 pt-12 sm:pb-8 sm:pt-20"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeading eyebrow={t.eyebrow} title={t.title} intro={t.intro} />
+        <SectionHeading eyebrow={t.eyebrow} title={t.title} />
 
         <div className="mt-6 space-y-4 sm:mt-10 sm:space-y-5">
           {featuredProjects.map((project) =>

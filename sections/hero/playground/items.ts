@@ -77,18 +77,19 @@ export const TRIO = ['ticket', 'agents', 'night'] as const;
 export type TrioId = (typeof TRIO)[number];
 
 /**
- * The rest of me, added round them from the tray on request, most important first.
- * Switzerland and the languages come last: the hero's facts line already says them.
+ * The rest of me, added round them from the tray on request: the homelab, open source,
+ * Switzerland and the languages first, then the robot, the walking pad, the search key
+ * and the strategy board.
  */
 export const EXTRAS = [
-  'robot',
-  'sport',
-  'oss',
   'server',
-  'keys',
-  'strategy',
+  'oss',
   'mountain',
   'flags',
+  'robot',
+  'sport',
+  'keys',
+  'strategy',
 ] as const;
 export type ExtraId = (typeof EXTRAS)[number];
 

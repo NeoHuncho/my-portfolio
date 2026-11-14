@@ -1,10 +1,9 @@
 import { type LocalizedString } from './types';
 
-/** How AI fits into a project: a title, a line that stands on its own, optional specifics. */
+/** How AI fits into a project: a title and a line that stands on its own. */
 export type Callout = {
   title: LocalizedString;
   body: LocalizedString;
-  points?: LocalizedString[];
   /** Points up to the "How I work" board, which mocks this workflow. */
   linkToBoard?: boolean;
 };
@@ -62,19 +61,9 @@ export const featuredProjects: FeaturedProject[] = [
       {
         title: { en: 'Built by scheduled agents', fr: 'Construit par des agents planifiés' },
         body: {
-          en: 'Pomi runs on the workflow from the board above: scheduled agents plan, I decide, an agent implements, and nothing merges until I understand it.',
-          fr: 'Pomi tourne avec le workflow du board au-dessus : des agents planifiés préparent, je décide, un agent implémente, et rien n’est mergé tant que je ne l’ai pas compris.',
+          en: 'Pomi is built with the workflow from the board above: agents plan twice a day, I decide, and nothing merges until I understand it.',
+          fr: 'Pomi se construit avec le workflow du board au-dessus : des agents planifient deux fois par jour, je décide, et rien n’est mergé tant que je ne l’ai pas compris.',
         },
-        points: [
-          {
-            en: 'Planning agents for features, bugs, performance and security run twice a day.',
-            fr: 'Des agents de planification pour les features, bugs, performance et sécurité tournent deux fois par jour.',
-          },
-          {
-            en: 'Low-cost agents do the volume; decision agents stop empty runs in seconds.',
-            fr: 'Des agents peu coûteux font le volume ; des agents de décision arrêtent les runs vides en quelques secondes.',
-          },
-        ],
         linkToBoard: true,
       },
     ],
@@ -98,15 +87,15 @@ export const featuredProjects: FeaturedProject[] = [
       {
         title: { en: 'Tested by agents', fr: 'Testé par des agents' },
         body: {
-          en: 'Agents test every GameHub change in a real browser on phone, tablet and desktop. Bot-versus-bot simulations check a game’s balance before a rule changes.',
-          fr: 'Des agents testent chaque changement de GameHub dans un vrai navigateur, sur mobile, tablette et desktop. Des simulations bot contre bot vérifient l’équilibre avant qu’une règle change.',
+          en: 'Agents test every GameHub change in a real browser, on phone and desktop, and bot-versus-bot games check the balance.',
+          fr: 'Des agents testent chaque changement de GameHub dans un vrai navigateur, sur mobile et desktop, et des parties bot contre bot vérifient l’équilibre.',
         },
       },
       {
         title: { en: 'Where I experiment', fr: 'Mon terrain d’expérimentation' },
         body: {
-          en: 'GameHub is my AI test bed: I connect Blender and other software to agents through MCP servers, and try each new frontier model on real tasks, from 3D figures to game rules.',
-          fr: 'GameHub est mon terrain d’essai IA : je connecte Blender et d’autres logiciels aux agents via des serveurs MCP, et j’essaie chaque nouveau modèle frontier sur de vraies tâches, des figurines 3D aux règles du jeu.',
+          en: 'GameHub is where I try each new frontier model, and connect Blender and other software to agents through MCP.',
+          fr: 'GameHub, c’est là que j’essaie chaque nouveau modèle frontier, et que je connecte Blender et d’autres logiciels aux agents via MCP.',
         },
       },
     ],

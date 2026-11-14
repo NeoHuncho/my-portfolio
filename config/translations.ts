@@ -208,7 +208,6 @@ export type TranslationStrings = {
   sideProjects: {
     eyebrow: string;
     title: string;
-    intro: string;
     stars: (count: number) => string;
     source: string;
     more: string;
@@ -291,9 +290,9 @@ export const translations: Record<Locale, TranslationStrings> = {
         turnHint: 'Swipe to turn it',
         caption: {
           ticket:
-            'By day, I make the architecture decisions with the team. Agents extend my own thinking: they explore the code with me and draft plans that I edit until they hold up.',
+            'By day, I make the architecture decisions with the team. Agents explore the code with me and draft plans that I edit until they hold up.',
           agents:
-            'I run a modded Claude Code as my main driver, with the Codex CLI wired in to make full use of both subscriptions. Each model takes the work it does best and checks the other’s.',
+            'A modded Claude Code is my main driver, with the Codex CLI wired in to use both subscriptions. Each model takes the work it does best and checks the other’s.',
           night:
             'Overnight, agents triage feedback and errors, and explorers hunt for security issues and performance wins. In the morning, I decide.',
         },
@@ -314,85 +313,83 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         caption: {
           flags:
-            'Dual British and French citizen, native in both languages: I work as well in English as in French. German: school level (A2).',
+            'I am a dual British and French citizen, native in English and French. German: A2 (school level).',
           mountain:
             'My favourite place is the mountains, so Switzerland worked out suspiciously well. Swiss B permit: already sorted.',
           sport:
             'I love to move. At my standing desk I walk on a walking pad and dictate much of what I write.',
-          robot:
-            'I automate where it makes sense, at home too: agent workflows take care of the repetitive bits of my personal life.',
+          robot: 'I automate where it makes sense, at home too, with agent workflows.',
           server:
             'I love hardware. I self-host what I can on my homelab, and my side projects can be self-hosted too.',
-          oss: 'I use open source every day and run my own forks of several projects, tailored to my needs. I contribute upstream when I can and publish my own.',
+          oss: 'I run my own forks of several open-source projects, tailored to my needs, and contribute upstream when I can.',
           strategy:
-            'I love strategy games: thinking a few turns ahead, then adapting when the other side moves. Enough to design my own, on GameHub.',
+            'I love strategy games: thinking a few turns ahead, then adapting. I design my own on GameHub.',
         },
       },
       objects: {
         ticket: {
           title: 'Day shift',
-          body: 'By day, I make the architecture decisions with the team, so the code serves the business. Agents extend my own thinking: they explore the codebase with me and draft plans that I edit until they hold up.',
+          body: 'By day, I make the architecture decisions with the team. Agents extend my thinking: they explore the code with me and draft plans that I edit until they hold up.',
         },
         keys: {
           title: 'Keyboard shortcuts',
-          body: 'I would rather press a key than reach for the mouse. Press / to search this site or jump anywhere.',
+          body: 'I would rather press a key than reach for the mouse. Press / to search this site.',
         },
         agents: {
           title: 'Claude Code and Codex',
-          body: 'I run a modded Claude Code as my main driver, with the Codex CLI wired in to make full use of both subscriptions: each model takes the work it does best and checks the other’s.',
+          body: 'A modded Claude Code is my main driver, with the Codex CLI wired in to make full use of both subscriptions. Each model takes the work it does best and checks the other’s.',
         },
         oss: {
           title: 'Open source',
-          body: 'I use open source every day and run my own forks of several projects, tailored to how I work. I contribute upstream when I can and publish my own projects.',
+          body: 'I run my own forks of several open-source projects, tailored to how I work, and contribute upstream when I can.',
         },
         server: {
           title: 'Homelab',
-          body: 'I am passionate about hardware in general. I self-host what I can on my homelab, and my side projects can be self-hosted too.',
+          body: 'I love hardware in general. I self-host what I can on my homelab, and my side projects can be self-hosted too.',
         },
         sport: {
           title: 'Walk and talk',
-          body: 'I love to move, and sport is how I recharge. At my standing desk I walk on a walking pad and dictate much of what I write.',
+          body: 'I love to move. At my standing desk I walk on a walking pad and dictate much of what I write.',
         },
         mountain: {
           title: 'Switzerland',
-          body: 'For someone whose favourite place is the mountains, ending up in Switzerland worked out suspiciously well. Swiss B permit: already sorted.',
+          body: 'My favourite place is the mountains, so ending up in Switzerland worked out suspiciously well. Swiss B permit: already sorted.',
         },
         robot: {
           title: 'Automation, at home too',
-          body: 'I automate where it makes sense, and not only at work: automations and AI agent workflows take care of repetitive things in my personal life too.',
+          body: 'I automate where it makes sense, at home too: agent workflows take care of the repetitive bits of my personal life.',
         },
         night: {
           title: 'Night shift',
-          body: 'Overnight, scheduled agents triage feedback and errors, and explorers hunt for security issues and performance wins. In the morning, I decide what gets built.',
+          body: 'Overnight, scheduled agents triage feedback and errors, and explorers hunt for security issues and performance wins. In the morning, I decide.',
         },
         flags: {
           title: 'British and French',
-          body: 'I am a dual British and French citizen, and both languages are native to me: I work just as well in English as in French. My German is school level (A2).',
+          body: 'I am a dual British and French citizen, and both English and French are native to me. My German is A2 (school level).',
         },
         strategy: {
           title: 'Strategy games',
-          body: 'I love strategy games: thinking a few turns ahead, weighing trade-offs, adapting when the other side moves. Enough to design my own: they are on GameHub, further down.',
+          body: 'I love strategy games: thinking a few turns ahead, then adapting when the other side moves. I design my own on GameHub, further down.',
         },
       },
     },
     board: {
       eyebrow: '03 · How I work',
-      title: 'Agents bring me plans, and I choose which ones get built.',
-      intro:
-        'Scheduled agent runs turn feedback, errors and the codebase into tickets with a plan. I make the decisions and own every change that ships. Below, a replay of the radar on Pomi, my side project. Try it.',
+      title: 'I decide what the agents build.',
+      intro: 'A replay of the board from Pomi, my side project.',
       radar: 'Daily radar',
       onGitHub: 'Real issues on GitHub',
       example: 'Example',
       filterAll: 'All',
       toDecide: (count) => `${count} to decide`,
       columns: {
-        decision: 'Needs your decision',
-        review: 'Your review',
+        decision: 'To decide',
+        review: 'To review',
         released: 'Released',
       },
       status: {
         building: 'Agent implementing',
-        prReady: 'PR ready for your review',
+        prReady: 'PR ready for review',
         alreadyImplemented: 'The agent found it already built',
         merged: 'Merged',
       },
@@ -416,11 +413,11 @@ export const translations: Record<Locale, TranslationStrings> = {
       genericReply:
         'Noted: the agent looks into it on its next run and replies here. The ticket waits for your decision.',
       practices: {
-        title: 'How I keep unattended agent runs in check',
+        title: 'How I keep agent runs in check',
         items: [
           {
             title: 'Ownership',
-            body: '{link} makes me reason through each plan before it is built, and Geoffrey Litt’s {link} quizzes me on what was built, so I understand each change before it merges.',
+            body: '{link} has me reason through each plan before it is built, and Geoffrey Litt’s {link} quizzes me on each PR.',
             links: [
               { label: 'VibeWise', href: 'https://github.com/nykooi1/vibe-wise' },
               {
@@ -431,15 +428,15 @@ export const translations: Record<Locale, TranslationStrings> = {
           },
           {
             title: 'Feedback loop',
-            body: 'My accepts, rejections and review comments go back into the agent instructions and the repo memory, so the next run repeats fewer mistakes.',
+            body: 'My accepts, rejections and review comments go back into the agents’ instructions.',
           },
           {
             title: 'Scoring',
-            body: 'Every plan comes with an effort estimate and the evidence behind it. When the agent is unsure about a plan, it asks a question before anything is built.',
+            body: 'Each agent plan comes with an effort estimate and its evidence, plus a question when the agent is unsure.',
           },
           {
             title: 'Retrospectives',
-            body: 'Matt Pocock’s {link} takes me back through past agent runs to see where they went wrong and what to change in the instructions.',
+            body: 'Matt Pocock’s {link} takes me back over past agent runs to improve the instructions.',
             links: [
               {
                 label: 'retro skill',
@@ -538,8 +535,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     sideProjects: {
       eyebrow: '04 · Side projects',
-      title: 'Open-source projects I built for my own use.',
-      intro: 'Personal tools, and the place where I try out AI inside the product itself.',
+      title: 'Open-source projects I built.',
       stars: (count) => `${count}+ stars`,
       source: 'Source code',
       more: 'More projects',
@@ -550,7 +546,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     footer: {
       title: 'Building a team that works with AI agents?',
-      body: 'I am open to full-stack and AI engineering roles in Switzerland, and happy to talk about how your team could work with agents.',
+      body: 'I am open to full-stack and AI engineering roles in Switzerland.',
       email: 'Email me',
       builtWith: 'Built with Next.js, React Three Fiber and Rapier.',
     },
@@ -624,9 +620,9 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         caption: {
           ticket:
-            'Le jour, je prends les décisions d’architecture avec l’équipe. Les agents prolongent ma propre réflexion : ils explorent le code avec moi et rédigent des plans que je retravaille jusqu’à ce qu’ils tiennent la route.',
+            'Le jour, je prends les décisions d’architecture avec l’équipe. Les agents explorent le code avec moi et rédigent des plans que je retravaille jusqu’à ce qu’ils tiennent la route.',
           agents:
-            'J’utilise une version moddée de Claude Code comme outil principal, avec la CLI Codex intégrée pour exploiter pleinement mes deux abonnements. Chaque modèle prend ce qu’il fait le mieux et vérifie le travail de l’autre.',
+            'Une version moddée de Claude Code est mon outil principal, avec la CLI Codex intégrée pour profiter de mes deux abonnements. Chaque modèle prend ce qu’il fait le mieux et vérifie l’autre.',
           night:
             'La nuit, des agents trient retours et erreurs, et des explorateurs traquent failles de sécurité et gains de performance. Le matin, je décide.',
         },
@@ -647,44 +643,43 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         caption: {
           flags:
-            'Double nationalité française et britannique, deux langues maternelles : je travaille aussi bien en français qu’en anglais. Allemand : niveau scolaire (A2).',
+            'J’ai la double nationalité française et britannique, et deux langues maternelles, le français et l’anglais. Allemand : A2 (niveau scolaire).',
           mountain:
             'Quand on préfère la montagne à tout, finir en Suisse tombe étrangement bien. Permis B : déjà en poche.',
           sport:
             'J’adore bouger. À mon bureau debout, je marche sur un tapis et je dicte une bonne partie de ce que j’écris.',
-          robot:
-            'J’automatise là où ça a du sens, à la maison aussi : des workflows d’agents s’occupent des tâches répétitives de ma vie perso.',
+          robot: 'J’automatise là où ça a du sens, à la maison aussi, avec des workflows d’agents.',
           server:
             'Passionné de hardware, j’auto-héberge ce que je peux sur mon homelab, et mes projets perso peuvent l’être aussi.',
-          oss: 'J’utilise l’open source tous les jours et j’entretiens mes propres forks de plusieurs projets, adaptés à mes besoins. Je contribue quand je peux et je publie les miens.',
+          oss: 'J’entretiens mes propres forks de plusieurs projets open source, adaptés à mes besoins, et je contribue quand je peux.',
           strategy:
-            'J’adore les jeux de stratégie : voir quelques tours à l’avance, puis s’adapter quand l’adversaire joue. Au point de concevoir les miens, sur GameHub.',
+            'J’adore les jeux de stratégie : voir quelques tours à l’avance, puis s’adapter. Je conçois les miens sur GameHub.',
         },
       },
       objects: {
         ticket: {
           title: 'L’équipe de jour',
-          body: 'Le jour, je prends les décisions d’architecture avec l’équipe, pour que le code serve le métier. Les agents prolongent ma propre réflexion : ils explorent la codebase avec moi et rédigent des plans que je retravaille jusqu’à ce qu’ils tiennent la route.',
+          body: 'Le jour, je prends les décisions d’architecture avec l’équipe. Les agents prolongent ma réflexion : ils explorent le code avec moi et rédigent des plans que je retravaille jusqu’à ce qu’ils tiennent la route.',
         },
         keys: {
           title: 'Raccourcis clavier',
-          body: 'Je préfère une touche à la souris. Appuie sur / pour chercher sur le site ou aller n’importe où.',
+          body: 'Je préfère une touche à la souris. Appuie sur / pour chercher sur le site.',
         },
         agents: {
           title: 'Claude Code et Codex',
-          body: 'J’utilise une version moddée de Claude Code comme outil principal, avec la CLI Codex intégrée pour exploiter pleinement mes deux abonnements : chaque modèle prend ce qu’il fait le mieux et vérifie le travail de l’autre.',
+          body: 'Une version moddée de Claude Code est mon outil principal, avec la CLI Codex intégrée pour exploiter pleinement mes deux abonnements. Chaque modèle prend ce qu’il fait le mieux et vérifie le travail de l’autre.',
         },
         oss: {
           title: 'Open source',
-          body: 'J’utilise l’open source tous les jours et j’entretiens mes propres forks de plusieurs projets, adaptés à ma façon de travailler. Je contribue quand je peux et je publie mes propres projets.',
+          body: 'J’entretiens mes propres forks de plusieurs projets open source, adaptés à ma façon de travailler, et je contribue quand je peux.',
         },
         server: {
           title: 'Homelab',
-          body: 'Je suis passionné par le hardware en général. J’auto-héberge ce que je peux sur mon homelab, et mes projets perso peuvent l’être aussi.',
+          body: 'Passionné de hardware en général, j’auto-héberge ce que je peux sur mon homelab, et mes projets perso peuvent l’être aussi.',
         },
         sport: {
           title: 'Marcher et parler',
-          body: 'J’adore bouger, et le sport me ressource. À mon bureau debout, je marche sur un tapis de marche et je dicte une bonne partie de ce que j’écris.',
+          body: 'J’adore bouger. À mon bureau debout, je marche sur un tapis de marche et je dicte une bonne partie de ce que j’écris.',
         },
         mountain: {
           title: 'La Suisse',
@@ -692,40 +687,39 @@ export const translations: Record<Locale, TranslationStrings> = {
         },
         robot: {
           title: 'L’automatisation, à la maison aussi',
-          body: 'J’automatise là où ça a du sens, et pas seulement au travail : des automatisations et des workflows d’agents IA s’occupent aussi des tâches répétitives de ma vie perso.',
+          body: 'J’automatise là où ça a du sens, à la maison aussi : des workflows d’agents s’occupent des tâches répétitives de ma vie perso.',
         },
         night: {
           title: 'L’équipe de nuit',
-          body: 'La nuit, des agents planifiés trient les retours et les erreurs, et des explorateurs traquent failles de sécurité et gains de performance. Le matin, je décide de ce qui se construit.',
+          body: 'La nuit, des agents planifiés trient les retours et les erreurs, et des explorateurs traquent failles de sécurité et gains de performance. Le matin, je décide.',
         },
         flags: {
           title: 'Franco-britannique',
-          body: 'J’ai la double nationalité française et britannique, et les deux langues sont maternelles pour moi : je travaille aussi bien en français qu’en anglais. Mon allemand est de niveau scolaire (A2).',
+          body: 'J’ai la double nationalité française et britannique, et deux langues maternelles, le français et l’anglais. Mon allemand : A2 (niveau scolaire).',
         },
         strategy: {
           title: 'Les jeux de stratégie',
-          body: 'J’adore les jeux de stratégie : voir quelques tours à l’avance, peser le pour et le contre, s’adapter quand l’adversaire joue. Au point de concevoir les miens : ils sont sur GameHub, plus bas.',
+          body: 'J’adore les jeux de stratégie : voir quelques tours à l’avance, puis s’adapter quand l’adversaire joue. Je conçois les miens sur GameHub, plus bas.',
         },
       },
     },
     board: {
       eyebrow: '03 · Ma méthode',
-      title: 'Les agents me proposent des plans, et je choisis ceux qu’on construit.',
-      intro:
-        'Des runs d’agents planifiés transforment les retours, les erreurs et la codebase en tickets avec un plan. Je prends les décisions et je réponds de chaque changement livré. Ci-dessous, le radar de Pomi, mon projet perso, rejoué. Essaie.',
+      title: 'Je décide de ce que les agents construisent.',
+      intro: 'Une reproduction du tableau de Pomi, mon projet perso.',
       radar: 'Radar quotidien',
       onGitHub: 'Les vrais tickets sur GitHub',
       example: 'Exemple',
       filterAll: 'Tout',
       toDecide: (count) => `${count} à décider`,
       columns: {
-        decision: 'Attend ta décision',
-        review: 'Ta relecture',
+        decision: 'À décider',
+        review: 'À relire',
         released: 'En production',
       },
       status: {
         building: 'L’agent implémente',
-        prReady: 'PR prête pour ta relecture',
+        prReady: 'PR prête à relire',
         alreadyImplemented: 'L’agent l’a trouvé déjà en place',
         merged: 'Mergée',
       },
@@ -750,11 +744,11 @@ export const translations: Record<Locale, TranslationStrings> = {
       genericReply:
         'Noté : l’agent s’en occupe à son prochain run et répond ici. Le ticket attend ta décision.',
       practices: {
-        title: 'Comment je garde la main sur les runs d’agents autonomes',
+        title: 'Comment je garde la main sur les runs d’agents',
         items: [
           {
             title: 'Maîtrise',
-            body: '{link} m’oblige à raisonner moi-même sur chaque plan avant qu’il soit construit, et le {link} de Geoffrey Litt me questionne sur ce qui a été construit : je comprends chaque changement avant qu’il soit mergé.',
+            body: '{link} m’oblige à raisonner sur chaque plan avant qu’il soit construit, et le {link} de Geoffrey Litt me questionne sur chaque PR.',
             links: [
               { label: 'VibeWise', href: 'https://github.com/nykooi1/vibe-wise' },
               {
@@ -765,15 +759,15 @@ export const translations: Record<Locale, TranslationStrings> = {
           },
           {
             title: 'Boucle de retours',
-            body: 'Mes acceptations, mes rejets et mes commentaires de relecture repartent dans les instructions des agents et la mémoire du repo, pour que le run suivant répète moins d’erreurs.',
+            body: 'Mes acceptations, mes rejets et mes commentaires de relecture repartent dans les instructions des agents.',
           },
           {
             title: 'Scoring',
-            body: 'Chaque plan arrive avec une estimation de l’effort et les preuves qui le justifient. Quand l’agent doute d’un plan, il pose une question avant que quoi que ce soit ne se construise.',
+            body: 'Chaque plan d’agent arrive avec une estimation de l’effort et ses preuves, plus une question quand l’agent doute.',
           },
           {
             title: 'Rétrospectives',
-            body: 'Le {link} de Matt Pocock me fait repasser sur les runs d’agents passés, pour voir où ils ont dérapé et ce qu’il faut changer dans les instructions.',
+            body: 'Le {link} de Matt Pocock me fait repasser sur les runs d’agents passés pour améliorer les instructions.',
             links: [
               {
                 label: 'skill retro',
@@ -873,8 +867,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     sideProjects: {
       eyebrow: '04 · Projets perso',
-      title: 'Des projets open source, construits pour mon propre usage.',
-      intro: 'Des outils perso, et l’endroit où je teste l’IA dans le produit lui-même.',
+      title: 'Des projets open source que j’ai développés.',
       stars: (count) => `${count}+ étoiles`,
       source: 'Code source',
       more: 'Autres projets',
@@ -885,7 +878,7 @@ export const translations: Record<Locale, TranslationStrings> = {
     },
     footer: {
       title: 'Tu montes une équipe qui travaille avec des agents IA ?',
-      body: 'Je suis ouvert à des postes de développeur full-stack ou IA en Suisse, et partant pour parler de la façon dont ton équipe pourrait travailler avec des agents.',
+      body: 'Je suis ouvert à des postes de développeur full-stack ou IA en Suisse.',
       email: 'Écris-moi',
       builtWith: 'Construit avec Next.js, React Three Fiber et Rapier.',
     },

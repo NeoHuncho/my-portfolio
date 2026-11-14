@@ -23,8 +23,8 @@ import trayStrategy from '@public/assets/showcase/tray-strategy.webp';
 
 /** How I work, on the stage's tabs: the day shift, my agents and their night shift. */
 export const SHIFTS = ['ticket', 'agents', 'night'] as const;
-/** The rest of me, on the shelf, most important first; Switzerland and the languages last, as the hero says them. */
-export const SHELF = ['robot', 'sport', 'oss', 'server', 'strategy', 'mountain', 'flags'] as const;
+/** The rest of me, on the shelf, in the desk tray's order without the search key. */
+export const SHELF = ['server', 'oss', 'mountain', 'flags', 'robot', 'sport', 'strategy'] as const;
 
 export type ShiftId = (typeof SHIFTS)[number];
 export type ShelfId = (typeof SHELF)[number];
@@ -79,15 +79,15 @@ export function stillOf<Place extends keyof Stills>(
 }
 
 /** The desk tray's pieces, in its order. */
-const TRAY_ORDER: ExhibitId[] = [
-  'robot',
-  'sport',
-  'oss',
+export const TRAY_ORDER: ExhibitId[] = [
   'server',
-  'keys',
-  'strategy',
+  'oss',
   'mountain',
   'flags',
+  'robot',
+  'sport',
+  'keys',
+  'strategy',
 ];
 /**
  * Every tray and shelf piece faces the viewer at first, in its still and as

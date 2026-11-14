@@ -1,7 +1,7 @@
 import { type ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useLanguage } from '@hooks/useLanguage';
-import { type ExhibitId, SHELF, SHIFTS } from '../phone/exhibitIds';
+import { type ExhibitId, SHELF, SHIFTS, TRAY_ORDER } from '../phone/exhibitIds';
 import { HolderScene, StageScene, ThumbScene, TrioScene } from '../phone/exhibits';
 
 /**
@@ -16,22 +16,11 @@ const SIZES = {
   trio: [1280, 640],
 } as const;
 
-const TRAY: ExhibitId[] = [
-  'robot',
-  'sport',
-  'oss',
-  'server',
-  'keys',
-  'strategy',
-  'mountain',
-  'flags',
-];
-
 const STILLS: Array<{ id: ExhibitId; place: 'stage' | 'shelf' | 'tray' }> = [
   ...SHIFTS.map((id) => ({ id, place: 'stage' as const })),
   ...SHELF.map((id) => ({ id, place: 'shelf' as const })),
   // The desk's tray, each piece facing the viewer, as its 3D starts.
-  ...TRAY.map((id) => ({ id, place: 'tray' as const })),
+  ...TRAY_ORDER.map((id) => ({ id, place: 'tray' as const })),
 ];
 
 /** Long enough for the labels, painted once the site fonts are in, to be painted. */
